@@ -44,8 +44,8 @@ class SQL3X:
 
     def init_template(self, template: TemplateType):
         """Need to rename"""
-        for (name, columns) in template.items():
-            self.create_table(name=name, columns=columns)
+        for (table, columns) in template.items():
+            self.create_table(name=table, columns=columns)
 
     def create_table(self, name: AnyStr, columns: TableType):
         """
@@ -54,25 +54,47 @@ class SQL3X:
 
         _columns = ''
 
-        for (column, params) in columns.items():
+        for (col, params) in columns.items():
             if isinstance(params, (int, str)):
-                _columns += f"{column} {stc(params)}" + ',\n'
+                _columns += f"{col} {stc(params)}" + ',\n'
+
             elif isinstance(params, list):
-                if "FOREIGN KEY" not in params:
-                    _columns += f"{column}"
-                    for param in params:
-                        _columns += f' {stc(param)}'
-                else:
-                    _columns += f"FOREIGN KEY ({params[1]}) REFERENCES {column} ({params[1]})"
-                    for param in params[2:]:
-                        _columns += f" {param}"
-                _columns += ',\n'
+                for param in params:
+                    _columns += f' {stc(param)}'
+
+                _columns = f"{col}{_columns},\n"
+
+            elif isinstance(params, dict):
+                if col == FOREIGN_KEY:
+                    for (key, refs) in params.items():
+                        _columns += f"FOREIGN KEY ({key}) REFERENCES {refs[0]} ({refs[1]})"
+                        for ref in refs[2:]:
+                            _columns += f" {ref}"
+                        _columns += ',\n'
 
             else:
                 raise TypeError
 
         script = f'CREATE TABLE IF NOT EXISTS "{name}" (\n{_columns[:-2]}\n);'
-        print(script)
+        self.execute(script)
+
+    def execute(self, script: AnyStr):
+        """
+        purchases = [('2006-03-28', 'BUY', 'IBM', 1000, 45.00),
+             ('2006-04-05', 'BUY', 'MSFT', 1000, 72.00),
+             ('2006-04-06', 'SELL', 'IBM', 500, 53.00),
+            ]
+        cur.executemany('INSERT INTO stocks VALUES (?,?,?,?,?)', purchases)
+        :return:
+        """
+        with sqlite3.connect(self.path) as conn:
+            cur = conn.cursor()
+            try:
+                cur.execute(script)
+                conn.commit()
+            except Exception as error:
+                raise error
+
 
     def insert(self, table: str, mod: ReadType, *args: InsertType, **kwargs: InsertType):
         if mod is ReadOnlyMode:
@@ -82,12 +104,19 @@ class SQL3X:
 
 
 my_template: TemplateType = {
-    "my_table": {
-        "id": [INTEGER, PRIMARY_KEY, UNIQUE],
-        "name": [TEXT, DEFAULT, '101'],
-        "age": INTEGER,
-        "super_id": [FOREIGN_KEY, 'contacts'],
-        "mega_id":  [FOREIGN_KEY, 'contacts', "ON DELETE CASCADE ON UPDATE NO ACTION"]
+    "groups": {
+        "group_id": [INTEGER, PRIMARY_KEY, UNIQUE],
+        "name": [TEXT, NOT_NULL, DEFAULT, '101'],
+    },
+
+    "contact_groups": {
+        "contact_id": INTEGER,
+        "group_id": INTEGER,
+
+        FOREIGN_KEY: {
+            "contact_id": ["contacts", "contact_id"],
+            "group_id": ["groups", "group_id"]
+        },
     }
 }
 
