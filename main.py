@@ -1,19 +1,19 @@
 from init_types import *
 from constants import *
 import column_gens as cg
+import parsers as parse
 import sqlite3
 from loguru import logger
 
 
 class SQL3X:
-    def __init__(self, path: PathType = "sql3x.db", mod: ReadType = None, template: DBTemplateType = None):
+    def __init__(self, path: PathType = "sql3x.db", template: DBTemplateType = None):
         """
 
         :param path: Location of database
         :param mod: Mod, might be readonly or other
         """
         self.path = path
-        self.mod = mod
         self.init_db()
         if template:
             self.markup_db(template=template)
@@ -22,12 +22,12 @@ class SQL3X:
         return f"{{SQL3X: path='{self.path}'}}"
 
     def __bool__(self):
-        """Is db available"""
-        return True
+        return self.init_db()
 
     def init_db(self):
         try:
             sqlite3.connect(self.path)
+            return True
         except Exception as e:
             logger.error(e)
 
@@ -88,40 +88,26 @@ class SQL3X:
             except Exception as e:
                 logger.error(e)
 
-    def select_columns(self, table: AnyStr) -> list:
+    def get_columns_list(self, table: AnyStr) -> list:
         return list(map(
             lambda item: item[1],
             self.execute(script=f"PRAGMA table_info({table});")
         ))
 
     def insert(self, table: AnyStr, *args: InsertArgs, **kwargs: InsertKwargs):
-        if self.mod is ReadOnlyMode:
-            return False
+        args, kwargs = parse.args_fix(args=args, kwargs=kwargs)
 
-        columns, values = [], []
+        if args:
+            columns, values = cg.equalize_size(
+                columns=self.get_columns_list(table=table),     # list of columns of table
+                values=parse.args2list(args)                    # pressing args
+            )
 
-        if kwargs and not args:
-            columns = list(kwargs.keys())
-            values = list(kwargs.values())
+        elif kwargs:
+            columns, values = parse.kwargs2lists(kwargs)        # split dict on 2 lists [keys] and [values]
 
-        if args and not kwargs:
-            if len(args) == 1:
-                logger.warning('One value only!')
-                values = [args[0]]
-
-            else:
-                values = []
-                for arg in args:
-                    values.append(arg if isinstance(arg, (str, int, float)) else str(arg))
-
-            columns = self.select_columns(table=table)
-
-            if len(values) != len(columns):
-                logger.warning(f"len(*args) != len(columns): ({len(values)} != {len(columns)})")
-                if len(values) > len(columns):
-                    values = values[:len(columns)]
-                if len(values) < len(columns):
-                    columns = columns[:len(values)]
+        else:
+            return
 
         self.execute(f"INSERT INTO {table} ("
                      f"{', '.join(map(str, columns))}) VALUES ("
@@ -146,5 +132,7 @@ db_template: DBTemplateType = {
 }
 
 db = SQL3X(template=db_template)
-db.insert("groups", group_id=33, name="MySS")
-db.insert("contact_groups", 1233, 1)
+# db.insert("groups", group_id=33, name="MySS")
+# db.insert("contact_groups", [1233, 2, 5])
+db.insert("contact_groups", contact_id=111, group_id="111")
+# db.select([], where={'a: b'})

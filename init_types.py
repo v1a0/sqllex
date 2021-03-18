@@ -37,7 +37,7 @@ DBTemplateType = Mapping[AnyStr, TableType]
 # types for inserting
 NumStr = Union[Number, AnyStr]
 InsertArgs = Union[
-    List[NumStr], NumStr
+    List[NumStr], NumStr, Mapping
 ]
 InsertKwargs = Mapping[AnyStr, NumStr]
 

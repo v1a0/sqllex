@@ -1,6 +1,7 @@
-from typing import Any, AnyStr, Mapping
+from typing import Any, AnyStr, Mapping, Set
 from constants import *
 from init_types import NumStr, ListDataType
+from loguru import logger
 
 
 def qtc(param: Any):
@@ -23,7 +24,6 @@ def compound(col: AnyStr, params: ListDataType) -> AnyStr:
     res = f"{col}"
     for param in params:
         res += f' {qtc(param)}'
-
     return f"{res},\n"
 
 
@@ -48,3 +48,13 @@ def foreign_key(params: Mapping) -> AnyStr:
 
     return res[:-1]
 
+
+def equalize_size(columns: list, values: list) -> tuple:
+    if len(values) != len(columns):
+        logger.warning(f"SIZE CROP! Expecting {len(columns)} arguments but {len(values)} were given!")
+        if len(values) > len(columns):
+            values = values[:len(columns)]
+        if len(values) < len(columns):
+            columns = columns[:len(values)]
+
+    return columns, values
