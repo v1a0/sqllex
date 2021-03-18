@@ -1,6 +1,7 @@
 import typing
 from pathlib import Path
 from typing import Literal, Mapping, Union, Any, List, AnyStr, TypedDict
+from numbers import Number
 
 ReadOnlyMode = Literal["r", "r+"]
 WriteAndTruncateMode = Literal["w", "w+", "wt", "w+t"]
@@ -28,16 +29,17 @@ ConstrainType = Union[
     KeyType
 ]
 
-ListDataType = List[Union[DataType, ConstrainType, AnyStr, int]]
+ListDataType = List[Union[DataType, ConstrainType, AnyStr, Number]]
 ColumnType = Union[ListDataType, DataType, AnyStr]
 TableType = Mapping[AnyStr, ColumnType]
 DBTemplateType = Mapping[AnyStr, TableType]
 
 # types for inserting
-IntStr = Union[int, AnyStr]
-InsertType = Union[
-    List[IntStr], Mapping[AnyStr, IntStr], IntStr
+NumStr = Union[Number, AnyStr]
+InsertArgs = Union[
+    List[NumStr], NumStr
 ]
+InsertKwargs = Mapping[AnyStr, NumStr]
 
 # Path
 PathType = Union[Path, AnyStr]

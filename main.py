@@ -2,6 +2,7 @@ from init_types import *
 from constants import *
 import column_gens as cg
 import sqlite3
+from loguru import logger
 
 
 class SQL3X:
@@ -28,7 +29,7 @@ class SQL3X:
         try:
             sqlite3.connect(self.path)
         except Exception as e:
-            raise e
+            logger.error(e)
 
     def markup_db(self, template: DBTemplateType):
         """Need to rename"""
@@ -40,7 +41,7 @@ class SQL3X:
         Create table in bd
         """
         for (col, params) in columns.items():
-            if isinstance(params, (int, str)):
+            if isinstance(params, (int, str, float)):
                 result += cg.simple(col=col, params=params)
 
             elif isinstance(params, list):
@@ -53,7 +54,7 @@ class SQL3X:
             script=f'CREATE TABLE IF NOT EXISTS "{name}" (\n{result[:-2]}\n);'
         )
 
-    def execute(self, script: AnyStr):
+    def execute(self, script: AnyStr) -> list:
         """
         purchases = [('2006-03-28', 'BUY', 'IBM', 1000, 45.00),
              ('2006-04-05', 'BUY', 'MSFT', 1000, 72.00),
@@ -68,28 +69,63 @@ class SQL3X:
             try:
                 cur.execute(script)
                 conn.commit()
-            except Exception as error:
-                raise error
+                return cur.fetchall()
+            except Exception as e:
+                logger.error(e)
 
-    def executemany(self, script: AnyStr, load: Union[List, Mapping]):
+    def executemany(self, script: AnyStr, load: Union[List, Mapping]) -> list:
         """
         Sent executemany request to db
         :param script: SQLite script with placeholders: 'INSERT INTO table1 VALUES (?,?,?)'
         :param load: Values for placeholders: [ (1, 'text1', 0.1), (2, 'text2', 0.2) ]
         """
         with sqlite3.connect(self.path) as conn:
-            cursor = conn.cursor()
+            cur = conn.cursor()
             try:
-                cursor.executemany(script, load)
+                cur.executemany(script, load)
                 conn.commit()
-            except Exception as error:
-                raise error
+                return cur.fetchall()
+            except Exception as e:
+                logger.error(e)
 
-    def insert(self, table: str, mod: ReadType, *args: InsertType, **kwargs: InsertType):
-        if mod is ReadOnlyMode:
+    def select_columns(self, table: AnyStr) -> list:
+        return list(map(
+            lambda item: item[1],
+            self.execute(script=f"PRAGMA table_info({table});")
+        ))
+
+    def insert(self, table: AnyStr, *args: InsertArgs, **kwargs: InsertKwargs):
+        if self.mod is ReadOnlyMode:
             return False
 
-        pass
+        columns, values = [], []
+
+        if kwargs and not args:
+            columns = list(kwargs.keys())
+            values = list(kwargs.values())
+
+        if args and not kwargs:
+            if len(args) == 1:
+                logger.warning('One value only!')
+                values = [args[0]]
+
+            else:
+                values = []
+                for arg in args:
+                    values.append(arg if isinstance(arg, (str, int, float)) else str(arg))
+
+            columns = self.select_columns(table=table)
+
+            if len(values) != len(columns):
+                logger.warning(f"len(*args) != len(columns): ({len(values)} != {len(columns)})")
+                if len(values) > len(columns):
+                    values = values[:len(columns)]
+                if len(values) < len(columns):
+                    columns = columns[:len(values)]
+
+        self.execute(f"INSERT INTO {table} ("
+                     f"{', '.join(map(str, columns))}) VALUES ("
+                     f"{', '.join(map(cg.qtc, values))})")
 
 
 db_template: DBTemplateType = {
@@ -110,3 +146,5 @@ db_template: DBTemplateType = {
 }
 
 db = SQL3X(template=db_template)
+db.insert("groups", group_id=33, name="MySS")
+db.insert("contact_groups", 1233, 1)

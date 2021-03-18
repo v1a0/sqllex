@@ -1,6 +1,6 @@
 from typing import Any, AnyStr, Mapping
 from constants import *
-from init_types import IntStr, ListDataType, KeyType
+from init_types import NumStr, ListDataType
 
 
 def qtc(param: Any):
@@ -15,7 +15,7 @@ def qtc(param: Any):
         return f'{param}'
 
 
-def simple(col: AnyStr, params: IntStr) -> AnyStr:
+def simple(col: AnyStr, params: NumStr) -> AnyStr:
     return f"{col} {qtc(params)}" + ',\n'
 
 
@@ -35,11 +35,16 @@ def mapped(col: AnyStr, params: Mapping) -> AnyStr:
 
 
 def foreign_key(params: Mapping) -> AnyStr:
+    """
+    DOES NOT WORK ! (ikd why)
+    :param params:
+    :return:
+    """
     res = ''
     for (key, refs) in params.items():
-        res += f"FOREIGN KEY ({key}) REFERENCES {refs[0]} ({refs[1]})"
-        for ref in refs[2:]:
-            res += f" {ref}"
+        res += f"FOREIGN KEY ({key}) REFERENCES {refs[0]} ({refs[1]}), \n"
+        # for ref in refs[2:]:
+        #     res += f" {ref}"
 
-    return f"{res},\n"
+    return res[:-1]
 
