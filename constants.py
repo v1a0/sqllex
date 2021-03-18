@@ -1,4 +1,4 @@
-from init_types import DataType, ConstrainType
+from init_types import DataType, ConstrainType, KeyType
 
 # Const vars
 TEXT: DataType = "TEXT"
@@ -13,7 +13,7 @@ UNIQUE: ConstrainType = "UNIQUE"
 PRIMARY_KEY: ConstrainType = "PRIMARY KEY"
 CHECK: ConstrainType = "CHECK"
 AUTOINCREMENT: ConstrainType = "AUTOINCREMENT"
-FOREIGN_KEY: ConstrainType = "FOREIGN KEY"
+FOREIGN_KEY: KeyType = "FOREIGN KEY"
 REFERENCES: ConstrainType = "REFERENCES"
 
 CONSTANTS = [

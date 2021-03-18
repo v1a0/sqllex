@@ -1,23 +1,11 @@
 from init_types import *
 from constants import *
+import column_gens as cg
 import sqlite3
 
 
-def stc(param: Any):
-    """
-    String control
-    :param param:
-    :return:
-    """
-    if param not in CONSTANTS and type(param) == str:
-        return f'"{param}"'
-    else:
-        return f'{param}'
-
-
-
 class SQL3X:
-    def __init__(self, path: PathType = "sql3x.db", mod: ReadType = None, template: TemplateType = None):
+    def __init__(self, path: PathType = "sql3x.db", mod: ReadType = None, template: DBTemplateType = None):
         """
 
         :param path: Location of database
@@ -27,7 +15,7 @@ class SQL3X:
         self.mod = mod
         self.init_db()
         if template:
-            self.init_template(template)
+            self.markup_db(template=template)
 
     def __str__(self):
         return f"{{SQL3X: path='{self.path}'}}"
@@ -42,41 +30,28 @@ class SQL3X:
         except Exception as e:
             raise e
 
-    def init_template(self, template: TemplateType):
+    def markup_db(self, template: DBTemplateType):
         """Need to rename"""
         for (table, columns) in template.items():
             self.create_table(name=table, columns=columns)
 
-    def create_table(self, name: AnyStr, columns: TableType):
+    def create_table(self, name: AnyStr, columns: TableType, result: str = ''):
         """
         Create table in bd
         """
-
-        _columns = ''
-
         for (col, params) in columns.items():
             if isinstance(params, (int, str)):
-                _columns += f"{col} {stc(params)}" + ',\n'
+                result += cg.simple(col=col, params=params)
 
             elif isinstance(params, list):
-                for param in params:
-                    _columns += f' {stc(param)}'
-
-                _columns = f"{col}{_columns},\n"
+                result += cg.compound(col=col, params=params)
 
             elif isinstance(params, dict):
-                if col == FOREIGN_KEY:
-                    for (key, refs) in params.items():
-                        _columns += f"FOREIGN KEY ({key}) REFERENCES {refs[0]} ({refs[1]})"
-                        for ref in refs[2:]:
-                            _columns += f" {ref}"
-                        _columns += ',\n'
+                result += cg.mapped(col=col, params=params)
 
-            else:
-                raise TypeError
-
-        script = f'CREATE TABLE IF NOT EXISTS "{name}" (\n{_columns[:-2]}\n);'
-        self.execute(script)
+        self.execute(
+            script=f'CREATE TABLE IF NOT EXISTS "{name}" (\n{result[:-2]}\n);'
+        )
 
     def execute(self, script: AnyStr):
         """
@@ -87,6 +62,7 @@ class SQL3X:
         cur.executemany('INSERT INTO stocks VALUES (?,?,?,?,?)', purchases)
         :return:
         """
+        print(script, '\n')
         with sqlite3.connect(self.path) as conn:
             cur = conn.cursor()
             try:
@@ -95,6 +71,19 @@ class SQL3X:
             except Exception as error:
                 raise error
 
+    def executemany(self, script: AnyStr, load: Union[List, Mapping]):
+        """
+        Sent executemany request to db
+        :param script: SQLite script with placeholders: 'INSERT INTO table1 VALUES (?,?,?)'
+        :param load: Values for placeholders: [ (1, 'text1', 0.1), (2, 'text2', 0.2) ]
+        """
+        with sqlite3.connect(self.path) as conn:
+            cursor = conn.cursor()
+            try:
+                cursor.executemany(script, load)
+                conn.commit()
+            except Exception as error:
+                raise error
 
     def insert(self, table: str, mod: ReadType, *args: InsertType, **kwargs: InsertType):
         if mod is ReadOnlyMode:
@@ -103,7 +92,7 @@ class SQL3X:
         pass
 
 
-my_template: TemplateType = {
+db_template: DBTemplateType = {
     "groups": {
         "group_id": [INTEGER, PRIMARY_KEY, UNIQUE],
         "name": [TEXT, NOT_NULL, DEFAULT, '101'],
@@ -120,5 +109,4 @@ my_template: TemplateType = {
     }
 }
 
-db = SQL3X(template=my_template)
-# print(db)
+db = SQL3X(template=db_template)

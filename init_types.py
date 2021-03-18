@@ -11,7 +11,7 @@ ReadType = Literal[ReadOnlyMode, WriteAndTruncateMode, WriteNoTruncateMode, Appe
 """
 Types for db init-on from template
 
-my_template: TemplateType = {
+db_template: DBTemplateType = {
     "my_table": {
         "id": [INTEGER, PRIMARY_KEY, UNIQUE],
         "name": [TEXT, DEFAULT, '1337'],
@@ -19,16 +19,19 @@ my_template: TemplateType = {
     }
 }
 """
+
+KeyType = Literal["FOREIGN KEY"]
 DataType = Literal["TEXT", "NUMERIC", "INTEGER", "REAL", "NONE"]
-ConstrainType = Literal[
-    "NOT NULL", "DEFAULT", "UNIQUE",
-    "CHECK", "AUTOINCREMENT",
-    "PRIMARY KEY", "FOREIGN KEY", "REFERENCES",
+
+ConstrainType = Union[
+    Literal["NOT NULL", "DEFAULT", "UNIQUE", "CHECK", "AUTOINCREMENT", "PRIMARY KEY", "REFERENCES"],
+    KeyType
 ]
-MultipleDataType = List[Union[DataType, ConstrainType, AnyStr, int]]
-ColumnType = Union[MultipleDataType, DataType, AnyStr]
+
+ListDataType = List[Union[DataType, ConstrainType, AnyStr, int]]
+ColumnType = Union[ListDataType, DataType, AnyStr]
 TableType = Mapping[AnyStr, ColumnType]
-TemplateType = Mapping[AnyStr, TableType]
+DBTemplateType = Mapping[AnyStr, TableType]
 
 # types for inserting
 IntStr = Union[int, AnyStr]
