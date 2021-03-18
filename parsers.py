@@ -23,8 +23,8 @@ def args_fix(args: Any, kwargs: Any) -> tuple:
 def args2list(args: Any) -> list:
     """
     Converting *args from tuple to list
-    :param args: Any
-    :return: [args]
+    :param args: args
+    :return: args as list
     """
     res = []
     for arg in args:

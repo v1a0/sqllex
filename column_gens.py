@@ -1,19 +1,23 @@
-from typing import Any, AnyStr, Mapping, Set
+from typing import Any, AnyStr, Mapping, Set, Union
 from constants import *
 from init_types import NumStr, ListDataType
 from loguru import logger
 
 
-def qtc(param: Any):
+def qtc(val: Union[int, float, str, list, type]):
     """
-    Quotes control
-    int = int
-    str = "str" if str not in CONSTANTS else str
+    Quotes ("str") control
+    :param: Any val
+    :return "str" if str not in CONSTANTS else str
     """
-    if param not in CONSTANTS and type(param) == str:
-        return f'"{param}"'
+    if isinstance(val, (int, float)) or val in CONSTANTS:
+        return f'{val}'
+
+    elif isinstance(val, (list, tuple)) and len(val) == 1:
+        return f'"{val[0]}"'
+    
     else:
-        return f'{param}'
+        return f'"{val}"'
 
 
 def simple(col: AnyStr, params: NumStr) -> AnyStr:
