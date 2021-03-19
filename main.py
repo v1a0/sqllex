@@ -63,7 +63,7 @@ class SQL3X:
         cur.executemany('INSERT INTO stocks VALUES (?,?,?,?,?)', purchases)
         :return:
         """
-        print(script, values if values else '', '\n')
+        # print(script, values if values else '', '\n')
         with sqlite3.connect(self.path) as conn:
             cur = conn.cursor()
             try:
@@ -74,7 +74,7 @@ class SQL3X:
                 conn.commit()
                 return cur.fetchall()
             except Exception as e:
-                logger.error(e)
+                logger.error(f"{e}\nscript: {script}\nvalues: {values}")
 
     def executemany(self, script: AnyStr, load: Union[List, Mapping]) -> list:
         """
@@ -91,42 +91,34 @@ class SQL3X:
             except Exception as e:
                 logger.error(e)
 
-    def get_columns_list(self, table: AnyStr) -> list:
-        return list(map(
+    def get_columns(self, table: AnyStr) -> tuple:
+        return tuple(map(
             lambda item: item[1],
             self.execute(script=f"PRAGMA table_info({table});")
         ))
 
-    def insert(self, table: AnyStr, *args: InsertArgs, **kwargs: InsertKwargs):
+    def insert(self, table: AnyStr, *args: Any, **kwargs: Any):
         args, kwargs = parse.args_fix(args=args, kwargs=kwargs)
 
         if args:
-            # columns = self.get_columns_list(table=table)
-            # values = args
-            #
-            # if len(values) != len(columns):
-            #     logger.warning(f"SIZE CROP! Expecting {len(columns)} arguments but {len(values)} were given!")
-            #     crop = min(len(values), len(columns))
-            #     columns, values = columns[:crop], values[:crop]
-
-            columns, values = cg.crop_size(
-                columns=self.get_columns_list(table=table),  # list of columns of table
-                values=parse.args2list(args)                 # parsing args
-            )
+            columns = self.get_columns(table=table)
+            columns, args = cg.crop(columns, args)
+            unsafe_values = args
 
         elif kwargs:
-            columns, values = parse.kwargs2lists(kwargs)  # split dict on 2 lists [keys] and [values]
+            columns = tuple(kwargs.keys())
+            unsafe_values = kwargs.values()
 
         else:
             return
 
-        # self.execute(f"INSERT INTO {table} ("
-        #             f"{', '.join(map(str, columns))}) VALUES ("
-        #             f"{', '.join(map(cg.qtc, values))})", )
+        values = ()
+        for val in unsafe_values:
+            values += (cg.type_control(val),)
 
         self.execute(f"INSERT INTO {table} ("
-                     f"{', '.join(map(str, columns))}) VALUES ("
-                     f"{', '.join('?' * len(values))})", tuple(cg.qtc_foreach_in(values)))
+                     f"{', '.join(column for column in columns)}) VALUES ("
+                     f"{', '.join('?' * len(values))})", values)
 
     def select(self):
         pass
@@ -150,7 +142,7 @@ db_template: DBTemplateType = {
 }
 
 db = SQL3X(template=db_template)
-# db.insert("groups", group_id=33, name="MySS")
-# db.insert("contact_groups", [1233, 2, 5])
+db.insert("groups", group_id=33, name="MySS")
+db.insert("contact_groups", [1233, 2, 5])
 db.insert("contact_groups", contact_id=111, group_id={1:2})
 # db.select(['contact_id', 'group_id'], from_table='contact_groups', where={'contact_id': 1})

@@ -9,13 +9,14 @@ def args_fix(args: Any, kwargs: Any) -> tuple:
     If args = (tuple,) :return: (args, kwargs) = (list, None)
     Otherwise :return: (args, kwargs)
     """
-    if args and len(args) == 1:
+    if len(args) == 1:
         if isinstance(args[0], dict):
-            return None, args
+            return None, (args,)
         if isinstance(args[0], list):
-            return args[0], None
+            return (args[0],), None
         if isinstance(args[0], tuple):
-            return list(args[0]), None
+            return (args[0],), None
+
     else:
         return args, kwargs
 
@@ -29,7 +30,7 @@ def args2list(args: Any) -> list:
     res = []
     for arg in args:
         res.append(
-            cg.qtc(arg) if isinstance(arg, (str, int, float))
+            cg.type_control(arg) if isinstance(arg, (str, int, float))
             else str(arg)
         )
     return res

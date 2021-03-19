@@ -4,36 +4,36 @@ from init_types import NumStr, ListDataType
 from loguru import logger
 
 
-def qtc(val: Union[int, float, str, list, type, list]):
+def type_control(val: Union[int, float, str, list, type, list]):
     """
-    Quotes ("str") control
+    Type control
     :param: Any val
-    :return "str" if str not in CONSTANTS else str
+    :return str(val) if value not (int or in CONSTANTS )
     """
     if isinstance(val, (int, float)) or val in CONSTANTS:
-        return f'{val}'
+        return val
 
     elif isinstance(val, (list, tuple)) and len(val) == 1:
-        return f'"{val[0]}"'
+        return f'{val[0]}'
 
     else:
-        return f'"{val}"'
+        return f'{val}'
 
 
-def qtc_foreach_in(_list: Union[list, tuple]):
+def qtc_foreach(_list: Union[list, tuple]):
     for i in range(len(_list)):
-        _list[i] = qtc(_list[i])
+        _list[i] = type_control(_list[i])
     return _list
 
 
 def simple(col: AnyStr, params: NumStr) -> AnyStr:
-    return f"{col} {qtc(params)}" + ',\n'
+    return f"{col} {type_control(params)}" + ',\n'
 
 
 def compound(col: AnyStr, params: ListDataType) -> AnyStr:
     res = f"{col}"
     for param in params:
-        res += f' {qtc(param)}'
+        res += f' {type_control(param)}'
     return f"{res},\n"
 
 
@@ -59,10 +59,10 @@ def foreign_key(params: Mapping) -> AnyStr:
     return res[:-1]
 
 
-def crop_size(columns: list, values: list) -> tuple:
-    if len(values) != len(columns):
-        logger.warning(f"SIZE CROP! Expecting {len(columns)} arguments but {len(values)} were given!")
-        min_len = min(len(values), len(columns))
-        columns, values = columns[:min_len], values[:min_len]
+def crop(columns: tuple, args: tuple) -> tuple:
+    if len(args) != len(columns):
+        logger.warning(f"SIZE CROP! Expecting {len(columns)} arguments but {len(args)} were given!")
+        _len_ = min(len(args), len(columns))
+        return columns[:_len_], args[:_len_]
 
-    return columns, values
+    return columns, args
