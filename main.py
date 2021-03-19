@@ -4,6 +4,7 @@ import column_gens as cg
 import parsers as parse
 import sqlite3
 from loguru import logger
+from exceptins import TableInfoError, ExecuteError
 
 
 class SQL3X:
@@ -73,8 +74,8 @@ class SQL3X:
                     cur.execute(script)
                 conn.commit()
                 return cur.fetchall()
-            except Exception as e:
-                logger.error(f"{e}\nscript: {script}\nvalues: {values}")
+            except Exception as error:
+                raise ExecuteError(error=error, script=script, values=values)
 
     def executemany(self, script: AnyStr, load: Union[List, Mapping]) -> list:
         """
@@ -89,13 +90,14 @@ class SQL3X:
                 conn.commit()
                 return cur.fetchall()
             except Exception as e:
-                logger.error(e)
+                raise e
 
     def get_columns(self, table: AnyStr) -> tuple:
-        return tuple(map(
-            lambda item: item[1],
-            self.execute(script=f"PRAGMA table_info({table});")
-        ))
+        columns = self.execute(script=f"PRAGMA table_info({table});")
+        if columns:
+            return tuple(map(lambda item: item[1], columns))
+        else:
+            raise TableInfoError
 
     def insert(self, table: AnyStr, *args: Any, **kwargs: Any):
         args, kwargs = parse.args_fix(args=args, kwargs=kwargs)
@@ -141,8 +143,10 @@ db_template: DBTemplateType = {
     }
 }
 
+
+
 db = SQL3X(template=db_template)
 db.insert("groups", group_id=33, name="MySS")
-db.insert("contact_groups", [1233, 2, 5])
+db.insert("contact_groups1", [1233, 2, 5])
 db.insert("contact_groups", contact_id=111, group_id={1:2})
-# db.select(['contact_id', 'group_id'], from_table='contact_groups', where={'contact_id': 1})
+#db.select(['contact_id', 'group_id'], from_table='contact_groups', where={'contact_id': 1})
