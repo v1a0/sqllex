@@ -144,9 +144,8 @@ db_template: DBTemplateType = {
 }
 
 
-
 db = SQL3X(template=db_template)
 db.insert("groups", group_id=33, name="MySS")
-db.insert("contact_groups1", [1233, 2, 5])
-db.insert("contact_groups", contact_id=111, group_id={1:2})
+db.insert("contact_groups", [1233, 2, 5])
+db.insert("contact_groups", contact_id=111, group_id={1: 2})
 #db.select(['contact_id', 'group_id'], from_table='contact_groups', where={'contact_id': 1})
