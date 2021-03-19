@@ -1,4 +1,4 @@
-from init_types import DataType, ConstrainType, KeyType
+from types_.types import *
 
 # Const vars
 TEXT: DataType = "TEXT"
