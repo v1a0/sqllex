@@ -4,7 +4,7 @@ from init_types import NumStr, ListDataType
 from loguru import logger
 
 
-def qtc(val: Union[int, float, str, list, type]):
+def qtc(val: Union[int, float, str, list, type, list]):
     """
     Quotes ("str") control
     :param: Any val
@@ -15,9 +15,15 @@ def qtc(val: Union[int, float, str, list, type]):
 
     elif isinstance(val, (list, tuple)) and len(val) == 1:
         return f'"{val[0]}"'
-    
+
     else:
         return f'"{val}"'
+
+
+def qtc_foreach_in(_list: Union[list, tuple]):
+    for i in range(len(_list)):
+        _list[i] = qtc(_list[i])
+    return _list
 
 
 def simple(col: AnyStr, params: NumStr) -> AnyStr:
@@ -53,12 +59,10 @@ def foreign_key(params: Mapping) -> AnyStr:
     return res[:-1]
 
 
-def equalize_size(columns: list, values: list) -> tuple:
+def crop_size(columns: list, values: list) -> tuple:
     if len(values) != len(columns):
         logger.warning(f"SIZE CROP! Expecting {len(columns)} arguments but {len(values)} were given!")
-        if len(values) > len(columns):
-            values = values[:len(columns)]
-        if len(values) < len(columns):
-            columns = columns[:len(values)]
+        min_len = min(len(values), len(columns))
+        columns, values = columns[:min_len], values[:min_len]
 
     return columns, values

@@ -54,7 +54,7 @@ class SQL3X:
             script=f'CREATE TABLE IF NOT EXISTS "{name}" (\n{result[:-2]}\n);'
         )
 
-    def execute(self, script: AnyStr) -> list:
+    def execute(self, script: AnyStr, values: tuple = None) -> list:
         """
         purchases = [('2006-03-28', 'BUY', 'IBM', 1000, 45.00),
              ('2006-04-05', 'BUY', 'MSFT', 1000, 72.00),
@@ -63,11 +63,14 @@ class SQL3X:
         cur.executemany('INSERT INTO stocks VALUES (?,?,?,?,?)', purchases)
         :return:
         """
-        print(script, '\n')
+        print(script, values if values else '', '\n')
         with sqlite3.connect(self.path) as conn:
             cur = conn.cursor()
             try:
-                cur.execute(script)
+                if values:
+                    cur.execute(script, values)
+                else:
+                    cur.execute(script)
                 conn.commit()
                 return cur.fetchall()
             except Exception as e:
@@ -98,20 +101,35 @@ class SQL3X:
         args, kwargs = parse.args_fix(args=args, kwargs=kwargs)
 
         if args:
-            columns, values = cg.equalize_size(
-                columns=self.get_columns_list(table=table),     # list of columns of table
-                values=parse.args2list(args)                    # pressing args
+            # columns = self.get_columns_list(table=table)
+            # values = args
+            #
+            # if len(values) != len(columns):
+            #     logger.warning(f"SIZE CROP! Expecting {len(columns)} arguments but {len(values)} were given!")
+            #     crop = min(len(values), len(columns))
+            #     columns, values = columns[:crop], values[:crop]
+
+            columns, values = cg.crop_size(
+                columns=self.get_columns_list(table=table),  # list of columns of table
+                values=parse.args2list(args)                 # parsing args
             )
 
         elif kwargs:
-            columns, values = parse.kwargs2lists(kwargs)        # split dict on 2 lists [keys] and [values]
+            columns, values = parse.kwargs2lists(kwargs)  # split dict on 2 lists [keys] and [values]
 
         else:
             return
 
+        # self.execute(f"INSERT INTO {table} ("
+        #             f"{', '.join(map(str, columns))}) VALUES ("
+        #             f"{', '.join(map(cg.qtc, values))})", )
+
         self.execute(f"INSERT INTO {table} ("
                      f"{', '.join(map(str, columns))}) VALUES ("
-                     f"{', '.join(map(cg.qtc, values))})")
+                     f"{', '.join('?' * len(values))})", tuple(cg.qtc_foreach_in(values)))
+
+    def select(self):
+        pass
 
 
 db_template: DBTemplateType = {
@@ -134,5 +152,5 @@ db_template: DBTemplateType = {
 db = SQL3X(template=db_template)
 # db.insert("groups", group_id=33, name="MySS")
 # db.insert("contact_groups", [1233, 2, 5])
-db.insert("contact_groups", contact_id=111, group_id="111")
-# db.select([], where={'a: b'})
+db.insert("contact_groups", contact_id=111, group_id={1:2})
+# db.select(['contact_id', 'group_id'], from_table='contact_groups', where={'contact_id': 1})
