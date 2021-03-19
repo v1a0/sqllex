@@ -18,8 +18,8 @@ db_template = {
 
 
 db = SQL3X(template=db_template)
-# db.insert("groups", group_id=1, name="Admins")
-# db.insert("groups", group_id=2, name="Other")
+db.insert("groups", group_id=1, name="Admins")
+db.insert("groups", group_id=2, name="Other")
 
 import time
 _t = time.time()
