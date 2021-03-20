@@ -15,20 +15,21 @@ db_template = {
         },
     }
 }
-
+import time
+_t = time.time()
 
 db = SQL3X(template=db_template)
 db.insert("groups", group_id=1, name="Admins")
 db.insert("groups", group_id=2, name="Other")
 
-import time
-_t = time.time()
 db.insert("users", username="user_1", group_id=1)
 db.insert("users", "user_2", 1)
 db.insert("users", ["user_3", 2])
 db.insert("users", ("user_4", 2))
 db.insert("users", {'username': "user_4", 'group_id': 2})
+db.insert("users", [1])
+
+
+print(db.select(from_table="users", execute=False))
+print(db.select(from_table='users', where={'group_id': 1}, execute=True))
 print(time.time() - _t)
-
-
-# db.select(['contact_id', 'group_id'], from_table='contact_groups', where={'contact_id': 1})

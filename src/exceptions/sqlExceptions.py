@@ -6,7 +6,7 @@ class TableInfoError(Exception):
         return "Table doesn't exist or have no columns"
 
 
-class ExecuteError(Exception):
+class UniversalException(Exception):
     def __init__(self, **kwargs):
         self.kwargs = kwargs
 
@@ -15,3 +15,17 @@ class ExecuteError(Exception):
         for (arg, kwarg) in self.kwargs.items():
             s += f"{arg}: {kwarg}\n"
         return s
+
+
+class ExecuteError(UniversalException):
+    """
+    Execution failed by some reason, more
+    """
+
+
+class ArgumentError(UniversalException):
+    """
+    Argument have an incorrect type or value
+    """
+    pass
+
