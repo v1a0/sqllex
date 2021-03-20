@@ -17,8 +17,20 @@ db_template = {
 }
 
 import time
+
 _t = time.time()
 
+# a = ([1, 2, 3], [1, 2])
+#
+# print(
+#     max(
+#         map(
+#             lambda item: len(item),
+#             a
+#         )
+#     )
+# )
+#
 db = SQL3X(template=db_template)
 db.insert("groups", group_id=1, name="Admins")
 db.insert("groups", group_id=2, name="Other")
@@ -30,7 +42,11 @@ db.insert("users", ("user_4", 2))
 db.insert("users", {'username': "user_4", 'group_id': 2})
 db.insert("users", [1])
 
+db.insertmany("users", [10, 1], [11, 2], [12, 3])  # values = ([10, 1], [11, 2], [12, 3])
+db.insertmany("users", [(20, 1), (21, 2), (23, 3)])  # values = ([(20, 1), (21, 2), (23, 3)])
+db.insertmany("users", [[30], [31, 2]])
+db.insertmany("users", username=[41, 42, 43], group_id=[1, 2])
 
-print(db.select(from_table="users", execute=False))
-print(db.select(from_table='users', where={'group_id': 1}, execute=True))
-print(time.time() - _t)
+#print(db.select(from_table="users", execute=False))
+#print(db.select(from_table='users', where={'group_id': 1}, execute=True))
+#print(time.time() - _t)

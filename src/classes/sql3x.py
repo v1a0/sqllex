@@ -66,22 +66,16 @@ class SQL3X:
             except Exception as error:
                 raise ExecuteError(error=error, script=script, values=values)
 
-    def executemany(self, script: AnyStr, load: Union[List, dict]) -> list:
+    def executemany(self, script: AnyStr, load: tuple) -> list:
         """
         Sent executemany request to db
         :param script: SQLite script with placeholders: 'INSERT INTO table1 VALUES (?,?,?)'
-        :param load: Values for placeholders: [ (1, 'text1', 0.1), (2, 'text2', 0.2) ]
-
-        purchases = [('2006-03-28', 'BUY', 'IBM', 1000, 45.00),
-        ('2006-04-05', 'BUY', 'MSFT', 1000, 72.00),
-        ('2006-04-06', 'SELL', 'IBM', 500, 53.00),
-        ]
-        cur.executemany('INSERT INTO stocks VALUES (?,?,?,?,?)', purchases)
+        :param load: Values for placeholders: ( (1, 'text1', 0.1), (2, 'text2', 0.2) )
         """
         with sqlite3.connect(self.path) as conn:
             cur = conn.cursor()
             try:
-                print(script, load)
+
                 cur.executemany(script, load)
                 conn.commit()
                 return cur.fetchall()
@@ -99,7 +93,7 @@ class SQL3X:
         """
         INSERT data into db's table
         :param table: table name for inserting
-        :param args: 1'st way set values for insert, if len(args) != number of rows, inserts as much as possible
+        :param args: 1'st way set values for insert, if len(values) != number of rows, inserts as much as possible
         if too much values crop off excess, otherwise leave empty
         :param kwargs: 2'st way set values for insert, like: username="Alex", group="None"
         :return: DB answer to or script
@@ -111,12 +105,12 @@ class SQL3X:
             ) -> INSERT INTO users (username, group_id) VALUES ('user_1', 1);
         """
 
-        if kwargs.get('execute'):
+        if 'execute' in kwargs.keys():
             execute: bool = bool(kwargs.pop('execute'))
         else:
             execute = True
 
-        args, kwargs = insert_ags_fix(args=args, kwargs=kwargs)
+        args, kwargs = insert_args_fix(args=args, kwargs=kwargs)
 
         if args:
             columns = self.get_columns(table=table)
@@ -138,6 +132,52 @@ class SQL3X:
             self.execute(script, values)
         else:
             return [script, values]
+
+    def insertmany(self, table: AnyStr, *args: Union[list[list], list[tuple], tuple[list], tuple[tuple], list, tuple],
+                   **kwargs: Any):
+        if args:
+            values = list(map(lambda arg: list(arg), args))   # make values list[list] (yes it's necessary)
+
+            if len(values) == 1 and isinstance(values[0], list):
+                values = values[0]
+
+            max_l = max(map(lambda arg: len(arg), values))   # max len of arg in values
+            temp_ = [0 for _ in range(max_l)]                 # example values [] for script
+            script = self.insert(table, temp_, execute=False)
+            _len = len(script[1])
+
+            for i in range(len(values)):
+                while len(values[i]) < _len:
+                    values[i] += [None]
+                while len(values[i]) > _len:
+                    values[i] = values[i][:_len]
+
+        elif kwargs:
+            temp_ = {}
+            values = []
+            columns = list(kwargs.keys())
+            args = list(map(lambda vals: list(vals), kwargs.values()))
+
+            for i in range(len(args)):
+                temp_[columns[i]] = args[i][0]
+
+            script = self.insert(table, temp_, execute=False)
+            max_l = max(map(lambda val: len(val), args))   # max len of arg in values
+
+            for _ in range(max_l):
+                temp_ = []
+                for arg in args:
+                    if arg:
+                        temp_.append(arg.pop(0))
+                    else:
+                        temp_.append(None)
+                values.append(temp_)
+
+        else:
+            raise ArgumentError(args_kwargs="Unset", error="No data to insert")
+
+        values = tuple(map(lambda arg: tuple(arg), values))  # make values tuple[tuple] (yes it's necessary)
+        self.executemany(script[0], values)
 
     def select(self, select: Union[List[str], str] = None, table: str = None,
                where: dict = None, execute: bool = True, **kwargs) -> List:
@@ -192,7 +232,7 @@ class SQL3X:
             return self.execute(script, tuple(where.values()))
         else:
             return [script, tuple(where.values())]
-    
+
 
 def crop(columns: Union[tuple, list], args: Union[tuple, list]) -> tuple:
     """
@@ -210,12 +250,12 @@ def crop(columns: Union[tuple, list], args: Union[tuple, list]) -> tuple:
     return columns, args
 
 
-def insert_ags_fix(args: Any, kwargs: Any) -> tuple:
+def insert_args_fix(args: Any, kwargs: Any) -> tuple:
     """
-    If args = (dict,) :return: (args, kwargs) = (None, dict)
-    If args = (list,) :return: (args, kwargs) = (list, None)
-    If args = (tuple,) :return: (args, kwargs) = (list, None)
-    Otherwise :return: (args, kwargs)
+    If values = (dict,) :return: (values, kwargs) = (None, dict)
+    If values = (list,) :return: (values, kwargs) = (tuple(list), None)
+    If values = (tuple,) :return: (values, kwargs) = (list, None)
+    Otherwise :return: (values, kwargs)
     """
 
     if len(args) == 1:
