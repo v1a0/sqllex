@@ -49,11 +49,7 @@ class SQL3X:
 
     def execute(self, script: AnyStr, values: tuple = None) -> list:
         """
-        purchases = [('2006-03-28', 'BUY', 'IBM', 1000, 45.00),
-             ('2006-04-05', 'BUY', 'MSFT', 1000, 72.00),
-             ('2006-04-06', 'SELL', 'IBM', 500, 53.00),
-            ]
-        cur.executemany('INSERT INTO stocks VALUES (?,?,?,?,?)', purchases)
+
         :return:
         """
         # print(script, values if values else '', '\n')
@@ -75,6 +71,12 @@ class SQL3X:
         Sent executemany request to db
         :param script: SQLite script with placeholders: 'INSERT INTO table1 VALUES (?,?,?)'
         :param load: Values for placeholders: [ (1, 'text1', 0.1), (2, 'text2', 0.2) ]
+
+        purchases = [('2006-03-28', 'BUY', 'IBM', 1000, 45.00),
+        ('2006-04-05', 'BUY', 'MSFT', 1000, 72.00),
+        ('2006-04-06', 'SELL', 'IBM', 500, 53.00),
+        ]
+        cur.executemany('INSERT INTO stocks VALUES (?,?,?,?,?)', purchases)
         """
         with sqlite3.connect(self.path) as conn:
             cur = conn.cursor()
@@ -94,6 +96,21 @@ class SQL3X:
             raise TableInfoError
 
     def insert(self, table: AnyStr, *args: Any, **kwargs: Any) -> List:
+        """
+        INSERT data into db's table
+        :param table: table name for inserting
+        :param args: 1'st way set values for insert, if len(args) != number of rows, inserts as much as possible
+        if too much values crop off excess, otherwise leave empty
+        :param kwargs: 2'st way set values for insert, like: username="Alex", group="None"
+        :return: DB answer to or script
+        :example:
+            SQLite3x.insert(
+                "users",
+                username="user_1",
+                group_id=1
+            ) -> INSERT INTO users (username, group_id) VALUES ('user_1', 1);
+        """
+
         if kwargs.get('execute'):
             execute: bool = bool(kwargs.pop('execute'))
         else:
@@ -104,22 +121,18 @@ class SQL3X:
         if args:
             columns = self.get_columns(table=table)
             columns, args = crop(columns, args)
-            unsafe_values = args
+            values = tuple(args)
 
         elif kwargs:
             columns = tuple(kwargs.keys())
-            unsafe_values = kwargs.values()
+            values = tuple(kwargs.values())
 
         else:
-            return []
-
-        values = ()
-        for val in unsafe_values:
-            values += (py2sql.quote(val),)
+            raise ArgumentError(args_kwargs="Unset", error="No data to insert")
 
         script = f"INSERT INTO {table} (" + \
                  f"{', '.join(column for column in columns)}) VALUES (" + \
-                 f"{', '.join('?' * len(values))});"
+                 f"{', '.join('?' * len(values))})"
 
         if execute:
             self.execute(script, values)
@@ -129,7 +142,7 @@ class SQL3X:
     def select(self, select: Union[List[str], str] = None, table: str = None,
                where: dict = None, execute: bool = True, **kwargs) -> List:
         """
-        Select column or columns from one table
+        SELECT columns from (one) table
         :param select: columns to select, have shadow name in kwargs 'columns'. Value '*' by default
         :param table: table for selection, have shadow name in kwargs 'from_table'
         :param where: optional parameter for conditions, example: {'name': 'Alex', 'group': 2}
@@ -137,11 +150,11 @@ class SQL3X:
         :param execute: execute script and return db's answer (True) or return script (False)
         :return: DB answer to or script
         :example:
-        SQLite3X().select(
-            select=['id', 'about'],
-            table='users',
-            where={name: 'Alex', group: 2}
-            ) -> SELECT (id, about) FROM users WHERE (name='Alex', group=2)
+            SQLite3x().select(
+                select=['id', 'about'],
+                table='users',
+                where={name: 'Alex', group: 2}
+                ) -> SELECT (id, about) FROM users WHERE (name='Alex', group=2)
         """
         if not where:
             where = {}
@@ -179,9 +192,15 @@ class SQL3X:
             return self.execute(script, tuple(where.values()))
         else:
             return [script, tuple(where.values())]
-
+    
 
 def crop(columns: Union[tuple, list], args: Union[tuple, list]) -> tuple:
+    """
+    Converts columns and arguments to the same length for safe insert
+    :param columns:
+    :param args:
+    :return:
+    """
     if args and columns:
         if len(args) != len(columns):
             logger.warning(f"SIZE CROP! Expecting {len(columns)} arguments but {len(args)} were given!")

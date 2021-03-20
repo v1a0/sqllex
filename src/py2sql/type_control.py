@@ -2,6 +2,7 @@ from typing import Union
 from constants.sql import CONSTANTS
 
 
+# might be remove later
 def quote(val: Union[int, float, str, list, type, list]):
     """
     Quotes control
