@@ -1,2 +1,2 @@
-from classes import *
-from constants import *
+from sqllex.classes import *
+from sqllex.constants import *

@@ -1,1 +1,1 @@
-from classes.sqlite3x import *
+from sqllex.classes.sqlite3x import *

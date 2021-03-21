@@ -1,7 +1,7 @@
-from exceptions import TableInfoError, ExecuteError, ArgumentError
+from sqllex.exceptions import TableInfoError, ExecuteError, ArgumentError
 from loguru import logger
-from constants import *
-from types_ import *
+from sqllex.constants import *
+from sqllex.types_ import *
 import sqlite3
 
 

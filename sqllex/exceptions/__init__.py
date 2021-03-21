@@ -1,1 +1,1 @@
-from exceptions.sqlExceptions import *
+from sqllex.exceptions.sqlExceptions import *
