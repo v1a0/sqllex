@@ -4,8 +4,8 @@
 # SQLLEX alpha v0.1.2 📚
 
 ![Python:3.9](https://img.shields.io/badge/Python-3.9-green)
-![Python:3.9](https://img.shields.io/badge/Python-3.9-green)
-![Python:3.9](https://img.shields.io/badge/Python-3.9-green)
+[![Language grade: Python](https://img.shields.io/lgtm/grade/python/g/V1A0/sqllex.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/V1A0/sqllex/context:python)
+[![Total alerts](https://img.shields.io/lgtm/alerts/g/V1A0/sqllex.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/V1A0/sqllex/alerts/)
 
 <br>
 Better than <b>sqlite3</b>. Seriously, try it out<br>
