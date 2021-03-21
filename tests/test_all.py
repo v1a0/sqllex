@@ -1,4 +1,4 @@
-from src import SQLite3x, INTEGER, PRIMARY_KEY, UNIQUE, TEXT, NOT_NULL, DEFAULT, FOREIGN_KEY, ArgumentError, ExecuteError
+from sqllex import SQLite3x, INTEGER, PRIMARY_KEY, UNIQUE, TEXT, NOT_NULL, DEFAULT, FOREIGN_KEY, ArgumentError, ExecuteError
 from os import walk, getcwd, remove
 from loguru import logger
 
