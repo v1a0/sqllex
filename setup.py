@@ -3,12 +3,12 @@ from setuptools import setup
 setup(
     name='sqllex',
     packages=['sqllex', 'sqllex.classes', 'sqllex.constants', 'sqllex.exceptions', 'sqllex.types_'],
-    version='0.1.1',
+    version='0.1.2',
     license='gpl-3.0',
     description='Better than sqlite3',
     author='v1a0',
     url='https://github.com/v1a0/sqllex',
-    download_url='https://github.com/V1A0/sqllex/archive/refs/tags/v0.1.1.tar.gz',
+    download_url='https://github.com/V1A0/sqllex/archive/refs/tags/v0.1.2.tar.gz',
     keywords=['sql', 'sql3', 'sqlite', 'sqlite3', 'sqllex', 'db', 'database', 'easy'],
     install_requires=[  # I get to this in a second
         'colorama==0.4.4',
