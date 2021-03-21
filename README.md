@@ -1,7 +1,7 @@
 
 <div align="center">
 
-# SQLLEX alpha v0.1 📚
+# SQLLEX alpha v0.1.0 📚
 
 ![Python:3.9](https://img.shields.io/badge/Python-3.9-green)
 ![Python:3.9](https://img.shields.io/badge/Python-3.9-green)
