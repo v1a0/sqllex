@@ -2,8 +2,8 @@ from setuptools import setup
 
 setup(
     name='sqllex',
-    packages=['sqllex'],
-    version='0.1',
+    packages=['sqllex', 'sqllex.classes', 'sqllex.constants', 'sqllex.exceptions', 'sqllex.types_'],
+    version='0.1.0',
     license='gpl-3.0',
     description='Better than sqlite3',
     author='v1a0',
@@ -19,7 +19,7 @@ setup(
         'Development Status :: 3 - Alpha',
         'Intended Audience :: Developers',
         'Topic :: Software Development :: Build Tools',     # ????
-        'License :: OSI Approved :: GNU GENERAL PUBLIC LICENSE',  # Again, pick a license
+        'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',  # Again, pick a license
         'Programming Language :: Python :: 3.9',
     ],
 )

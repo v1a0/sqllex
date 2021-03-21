@@ -25,7 +25,7 @@ into it and take it back. That's how your code will look like.
 ```python
 from sqllex import *
 
-# Create some database, with simple structure 
+# Create some database, with simple structure
 db = SQLite3x(
     path='my_data.db',
     template= {

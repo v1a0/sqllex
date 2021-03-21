@@ -1,4 +1,4 @@
-from types_.types import *
+from sqllex.types_.types import *
 
 # Const vars
 TEXT: DataType = "TEXT"
