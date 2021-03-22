@@ -90,10 +90,10 @@ class SQLite3x:
         :param values: Values for placeholders: ( (1, 'text1', 0.1), (2, 'text2', 0.2) )
         :return: DB answer
         """
+        # print(script, values if values else '', '\n')
         with sqlite3.connect(self.path) as conn:
             cur = conn.cursor()
             try:
-
                 cur.executemany(script, values)
                 conn.commit()
                 return cur.fetchall()
@@ -269,6 +269,33 @@ class SQLite3x:
             return self.execute(script, tuple(where.values()))
         else:
             return [script, tuple(where.values())]
+
+# ---------------------------------------------------------------------------
+# https://www.sitepoint.com/getting-started-sqlite3-basic-commands/
+#
+#     def delete(self):
+#         pass
+#
+#     def update(self):
+#         pass
+#
+#     def drop(self):
+#         pass
+#
+#     def alter(self):
+#         # RENAME TO
+#         # RENAME COLUMN
+#         # ADD COLUMN
+#         # https://www.sqlitetutorial.net/sqlite-alter-table/
+#         pass
+#
+#     def commit(self):
+#         # ?
+#         pass
+#
+#     def vaccom(self):
+#         # https://www.sqlitetutorial.net/sqlite-vacuum/
+#         pass
 
 
 def table(col: AnyStr, params: Any, safe: bool = True):
