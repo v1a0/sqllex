@@ -13,7 +13,7 @@ class SQLite3x:
         :param template: template of DB structure
         """
         self.path = path
-        self.journal_mode(mode="WAL")
+        self.journal_mode(mode="WAL")   # make db little bit faster
         self.foreign_keys(mode="ON")
         if template:
             self.__markup__(template=template)
@@ -27,18 +27,27 @@ class SQLite3x:
         except ExecuteError:
             return False
 
-    def pragma(self, pram: str):
+    def pragma(self, *args: str, **kwargs):
+        if args:
+            script = f"PRAGMA {args[0]}"
+        elif kwargs:
+            script = f"PRAGMA {list(kwargs.keys())[0]}={list(kwargs.values())[0]}"
+        else:
+            raise ArgumentError(args_kwargs="Unset", error="No data to execute")
+
         try:
-            self.execute(script=f"PRAGMA {pram}")  # make db little bit faster
-            return True
+            return self.execute(script=script)
         except Exception as e:
             logger.error(e)
 
     def foreign_keys(self, mode: Literal["ON", "OFF"]):
-        self.pragma(f"foreign_keys={mode}")
+        self.pragma(foreign_keys=mode)
 
     def journal_mode(self, mode: Literal["DELETE", "TRUNCATE", "PERSIST", "MEMORY", "WAL", "OFF"]):
-        self.pragma(f"journal_mode={mode}")
+        self.pragma(journal_mode=mode)
+
+    def table_info(self, table: str):
+        return self.pragma(f"table_info({table})")
 
     def __markup__(self, template: DBTemplateType):
         """Need to rename"""
@@ -69,7 +78,7 @@ class SQLite3x:
         :param values: Values for placeholders: ( (1, 'text1', 0.1), (2, 'text2', 0.2) )
         :return: DB answer
         """
-        # print(script, values if values else '', '\n')
+        print(script, values if values else '', '\n')
         with sqlite3.connect(self.path) as conn:
             cur = conn.cursor()
             try:
@@ -106,7 +115,7 @@ class SQLite3x:
         :param table: table where from you want to get columns
         :return: [ (cid, name, type, notnull, default val, pk), ... ]
         """
-        columns = self.execute(script=f"PRAGMA table_info({table});")
+        columns = self.table_info(table=table)
         if columns:
             return tuple(map(lambda item: item[1], columns))
         else:
