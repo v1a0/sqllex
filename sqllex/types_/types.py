@@ -1,12 +1,12 @@
 from pathlib import Path
-from typing import Literal, Mapping, Union, List, AnyStr, Any
+from typing import Literal, Mapping, Union, List, AnyStr, Any, MutableMapping
 from numbers import Number
 
 KeyType = Literal["FOREIGN KEY"]
 DataType = Literal["TEXT", "NUMERIC", "INTEGER", "REAL", "NONE"]
 
 ConstrainType = Union[
-    Literal["NOT NULL", "DEFAULT", "UNIQUE", "CHECK", "AUTOINCREMENT", "PRIMARY KEY", "REFERENCES"],
+    Literal["NOT NULL", "DEFAULT", "UNIQUE", "CHECK", "AUTOINCREMENT", "PRIMARY KEY", "REFERENCES", "WITH"],
     KeyType
 ]
 
@@ -22,6 +22,16 @@ PathType = Union[Path, AnyStr]
 # Other
 NumStr = Union[Number, AnyStr]
 
+
+class ScriptValues:
+    def __init__(self, script: str, values: tuple):
+        self.script = script
+        self.values = values
+
+    def __str__(self):
+        return f"""{{SQLiteScript: script={self.script}, values={self.values}}}"""
+
+
 if __name__ == "__main__":
     __all__ = [
         KeyType,
@@ -35,4 +45,5 @@ if __name__ == "__main__":
 
         PathType,
         NumStr,
+        ScriptValues
     ]

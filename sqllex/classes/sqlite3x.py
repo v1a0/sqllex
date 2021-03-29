@@ -5,6 +5,67 @@ from sqllex.types_ import *
 import sqlite3
 
 
+def __with__(loads: List[tuple[Union[str, ScriptValues]]]) -> tuple[str, list]:
+    script = f"WITH "
+    values = []
+    for load in loads:
+        var = list(load)[0]
+        condition = list(load)[1]
+        script += f"{var} AS ({condition.script}), "
+        values += list(condition.values)
+
+    return script[:-2], values
+
+def insert_args_fix(args: Any, kwargs: Any) -> tuple:
+    """
+    If values = (dict,) :return: (values, kwargs) = (None, dict)
+    If values = (list,) :return: (values, kwargs) = (tuple(list), None)
+    If values = (tuple,) :return: (values, kwargs) = (list, None)
+    Otherwise :return: (values, kwargs)
+    """
+    if len(args) == 1:
+        if isinstance(args[0], dict):
+            return None, args[0]
+        if isinstance(args[0], list):
+            return tuple(args[0]), None
+        if isinstance(args[0], tuple):
+            return args[0], None
+        else:
+            return args, None
+
+    else:
+        return args, kwargs
+
+
+def args_parser(func: callable):
+    def wrapper(*args: tuple, **kwargs: dict):
+        if args:
+            arg0 = list(args)[0]
+            args = list(args)[1:]
+
+            if len(args) == 1:
+                if isinstance(args[0], dict):
+                    args, kwargs = None, args[0]
+                elif isinstance(args[0], list):
+                    args, kwargs = args[0], kwargs
+                elif isinstance(args[0], tuple):
+                    args, kwargs = list(args[0]), kwargs
+
+            else:
+                for arg in args:
+                    if isinstance(arg, dict):
+                        kwargs = arg
+                        args.remove(arg)
+
+            args = (arg0, *args)
+
+        #print('args:', args)
+        #print('kwargs: ', kwargs)
+        func(*args, **kwargs)
+
+    return wrapper
+
+
 class SQLite3x:
     def __init__(self, path: PathType = "sql3x.db", template: DBTemplateType = None):
         """
@@ -13,7 +74,7 @@ class SQLite3x:
         :param template: template of DB structure
         """
         self.path = path
-        self.journal_mode(mode="WAL")   # make db little bit faster
+        self.journal_mode(mode="WAL")  # make db little bit faster
         self.foreign_keys(mode="ON")
         if template:
             self.__markup__(template=template)
@@ -121,6 +182,7 @@ class SQLite3x:
         else:
             raise TableInfoError
 
+    @args_parser
     def insert(self, table: AnyStr, *args: Any, **kwargs: Any) -> List:
         """
         INSERT data into db's table
@@ -128,7 +190,7 @@ class SQLite3x:
         :param args: 1'st way set values for insert, if len(values) != number of rows, inserts as much as possible
         if too much values crop off excess, otherwise leave empty
         :param kwargs: 2'st way set values for insert, like: username="Alex", group="None"
-        :return: DB answer or script
+        :return: DB answer or SQL script
         :example:
             SQLite3x.insert(
                 "users",
@@ -137,33 +199,54 @@ class SQLite3x:
             ) -> INSERT INTO users (username, group_id) VALUES ('user_1', 1);
         """
 
+        # special params parsing
         if 'execute' in kwargs.keys():
             execute: bool = bool(kwargs.pop('execute'))
         else:
             execute = True
 
-        args, kwargs = insert_args_fix(args=args, kwargs=kwargs)
+        # Detecting WITH in kwargs
+        if WITH in kwargs.keys():
+            script, with_vals = __with__(
+                list(
+                    kwargs.pop(WITH).items()
+                )
+            )
 
+        else:
+            script, with_vals = '', []
+
+        # preparing args or kwargs of executing
         if args:
-            columns = self.get_columns(table=table)
-            columns, args = crop(columns, args)
-            values = tuple(args)
+            if isinstance(list(args)[0], (list, tuple)):
+                args = list(args)[0]
+            if isinstance(args, (str, int)):
+                args = list(args)
+
+            _columns = self.get_columns(table=table)
+            _columns, args = crop(_columns, args)
+            ins_vals = args
 
         elif kwargs:
-            columns = tuple(kwargs.keys())
-            values = tuple(kwargs.values())
+            _columns = tuple(kwargs.keys())
+            ins_vals = list(kwargs.values())
 
         else:
             raise ArgumentError(args_kwargs="Unset", error="No data to insert")
 
-        script = f"INSERT INTO {table} (" + \
-                 f"{', '.join(column for column in columns)}) VALUES (" + \
-                 f"{', '.join('?' * len(values))})"
+        # script without WITH
+        script += f" " if script else f'' + \
+                  f"INSERT INTO {table} (" + \
+                  f"{', '.join(column for column in _columns)}) VALUES (" + \
+                  f"{', '.join('?' * len(ins_vals))})"
 
+        all_values = tuple(with_vals) + tuple(ins_vals)
+
+        # Add WITH script and values if it's set
         if execute:
-            self.execute(script, values)
+            self.execute(script, tuple(value for value in all_values))
         else:
-            return [script, values]
+            return [script, tuple(all_values)]
 
     def insertmany(self, table: AnyStr, *args: Union[list[list], list[tuple], tuple[list], tuple[tuple], list, tuple],
                    **kwargs: Any):
@@ -181,13 +264,13 @@ class SQLite3x:
             ) -> INSERT INTO users (username, group_id) VALUES (?, ?);
         """
         if args:
-            values = list(map(lambda arg: list(arg), args))   # make values list[list] (yes it's necessary)
+            values = list(map(lambda arg: list(arg), args))  # make values list[list] (yes it's necessary)
 
             if len(values) == 1 and isinstance(values[0], list):
                 values = values[0]
 
-            max_l = max(map(lambda arg: len(arg), values))   # max len of arg in values
-            temp_ = [0 for _ in range(max_l)]                 # example values [] for script
+            max_l = max(map(lambda arg: len(arg), values))  # max len of arg in values
+            temp_ = [0 for _ in range(max_l)]  # example values [] for script
             script = self.insert(table, temp_, execute=False)
             _len = len(script[1])
 
@@ -207,7 +290,7 @@ class SQLite3x:
                 temp_[columns[i]] = args[i][0]
 
             script = self.insert(table, temp_, execute=False)
-            max_l = max(map(lambda val: len(val), args))   # max len of arg in values
+            max_l = max(map(lambda val: len(val), args))  # max len of arg in values
 
             for _ in range(max_l):
                 temp_ = []
@@ -225,7 +308,7 @@ class SQLite3x:
         self.executemany(script[0], values)
 
     def select(self, select: Union[List[str], str] = None, table: str = None,
-               where: dict = None, execute: bool = True, **kwargs) -> List:
+               where: dict = None, execute: bool = True, **kwargs) -> Union[ScriptValues, List]:
         """
         SELECT columns from (one) table
         :param select: columns to select, have shadow name in kwargs 'columns'. Value '*' by default
@@ -272,12 +355,13 @@ class SQLite3x:
         if where:
             script += f"WHERE ({'=?, '.join(wh for wh in where.keys())}=?)"
 
-        script += ';\n'
+        # script += ';\n'
 
         if execute:
             return self.execute(script, tuple(where.values()))
         else:
-            return [script, tuple(where.values())]
+            return ScriptValues(script, tuple(where.values()))
+
 
 # ---------------------------------------------------------------------------
 # https://www.sitepoint.com/getting-started-sqlite3-basic-commands/
@@ -370,26 +454,7 @@ def crop(columns: Union[tuple, list], values: Union[tuple, list]) -> tuple:
     return columns, values
 
 
-def insert_args_fix(args: Any, kwargs: Any) -> tuple:
-    """
-    If values = (dict,) :return: (values, kwargs) = (None, dict)
-    If values = (list,) :return: (values, kwargs) = (tuple(list), None)
-    If values = (tuple,) :return: (values, kwargs) = (list, None)
-    Otherwise :return: (values, kwargs)
-    """
 
-    if len(args) == 1:
-        if isinstance(args[0], dict):
-            return None, args[0]
-        if isinstance(args[0], list):
-            return tuple(args[0]), None
-        if isinstance(args[0], tuple):
-            return args[0], None
-        else:
-            return args, None
-
-    else:
-        return args, kwargs
 
 
 if __name__ == "__main__":

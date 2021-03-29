@@ -1,4 +1,4 @@
-from sqllex import SQLite3x, INTEGER, PRIMARY_KEY, UNIQUE, TEXT, NOT_NULL, DEFAULT, FOREIGN_KEY, ArgumentError, ExecuteError
+from sqllex import SQLite3x, INTEGER, PRIMARY_KEY, UNIQUE, TEXT, NOT_NULL, DEFAULT, FOREIGN_KEY, ExecuteError, WITH
 from os import walk, getcwd, remove
 from loguru import logger
 
@@ -38,6 +38,12 @@ DB_TEMPLATE = {
 # CREATE database by template
 db = SQLite3x(path=DB_NAME, template=DB_TEMPLATE)
 
+db.insert('users', ["user_1", 1],
+          WITH={
+              'some': db.select('*', 'users', execute=False)
+          }
+          )
+
 if not is_exist(DB_NAME):
     raise TestFailed("DB is not exist")
 else:
@@ -49,7 +55,6 @@ else:
 # 1'st table
 db.insert("groups", group_id=1, name="Admins")
 db.insert("groups", group_id=2, name="Other")
-
 # Have to fail
 try:
     db.insert("groups", group_id=2, name="Other")
@@ -68,6 +73,7 @@ db.insert("users", {
     'username': "user_6",
     'group_id': 1
 })
+
 
 # Have to fail
 try:
@@ -121,3 +127,5 @@ while rem.lower() not in ['y', 'n']:
     rem = input(f"\n\nAll tests passed! \nRemove {DB_NAME}?: ")
     if rem == 'y':
         remove(f"{getcwd()}/{DB_NAME}")
+
+
