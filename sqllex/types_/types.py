@@ -10,7 +10,7 @@ ConstrainType = Union[
     KeyType
 ]
 
-ListDataType = List[Union[DataType, ConstrainType, AnyStr, Number]]
+ListDataType = List[Union[DataType, ConstrainType, Number]]
 ColumnType = Union[ListDataType, DataType, AnyStr]
 TableType = Mapping[AnyStr, ColumnType]
 DBTemplateType = Mapping[AnyStr, TableType]
@@ -24,7 +24,7 @@ NumStr = Union[Number, AnyStr]
 
 # INSERT options
 InsertData = Union[NumStr, tuple, List, Mapping]
-InsertOptions = Literal["ABORT", "FAIL", "IGNORE", "REPLACE", "ROLLBACK"]
+InsertOrOptions = Literal["ABORT", "FAIL", "IGNORE", "REPLACE", "ROLLBACK"]
 
 
 class ScriptValues:

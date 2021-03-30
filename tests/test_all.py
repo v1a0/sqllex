@@ -1,6 +1,7 @@
-from sqllex import SQLite3x, INTEGER, PRIMARY_KEY, UNIQUE, TEXT, NOT_NULL, DEFAULT, FOREIGN_KEY, ExecuteError, WITH
+from sqllex import SQLite3x, INTEGER, PRIMARY_KEY, UNIQUE, TEXT, NOT_NULL, DEFAULT, FOREIGN_KEY, ExecuteError, REPLACE
 from os import walk, getcwd, remove
 from loguru import logger
+from time import sleep
 
 
 class TestFailed(Exception):
@@ -127,7 +128,26 @@ db.replace("groups", [1, 'AAdmins'])
 db.replace("groups", group_id=2, name="IDK")
 
 
+db.insert("users", username="user_4", group_id=1,
+          OR=REPLACE,
+          WITH={
+              'a': db.select(
+                  from_table='users',
+                  where={'group_id': 1},
+                  execute=False
+              )}
+          )
+
+
+db.insert("users", ["user_4", 1],
+          OR=REPLACE,
+          WITH={
+              'a': "SELECT * FROM users WHERE (group_id=2)"
+          })
+
+sleep(0.5)
 rem = ''
+
 while rem.lower() not in ['y', 'n']:
     rem = input(f"\n\nAll tests passed! \nRemove {DB_NAME}?: ")
     if rem == 'y':

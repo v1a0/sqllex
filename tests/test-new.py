@@ -1,4 +1,4 @@
-from sqllex import SQLite3x, INTEGER, PRIMARY_KEY, UNIQUE, TEXT, NOT_NULL, DEFAULT, FOREIGN_KEY, ExecuteError, WITH
+from sqllex import SQLite3x, INTEGER, PRIMARY_KEY, UNIQUE, TEXT, NOT_NULL, DEFAULT, FOREIGN_KEY, ExecuteError, REPLACE
 from os import walk, getcwd, remove
 from loguru import logger
 
@@ -21,6 +21,7 @@ DB_TEMPLATE = {
     }
 }
 
+
 db = SQLite3x(path=DB_NAME, template=DB_TEMPLATE)
 
 # db.insert("groups", group_id=1, name="Admins")
@@ -42,3 +43,21 @@ db.insert("users", {
 #}, WITH=)
 
 db.replace("users", ["user_1", 5])
+
+
+db.insert("users", username="user_4", group_id=1,
+          OR=REPLACE,
+          WITH={
+              'a': db.select(
+                  from_table='users',
+                  where={'group_id': 1},
+                  execute=False
+              )}
+          )
+
+
+db.insert("users", username="user_4", group_id=1,
+          OR=REPLACE,
+          WITH={
+              'a': "SELECT * FROM users WHERE (group_id=2)"
+          })

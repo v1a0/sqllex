@@ -7,16 +7,19 @@ import sqlite3
 
 def __with__(func: callable) -> callable:
     def wrapper(*args: tuple, **kwargs: dict):
-        if kwargs.get('with'):
-            with_dict: dict = kwargs.pop('with')
-
+        if kwargs.get('WITH'):
+            with_dict: dict = kwargs.pop('WITH')
             script = f"WITH "
             values = []
-            for (var, condition) in with_dict.values():
-                script += f"{var} AS ({condition.script}), "
-                values += list(condition.values)
 
-            return func(script=script, values=values, *args, **kwargs)
+            for (var, condition) in with_dict.items():
+                if issubclass(type(condition), ScriptValues):
+                    script += f"{var} AS ({condition.script}), "
+                    values += list(condition.values)
+                else:
+                    script += f"{var} AS ({condition}), "
+
+            return func(script=script[:-2], values=values, *args, **kwargs)
 
         return func(*args, **kwargs)
 
@@ -169,7 +172,7 @@ class SQLite3x:
             raise TableInfoError
 
     @__with__
-    def __insert_stmt__(self, method: AnyStr, table: AnyStr, *args: Any, **kwargs: Any) -> List:
+    def __insert_stmt__(self, method: AnyStr, table: AnyStr, *args: Any, **kwargs: Any) -> Union[List, ScriptValues]:
         """
         INSERT INTO statement (aka insert-stmt) and REPLACE INTO statement
         """
@@ -202,7 +205,7 @@ class SQLite3x:
         else:
             raise ArgumentError(args_kwargs="Unset", error="No data to insert")
 
-        script += f" " if script else f'' \
+        script += f"{' ' if script else ''}" \
                   f"{method} " \
                   f"INTO {table} (" \
                   f"{', '.join(column for column in _columns)}) VALUES (" \
@@ -213,15 +216,15 @@ class SQLite3x:
         if execute:
             return self.execute(script, tuple(value for value in all_values))
         else:
-            return [script, tuple(value for value in all_values)]
+            return ScriptValues(script, tuple(value for value in all_values))
 
     @args_parser
-    def insert(self, table: AnyStr, *args: InsertData, **kwargs: Any) -> List:
+    def insert(self, table: AnyStr, *args: InsertData, OR: InsertOrOptions = None, **kwargs: Any) -> ScriptValues:
         """
         INSERT data into db's table
         """
-        if kwargs.get('or_'):
-            method = f'INSERT OR {kwargs.pop("or_"): InsertOptions}'
+        if OR:
+            method = f'INSERT OR {OR}'
         else:
             method = 'INSERT'
 
@@ -259,8 +262,8 @@ class SQLite3x:
 
             max_l = max(map(lambda arg: len(arg), values))  # max len of arg in values
             temp_ = [0 for _ in range(max_l)]  # example values [] for script
-            script = self.insert(table, temp_, execute=False)
-            _len = len(script[1])
+            exe = self.insert(table, temp_, execute=False)
+            _len = len(exe.values)
 
             for i in range(len(values)):
                 while len(values[i]) < _len:
@@ -277,7 +280,7 @@ class SQLite3x:
             for i in range(len(args)):
                 temp_[columns[i]] = args[i][0]
 
-            script = self.insert(table, temp_, execute=False)
+            exe = self.insert(table, temp_, execute=False)
             max_l = max(map(lambda val: len(val), args))  # max len of arg in values
 
             for _ in range(max_l):
@@ -294,7 +297,7 @@ class SQLite3x:
 
         values = tuple(map(lambda arg: tuple(arg), values))  # make values tuple[tuple] (yes it's necessary)
 
-        self.executemany(script[0], values)
+        self.executemany(exe.script, values)
 
     def select(self, select: Union[List[str], str] = None, table: str = None,
                where: dict = None, execute: bool = True, **kwargs) -> Union[ScriptValues, List]:
