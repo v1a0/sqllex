@@ -26,12 +26,19 @@ db = SQLite3x(path=DB_NAME, template=DB_TEMPLATE)
 # db.insert("groups", group_id=1, name="Admins")
 # db.insert("groups", group_id=2, name="Other")
 
-db.insert("users", ["user_1", 1])
+db.insert("users", ["user_1", 1]) # kwargs.get('data')
 db.insert("users", ("user_2", 2))
 db.insert("users", "user_3", 2)
 db.insert("users", username="user_4", group_id=1)
 db.insert("users", username="user_5")
 db.insert("users", {
-    'username': "user_6",
-    'group_id': 1
+   'username': "user_6",
+   'group_id': 1
 })
+#db.insert(
+#   table="users",
+#   {'username': "user_6",
+#   'group_id': 1
+#}, WITH=)
+
+db.replace("users", ["user_1", 5])

@@ -5,36 +5,22 @@ from sqllex.types_ import *
 import sqlite3
 
 
-def __with__(loads: List[tuple[Union[str, ScriptValues]]]) -> tuple[str, list]:
-    script = f"WITH "
-    values = []
-    for load in loads:
-        var = list(load)[0]
-        condition = list(load)[1]
-        script += f"{var} AS ({condition.script}), "
-        values += list(condition.values)
+def __with__(func: callable) -> callable:
+    def wrapper(*args: tuple, **kwargs: dict):
+        if kwargs.get('with'):
+            with_dict: dict = kwargs.pop('with')
 
-    return script[:-2], values
+            script = f"WITH "
+            values = []
+            for (var, condition) in with_dict.values():
+                script += f"{var} AS ({condition.script}), "
+                values += list(condition.values)
 
-def insert_args_fix(args: Any, kwargs: Any) -> tuple:
-    """
-    If values = (dict,) :return: (values, kwargs) = (None, dict)
-    If values = (list,) :return: (values, kwargs) = (tuple(list), None)
-    If values = (tuple,) :return: (values, kwargs) = (list, None)
-    Otherwise :return: (values, kwargs)
-    """
-    if len(args) == 1:
-        if isinstance(args[0], dict):
-            return None, args[0]
-        if isinstance(args[0], list):
-            return tuple(args[0]), None
-        if isinstance(args[0], tuple):
-            return args[0], None
-        else:
-            return args, None
+            return func(script=script, values=values, *args, **kwargs)
 
-    else:
-        return args, kwargs
+        return func(*args, **kwargs)
+
+    return wrapper
 
 
 def args_parser(func: callable):
@@ -54,14 +40,14 @@ def args_parser(func: callable):
             else:
                 for arg in args:
                     if isinstance(arg, dict):
-                        kwargs = arg
+                        kwargs.update(arg)
                         args.remove(arg)
 
             args = (arg0, *args)
 
-        #print('args:', args)
-        #print('kwargs: ', kwargs)
-        func(*args, **kwargs)
+        # print('args:', args)
+        # print('kwargs: ', kwargs)
+        return func(*args, **kwargs)
 
     return wrapper
 
@@ -167,8 +153,8 @@ class SQLite3x:
                 cur.executemany(script, values)
                 conn.commit()
                 return cur.fetchall()
-            except Exception as e:
-                raise e
+            except Exception as error:
+                raise ExecuteError(error=error, script=script, values=values)
 
     def get_columns(self, table: AnyStr) -> tuple:
         """
@@ -182,71 +168,72 @@ class SQLite3x:
         else:
             raise TableInfoError
 
-    @args_parser
-    def insert(self, table: AnyStr, *args: Any, **kwargs: Any) -> List:
+    @__with__
+    def __insert_stmt__(self, method: AnyStr, table: AnyStr, *args: Any, **kwargs: Any) -> List:
         """
-        INSERT data into db's table
-        :param table: table name for inserting
-        :param args: 1'st way set values for insert, if len(values) != number of rows, inserts as much as possible
-        if too much values crop off excess, otherwise leave empty
-        :param kwargs: 2'st way set values for insert, like: username="Alex", group="None"
-        :return: DB answer or SQL script
-        :example:
-            SQLite3x.insert(
-                "users",
-                username="user_1",
-                group_id=1
-            ) -> INSERT INTO users (username, group_id) VALUES ('user_1', 1);
+        INSERT INTO statement (aka insert-stmt) and REPLACE INTO statement
         """
+        if kwargs.get('script'):  # if script has set (and have WITH)
+            script = kwargs.pop('script')
+            values = kwargs.pop('values')
+        else:
+            script, values = '', []
 
-        # special params parsing
         if 'execute' in kwargs.keys():
-            execute: bool = bool(kwargs.pop('execute'))
+            execute = bool(kwargs.pop('execute'))
         else:
             execute = True
 
-        # Detecting WITH in kwargs
-        if WITH in kwargs.keys():
-            script, with_vals = __with__(
-                list(
-                    kwargs.pop(WITH).items()
-                )
-            )
-
-        else:
-            script, with_vals = '', []
-
-        # preparing args or kwargs of executing
+        # parsing args or kwargs for _columns and insert_values
         if args:
-            if isinstance(list(args)[0], (list, tuple)):
+            if isinstance(list(args)[0], (list, tuple)):  # if args[0] : list or tuple
                 args = list(args)[0]
-            if isinstance(args, (str, int)):
+            if isinstance(args, (str, int)):  # if args contains only one argument
                 args = list(args)
 
             _columns = self.get_columns(table=table)
             _columns, args = crop(_columns, args)
-            ins_vals = args
+            insert_values = args
 
         elif kwargs:
             _columns = tuple(kwargs.keys())
-            ins_vals = list(kwargs.values())
+            insert_values = list(kwargs.values())
 
         else:
             raise ArgumentError(args_kwargs="Unset", error="No data to insert")
 
-        # script without WITH
-        script += f" " if script else f'' + \
-                  f"INSERT INTO {table} (" + \
-                  f"{', '.join(column for column in _columns)}) VALUES (" + \
-                  f"{', '.join('?' * len(ins_vals))})"
+        script += f" " if script else f'' \
+                  f"{method} " \
+                  f"INTO {table} (" \
+                  f"{', '.join(column for column in _columns)}) VALUES (" \
+                  f"{', '.join('?' * len(insert_values))})"
 
-        all_values = tuple(with_vals) + tuple(ins_vals)
+        all_values = tuple(values) + tuple(insert_values)
 
-        # Add WITH script and values if it's set
         if execute:
-            self.execute(script, tuple(value for value in all_values))
+            return self.execute(script, tuple(value for value in all_values))
         else:
-            return [script, tuple(all_values)]
+            return [script, tuple(value for value in all_values)]
+
+    @args_parser
+    def insert(self, table: AnyStr, *args: InsertData, **kwargs: Any) -> List:
+        """
+        INSERT data into db's table
+        """
+        if kwargs.get('or_'):
+            method = f'INSERT OR {kwargs.pop("or_"): InsertOptions}'
+        else:
+            method = 'INSERT'
+
+        # kwargs.update({'table': table})
+        return self.__insert_stmt__(method, table, *args, **kwargs)
+
+    @args_parser
+    def replace(self, table: AnyStr, *args: Any, **kwargs: Any):
+        """
+        REPLACE data into db's table
+        """
+        return self.__insert_stmt__('REPLACE', table, *args, **kwargs)
 
     def insertmany(self, table: AnyStr, *args: Union[list[list], list[tuple], tuple[list], tuple[tuple], list, tuple],
                    **kwargs: Any):
@@ -263,6 +250,7 @@ class SQLite3x:
                 [("Alex", 1), ("Bob", 2), ("Anon", 0)]
             ) -> INSERT INTO users (username, group_id) VALUES (?, ?);
         """
+
         if args:
             values = list(map(lambda arg: list(arg), args))  # make values list[list] (yes it's necessary)
 
@@ -305,6 +293,7 @@ class SQLite3x:
             raise ArgumentError(args_kwargs="Unset", error="No data to insert")
 
         values = tuple(map(lambda arg: tuple(arg), values))  # make values tuple[tuple] (yes it's necessary)
+
         self.executemany(script[0], values)
 
     def select(self, select: Union[List[str], str] = None, table: str = None,

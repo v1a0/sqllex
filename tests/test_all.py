@@ -122,6 +122,11 @@ db.insertmany("users", [(20, 1), (21, 2), (23, 3)])
 db.insertmany("users", [[30], [31, 2]])
 db.insertmany("users", username=[41, 42, 43], group_id=[1, 2])
 
+
+db.replace("groups", [1, 'AAdmins'])
+db.replace("groups", group_id=2, name="IDK")
+
+
 rem = ''
 while rem.lower() not in ['y', 'n']:
     rem = input(f"\n\nAll tests passed! \nRemove {DB_NAME}?: ")

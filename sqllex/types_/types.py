@@ -1,12 +1,12 @@
 from pathlib import Path
-from typing import Literal, Mapping, Union, List, AnyStr, Any, MutableMapping
+from typing import Literal, Mapping, Union, List, AnyStr, Any, MutableMapping, Tuple
 from numbers import Number
 
 KeyType = Literal["FOREIGN KEY"]
 DataType = Literal["TEXT", "NUMERIC", "INTEGER", "REAL", "NONE"]
 
 ConstrainType = Union[
-    Literal["NOT NULL", "DEFAULT", "UNIQUE", "CHECK", "AUTOINCREMENT", "PRIMARY KEY", "REFERENCES", "WITH"],
+    Literal["NOT NULL", "DEFAULT", "UNIQUE", "CHECK", "AUTOINCREMENT", "PRIMARY KEY", "REFERENCES", "WITH", "OR"],
     KeyType
 ]
 
@@ -21,6 +21,10 @@ PathType = Union[Path, AnyStr]
 
 # Other
 NumStr = Union[Number, AnyStr]
+
+# INSERT options
+InsertData = Union[NumStr, tuple, List, Mapping]
+InsertOptions = Literal["ABORT", "FAIL", "IGNORE", "REPLACE", "ROLLBACK"]
 
 
 class ScriptValues:
@@ -45,5 +49,6 @@ if __name__ == "__main__":
 
         PathType,
         NumStr,
-        ScriptValues
+        ScriptValues,
+        InsertOptions
     ]
