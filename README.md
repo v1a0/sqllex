@@ -93,4 +93,6 @@ db.insertmany('math', dataset)
 # Done
 ```
 
+### [TODO-list](todo.md)
+
 ### Not enough? Read more about methods and features in docs!
