@@ -3,9 +3,9 @@ from typing import Literal, Mapping, Union, List, AnyStr, Any, MutableMapping, T
 from numbers import Number
 
 
-class SQLStatement:
+class SQLRequest:
     """
-    SQL statement contains script and values (if necessary)
+    SQL request contains script and values (if necessary)
     """
     def __init__(self, script: str, values: tuple = None):
         self.script = script
@@ -13,6 +13,15 @@ class SQLStatement:
 
     def __str__(self):
         return f"""{{SQLiteScript: script={self.script}, values={self.values}}}"""
+
+
+class SQLStatement:
+    """
+    SQL request contains SQLRequest
+    """
+    def __init__(self, request: SQLRequest, path: Union[Path, AnyStr]):
+        self.request = request
+        self.path = path
 
 
 # FOREIGN_KEY const type
@@ -23,7 +32,7 @@ DataType = Literal["TEXT", "NUMERIC", "INTEGER", "REAL", "NONE"]
 
 # Types of constants used as keywords for column settings
 ConstrainType = Union[
-    Literal["NOT NULL", "DEFAULT", "UNIQUE", "CHECK", "AUTOINCREMENT", "REFERENCES", "WITH", "OR"],
+    Literal["NOT NULL", "DEFAULT", "UNIQUE", "CHECK", "AUTOINCREMENT", "PRIMARY KEY", "REFERENCES", "WITH", "OR"],
     ForeignKey
 ]
 
@@ -48,7 +57,7 @@ InsertData = Union[NumStr, tuple, List, Mapping]
 InsertOrOptions = Literal["ABORT", "FAIL", "IGNORE", "REPLACE", "ROLLBACK"]
 
 # Type for parameter of WITH argument
-WithType = Mapping[str, Union[SQLStatement, str]]
+WithType = Mapping[str, Union[SQLRequest, str]]
 
 
 if __name__ == "__main__":
@@ -64,7 +73,7 @@ if __name__ == "__main__":
 
         PathType,
         NumStr,
-        SQLStatement,
+        SQLRequest,
         InsertOrOptions,
         WithType
     ]

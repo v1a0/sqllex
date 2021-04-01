@@ -10,7 +10,7 @@
 | METHOD | COMPLETE | URL |
 | :--- | :---: | :---: |
 | INSERT or REPLACE | 80% | https://www.sqlite.org/lang_insert.html |
-|INSERTmany | 50% | - |
+|INSERTmany | 70% | - |
 | CREATE | 50% | https://www.sqlite.org/lang_delete.html |
 | PRAGMA | 50% | https://www.sqlite.org/pragma.html |
 | SELECT | 20% | https://www.sqlite.org/lang_select.html |

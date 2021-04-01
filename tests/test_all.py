@@ -53,18 +53,18 @@ else:
 
 ####################################################
 # INSERT data int DB and SELECT
-# 1'st table
+# 1'st FROM
 db.insert("groups", group_id=1, name="Admins")
 db.insert("groups", group_id=2, name="Other")
 # Have to fail
 try:
     db.insert("groups", group_id=2, name="Other")
-except ExecuteError:
+except Exception:
     logger.info("INSERT #1 passed")
 
 
 ####################################################
-# 2'nd table
+# 2'nd FROM
 db.insert("users", ["user_1", 1])
 db.insert("users", ("user_2", 2))
 db.insert("users", "user_3", 2)
@@ -79,7 +79,7 @@ db.insert("users", {
 # Have to fail
 try:
     db.insert("users", group_id=1)
-except ExecuteError:
+except Exception:
     logger.info("INSERT #2 passed")
 
 
