@@ -115,3 +115,5 @@ dmypy.json
 # Pyre type checker
 .pyre/
 test_table.db
+test_table.db
+*.db

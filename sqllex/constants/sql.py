@@ -13,7 +13,7 @@ UNIQUE: ConstrainType = "UNIQUE"
 PRIMARY_KEY: ConstrainType = "PRIMARY KEY"
 CHECK: ConstrainType = "CHECK"
 AUTOINCREMENT: ConstrainType = "AUTOINCREMENT"
-FOREIGN_KEY: KeyType = "FOREIGN KEY"
+FOREIGN_KEY: ForeignKey = "FOREIGN KEY"
 REFERENCES: ConstrainType = "REFERENCES"
 
 ABORT: InsertOrOptions = "ABORT"
