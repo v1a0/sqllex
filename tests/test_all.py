@@ -1,4 +1,4 @@
-from sqllex import SQLite3x, INTEGER, PRIMARY_KEY, UNIQUE, TEXT, NOT_NULL, DEFAULT, FOREIGN_KEY, ExecuteError, REPLACE
+from sqllex import SQLite3x, INTEGER, PRIMARY_KEY, UNIQUE, TEXT, NOT_NULL, DEFAULT, FOREIGN_KEY, REPLACE
 from os import walk, getcwd, remove
 from loguru import logger
 from time import sleep

@@ -1,4 +1,4 @@
-from sqllex.exceptions import TableInfoError, ExecuteError, ArgumentError
+from sqllex.exceptions import TableInfoError, ArgumentError
 from loguru import logger
 from sqllex.constants import *
 from sqllex.types_ import *
@@ -8,11 +8,21 @@ import sqlite3
 def __with__(func: callable) -> callable:
     def wrapper(*args: tuple, **kwargs: dict):
         with_dict: dict = kwargs.pop('WITH')
+
         if with_dict:
             script = f"WITH "
             values = []
 
-            for (var, condition) in with_dict.items():
+            for (var, statement) in with_dict.items():
+
+                # Checking is value of dict SQLStatement or str
+                if issubclass(type(statement), SQLStatement):
+                    condition = statement.request
+                elif isinstance(statement, str):
+                    condition = statement
+                else:
+                    raise TypeError
+
                 if issubclass(type(condition), SQLRequest):
                     script += f"{var} AS ({condition.script}), "
                     values += list(condition.values)
@@ -44,7 +54,7 @@ def args_parser(func: callable):
                 for arg in args:
                     if isinstance(arg, dict):
                         kwargs.update(arg)
-                        args.remove(arg)
+                        args = tuple(list(args).remove(arg))
 
             args = (arg0, *args)
 
@@ -52,19 +62,15 @@ def args_parser(func: callable):
         # print('kwargs: ', kwargs)
         return func(*args, **kwargs)
 
-
     return wrapper
 
 
 def table(col: AnyStr, params: Any):
+    if isinstance(params, (str, int, float)):
+        params = [f"{params}"]
+
     if isinstance(params, list):
         return f"{col} {' '.join(param for param in params)},\n"
-
-    elif isinstance(params, str):
-        return f"{col} {params}" + ',\n'
-
-    elif isinstance(params, (int, float)):
-        return f"{col} {params}" + ',\n'
 
     if isinstance(params, dict) and col == FOREIGN_KEY:
         res = ''
@@ -74,22 +80,6 @@ def table(col: AnyStr, params: Any):
 
     else:
         raise TypeError
-
-
-def quote(val: Union[int, float, str, list, type, list]):
-    """
-    Quotes control
-    :param: Any val
-    :return str(val) if value not (int or in CONSTANTS )
-    """
-    if isinstance(val, (int, float)) or val in CONSTANTS:
-        return val
-
-    elif isinstance(val, (list, tuple)) and len(val) == 1:
-        return f'{val[0]}'
-
-    else:
-        return f'{val}'
 
 
 def crop(columns: Union[tuple, list], values: Union[tuple, list]) -> tuple:
@@ -113,10 +103,18 @@ def crop(columns: Union[tuple, list], values: Union[tuple, list]) -> tuple:
     return columns, values
 
 
-def __new_execute__(func: callable):
+def __execute__(func: callable):
     def wrapper(*args: tuple, **kwargs: dict):
 
+        if 'execute' in kwargs.keys():
+            execute = bool(kwargs.pop('execute'))
+        else:
+            execute = True
+
         stmt: SQLStatement = func(*args, **kwargs)
+
+        if not execute:
+            return stmt
 
         print(stmt.request.script, stmt.request.values if stmt.request.values else '', '\n')
         with sqlite3.connect(stmt.path) as conn:
@@ -137,9 +135,17 @@ def __new_execute__(func: callable):
     return wrapper
 
 
-def __new_executemany__(func: callable):
+def __executemany__(func: callable):
     def wrapper(*args: tuple, **kwargs: dict):
+        if 'execute' in kwargs.keys():
+            execute = bool(kwargs.pop('execute'))
+        else:
+            execute = True
+
         stmt: SQLStatement = func(*args, **kwargs)
+
+        if not execute:
+            return stmt
 
         print(stmt.request.script, stmt.request.values if stmt.request.values else '', '\n')
         with sqlite3.connect(stmt.path) as conn:
@@ -163,34 +169,46 @@ class SQLite3x:
         self.journal_mode(mode="WAL")  # make db little bit faster
         self.foreign_keys(mode="ON")
         if template:
-            self.__markup__(template=template)
+            self.markup(template=template)
 
     def __str__(self):
         return f"{{SQLite3x: path='{self.path}'}}"
 
-    def __bool__(self):
-        try:
-            return bool(self.execute(script="PRAGMA database_list"))
-        except ExecuteError:
-            return False
+    # def __bool__(self):
+    #    try:
+    #        return bool(self.execute(script="PRAGMA database_list"))
+    #    except ExecuteError:
+    #        return False
 
-    @__new_execute__
-    def execute(self, script: AnyStr, values: tuple = None, request: SQLRequest = None):
-        """
-        Child method of __execute__ method
-        :param script: single SQLite script, might contains placeholders
-        :param values: Values for placeholders if script contains it
-        :param request: Instead of script and values might execute full statement
-        :return: Database answer if it has
-        """
+    @logger.catch
+    @__execute__
+    def _execute_(self, script: AnyStr, values: tuple = None, request: SQLRequest = None):
+
         if not request:
             return SQLStatement(SQLRequest(script, values), self.path)
         else:
             return SQLStatement(request, self.path)
 
+    def execute(self, script: AnyStr, values: tuple = None, request: SQLRequest = None) -> Union[List, None]:
+        """
+        Child method of _execute_ method
+        :param script: single SQLite script, might contains placeholders
+        :param values: Values for placeholders if script contains it
+        :param request: Instead of script and values might execute full statement
+        :return: Database answer if it has
+        """
+        return self._execute_(script=script, values=values, request=request)
+
     @logger.catch
-    @__new_executemany__
-    def executemany(self, script: AnyStr, values: tuple = None, request: SQLRequest = None):
+    @__executemany__
+    def _executemany_(self, script: AnyStr, values: tuple = None, request: SQLRequest = None):
+
+        if not request:
+            return SQLStatement(SQLRequest(script, values), self.path)
+        else:
+            return SQLStatement(request, self.path)
+
+    def executemany(self, script: AnyStr, values: tuple = None, request: SQLRequest = None) -> Union[List, None]:
         """
         Child method of __executemany__ method
         :param script: single or multiple SQLite script(s), might contains placeholders
@@ -198,13 +216,11 @@ class SQLite3x:
         :param request: Instead of script and values might execute full request
         :return: Database answer if it has
         """
-        if not request:
-            return SQLStatement(SQLRequest(script, values), self.path)
-        else:
-            return SQLStatement(request, self.path)
+        return self._executemany_(script=script, values=values, request=request)
 
-    @__new_execute__
-    def pragma(self, *args: str, **kwargs):
+    @logger.catch
+    @__execute__
+    def _pragma_(self, *args: str, **kwargs):
         if args:
             script = f"PRAGMA {args[0]}"
         elif kwargs:
@@ -213,6 +229,9 @@ class SQLite3x:
             raise ArgumentError(args_kwargs="Unset", error="No data to execute")
 
         return SQLStatement(SQLRequest(script), self.path)
+
+    def pragma(self, *args: str, **kwargs) -> Union[List, None]:
+        return self._pragma_(*args, **kwargs)
 
     def foreign_keys(self, mode: Literal["ON", "OFF"]):
         return self.pragma(foreign_keys=mode)
@@ -223,48 +242,104 @@ class SQLite3x:
     def table_info(self, table_name: str):
         return self.pragma(f"table_info({table_name})")
 
-    @__new_execute__
-    def __create__(self, create: AnyStr, name: AnyStr, columns: TableType):
+    @logger.catch
+    @__execute__
+    def __create__(self, temp: AnyStr, name: AnyStr, columns: TableType,
+                   if_not_exist: bool = None, AS: SQLRequest = None, without_rowid: bool = None):
         """
-        Create FROM in db
-        :param name: FROM name
-        :param columns: FROM's columns
+        Parent method for all CREATE-methods
+        """
+        content: str = ''
+        values = ()
+
+        # AS fork
+        if AS:
+            # AS fork
+            content = AS.script
+            values = AS.values
+        else:
+            # column-def
+            for (col, params) in columns.items():
+                if isinstance(params, (str, int, float)):
+                    params = [f"{params}"]
+
+                if isinstance(params, list):
+                    # column-def, table-constraint
+                    content += f"{col} {' '.join(param for param in params)},\n"
+
+                elif isinstance(params, dict) and col == FOREIGN_KEY:
+                    res = ''
+                    for (key, refs) in params.items():
+                        res += f"FOREIGN KEY ({key}) REFERENCES {refs[0]} ({refs[1]}), \n"
+                    content += res[:-1]
+
+                else:
+                    raise TypeError
+
+            content = f"{content[:-2]}"
+
+        script = f"CREATE " \
+                 f"{temp} " \
+                 f" TABLE " \
+                 f"{'IF NOT EXISTS' if if_not_exist else ''} " \
+                 f"'{name}' " \
+                 f" (\n{content}\n) " \
+                 f"{'WITHOUT ROWID' if without_rowid else ''};"
+
+        return SQLStatement(SQLRequest(script=script, values=values), self.path)
+
+    def create_table(self, name: AnyStr, columns: TableType,
+                     if_not_exist: bool = None, AS: SQLRequest = None, without_rowid: bool = None):
+        """
+        CREATE TABLE (IF NOT EXISTS) schema-name.table-name ...
+            ... (AS select-stmt)/(column-def table-constraint) (WITHOUT ROWID)
+        :param name:
+        :param columns:
+        :param if_not_exist:
+        :param AS:
+        :param without_rowid:
         :return:
         """
-        result: str = ''
+        self.__create__(temp='', name=name, columns=columns,
+                        if_not_exist=if_not_exist, AS=AS, without_rowid=without_rowid)
 
-        for (col, params) in columns.items():
-            result += table(col=col, params=params)
-
-        return SQLStatement(SQLRequest(script=f'{create} TABLE "{name}" (\n{result[:-2]}\n);'), self.path)
-
-
-
-
-
-
-
-    def create_table(self, name: AnyStr, columns: TableType):
+    def create_temp_table(self, name: AnyStr, columns: TableType, **kwargs):
         """
-        Create FROM in db
-        :param name: FROM name
-        :param columns: FROM's columns
-        :param safe: Convert not supported types in columns.values() to string, like [1, 2, 3] -> "[1, 2, 3]"
+        CREATE TEMP TABLE (IF NOT EXISTS) schema-name.table-name ...
+            ... (AS select-stmt)/(column-def table-constraint) (WITHOUT ROWID)
+        :param name:
+        :param columns:
+        :param if_not_exist:
+        :param AS:
+        :param without_rowid:
         :return:
         """
-        create = "CREATE"
-        self.__create__(create=create, name=name, columns=columns)
+        self.__create__(temp='TEMP', name=name, columns=columns, **kwargs)
 
-    def __markup__(self, template: DBTemplateType):
-        """Need to rename"""
-        for (table, columns) in template.items():
-            self.create_table(name=table, columns=columns)
+    def create_temporary_table(self, name: AnyStr, columns: TableType, **kwargs):
+        """
+        CREATE TEMPORARY TABLE (IF NOT EXISTS) schema-name.table-name ...
+            ... (AS select-stmt)/(column-def table-constraint) (WITHOUT ROWID)
+        :param name:
+        :param columns:
+        :param if_not_exist:
+        :param AS:
+        :param without_rowid:
+        :return:
+        """
+        self.__create__(temp='TEMPORARY', name=name, columns=columns, **kwargs)
 
-    def get_columns(self, table: AnyStr) -> tuple:
+    def markup(self, template: DBTemplateType):
+        """
+        Mark up table by template
+        """
+        for (table_name, columns) in template.items():
+            self.create_table(name=table_name, columns=columns, if_not_exist=True)
+
+    def get_columns(self, table: AnyStr) -> Union[tuple, list]:
         """
         Get list of FROM columns
-        :param table: FROM where from you want to get columns
-        :return: [ (cid, name, type, notnull, default val, pk), ... ]
+        :param table: schema-name.table-name or just table-name
         """
         columns = self.table_info(table_name=table)
         if columns:
@@ -272,6 +347,7 @@ class SQLite3x:
         else:
             raise TableInfoError
 
+    @__execute__
     @__with__
     def __insert_stmt__(self, method: AnyStr, table: AnyStr, *args: Any, **kwargs: Any):
         """
@@ -282,11 +358,6 @@ class SQLite3x:
             values = kwargs.pop('values')
         else:
             script, values = '', []
-
-        if 'execute' in kwargs.keys():
-            execute = bool(kwargs.pop('execute'))
-        else:
-            execute = True
 
         # parsing args or kwargs for _columns and insert_values
         if args:
@@ -317,9 +388,8 @@ class SQLite3x:
         return SQLStatement(SQLRequest(script, tuple(value for value in all_values)), self.path)
 
     @args_parser
-    @__new_execute__
     def insert(self, table: AnyStr, *args: InsertData, OR: InsertOrOptions = None, WITH: WithType = None,
-               **kwargs: Any) -> SQLStatement:
+               **kwargs: Any) -> Union[None, SQLStatement]:
         """
         INSERT data into db's FROM
         :param table: Table name for inserting
@@ -331,12 +401,10 @@ class SQLite3x:
         else:
             method = 'INSERT'
 
-        # kwargs.update({'FROM': FROM})
         return self.__insert_stmt__(method, table, *args, **kwargs, WITH=WITH)
 
-
     @args_parser
-    def replace(self, table: AnyStr, *args: Any, WITH: WithType = None, **kwargs: Any):
+    def replace(self, table: AnyStr, *args: Any, WITH: WithType = None, **kwargs: Any) -> Union[None, SQLStatement]:
         """
         REPLACE data into db's FROM
         :param table: Table name for inserting
@@ -344,15 +412,9 @@ class SQLite3x:
         """
         return self.__insert_stmt__('REPLACE', table, *args, **kwargs, WITH=WITH)
 
-    def insertmany(self, table: AnyStr, *args: Union[list[list], list[tuple], tuple[list], tuple[tuple], list, tuple],
-                   **kwargs: Any):
-        """
-        INSERT many data into db's FROM
-        The same as regular insert but for lists of inserts
-        :param table: FROM name for inserting
-        :param args: 1'st way set values for insert
-        :param kwargs: 2'st way set values for insert
-        """
+    @__executemany__
+    def _insertmany_(self, table: AnyStr, *args: Union[list[list], list[tuple], tuple[list], tuple[tuple], list, tuple],
+                     **kwargs: Any):
 
         if args:
             values = list(map(lambda arg: list(arg), args))  # make values list[list] (yes it's necessary)
@@ -362,8 +424,8 @@ class SQLite3x:
 
             max_l = max(map(lambda arg: len(arg), values))  # max len of arg in values
             temp_ = [0 for _ in range(max_l)]  # example values [] for script
-            exe = self.insert(table, temp_, execute=False)
-            len = len(exe.values)
+            stmt = self.insert(table, temp_, execute=False)
+            _len = len(stmt.request.values)
 
             for i in range(len(values)):
                 while len(values[i]) < _len:
@@ -380,7 +442,7 @@ class SQLite3x:
             for i in range(len(args)):
                 temp_[columns[i]] = args[i][0]
 
-            exe = self.insert(table, temp_, execute=False)
+            stmt = self.insert(table, temp_, execute=False)
             max_l = max(map(lambda val: len(val), args))  # max len of arg in values
 
             for _ in range(max_l):
@@ -397,31 +459,41 @@ class SQLite3x:
 
         values = tuple(map(lambda arg: tuple(arg), values))  # make values tuple[tuple] (yes it's necessary)
 
-        self.executemany(exe.script, values)
+        return SQLStatement(SQLRequest(stmt.request.script, values), self.path)
 
-    @__with__
-    def __select_stmt__(self, *args, script='', values=(), select: Union[List[str], str] = None, table: str = None,
-                        where: dict = None, execute: bool = True, **kwargs) -> Union[SQLRequest, List]:
+    def insertmany(self, table: AnyStr, *args: Union[list[list], list[tuple], tuple[list], tuple[tuple], list, tuple],
+                   **kwargs: Any):
         """
-                SELECT data from FROM
-                :param select: columns to select, have shadow name in kwargs 'columns'. Value '*' by default
-                :param table: FROM for selection, have shadow name in kwargs 'from_table'
-                :param where: optional parameter for conditions, example: {'name': 'Alex', 'group': 2}
-                :param kwargs: shadow names holder (columns, from_table)
-                :param execute: execute script and return db's answer (True) or return script (False)
-                :return: DB answer to or script
-                """
+        INSERT many data into db's FROM
+        The same as regular insert but for lists of inserts
+        :param table: FROM name for inserting
+        :param args: 1'st way set values for insert
+        :param kwargs: 2'st way set values for insert
+        """
+        return self._insertmany_(table, *args, **kwargs)
+
+    @__execute__
+    @__with__
+    def _select_stmt_(self, script='', values=(), select: Union[List[str], str] = None, table: str = None,
+                      where: dict = None, **kwargs):
+        """
+        SELECT data from FROM
+        :param select: columns to select, have shadow name in kwargs 'columns'. Value '*' by default
+        :param table: FROM for selection, have shadow name in kwargs 'from_table'
+        :param where: optional parameter for conditions, example: {'name': 'Alex', 'group': 2}
+        :param kwargs: shadow names holder (columns, from_table)
+        :param execute: execute script and return db's answer (True) or return script (False)
+        :return: DB answer to or script
+        """
         if not where:
             where = {}
 
         if kwargs:
-            if kwargs.get('execute'):
-                execute: bool = bool(kwargs.pop('execute'))
             if kwargs.get('from_table'):
                 table = kwargs.pop('from_table')
             if kwargs.get('columns'):
                 select = kwargs.pop('columns')
-            where.update()
+            where.update(kwargs)
 
         if not table:
             raise ArgumentError(from_table="Argument unset and have not default value")
@@ -433,35 +505,30 @@ class SQLite3x:
         elif isinstance(select, str):
             select = [select]
 
-        script = ''
-
         script += f"SELECT " \
                   f"{', '.join(sel for sel in select)}" \
                   f" FROM {table} "
 
         if where:
             script += f"WHERE ({'=?, '.join(wh for wh in where.keys())}=?)"
+            values = tuple(list(values) + list(where.values()))
 
-        # script += ';\n'
-
-        if execute:
-            return self.execute(script, tuple(where.values()))
-        else:
-            return SQLRequest(script, tuple(where.values()))
+        return SQLStatement(SQLRequest(script, values), self.path)
 
     def select(self, select: Union[List[str], str] = None, FROM: str = None, where: dict = None,
                execute: bool = True, WITH: WithType = None, **kwargs) -> Union[SQLRequest, List]:
-        return self.__select_stmt__(select=select, table=FROM, where=where, execute=execute, WITH=WITH, **kwargs)
+        return self._select_stmt_(select=select, table=FROM, where=where, execute=execute, WITH=WITH, **kwargs)
 
     def select_distinct(self, select: Union[List[str], str] = None, table: str = None, where: dict = None,
                         execute: bool = True, WITH: WithType = None, **kwargs) -> Union[SQLRequest, List]:
-        return self.__select_stmt__(select=select, table=table, where=where, execute=execute, WITH=WITH, **kwargs)
+        return self._select_stmt_(select=select, table=table, where=where, execute=execute, WITH=WITH, **kwargs)
 
     def select_all(self, select: Union[List[str], str] = None, table: str = None, where: dict = None,
                    execute: bool = True, WITH: WithType = None, **kwargs) -> Union[SQLRequest, List]:
-        return self.__select_stmt__(select=select, table=table, where=where, execute=execute, WITH=WITH, **kwargs)
+        return self._select_stmt_(select=select, table=table, where=where, execute=execute, WITH=WITH, **kwargs)
 
 
+# ================================================== #
 # ---------------------------------------------------------------------------
 # https://www.sitepoint.com/getting-started-sqlite3-basic-commands/
 #
