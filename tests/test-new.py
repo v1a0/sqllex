@@ -33,12 +33,3 @@ for (col, params) in columns.items():
 
 
 
-script = f"CREATE" \
-         f"{temp}" \
-         f" TABLE " \
-         f"{'IF NOT EXISTS' if if_not_exist else ''}" \
-         f"'{name}'" \
-         f" (\n{result[:-2]}\n);"
-
-print(script)
-
