@@ -54,7 +54,7 @@ NumStr = Union[Number, AnyStr]
 InsertData = Union[NumStr, tuple, List, Mapping]
 
 # Type for parameter of OR argument in INSERT method (?)
-InsertOrOptions = Literal["ABORT", "FAIL", "IGNORE", "REPLACE", "ROLLBACK"]
+OrOptionsType = Literal["ABORT", "FAIL", "IGNORE", "REPLACE", "ROLLBACK"]
 
 # Type for parameter of WITH argument
 WithType = Mapping[str, Union[SQLRequest, str]]
@@ -74,6 +74,6 @@ if __name__ == "__main__":
         PathType,
         NumStr,
         SQLRequest,
-        InsertOrOptions,
+        OrOptionsType,
         WithType
     ]

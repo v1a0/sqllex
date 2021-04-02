@@ -6,7 +6,7 @@ import sqlite3
 
 
 def __with__(func: callable) -> callable:
-    def wrapper(*args: tuple, **kwargs: dict):
+    def wrapper(*args, **kwargs):
         with_dict: dict = kwargs.pop('WITH')
 
         if with_dict:
@@ -29,7 +29,50 @@ def __with__(func: callable) -> callable:
                 else:
                     script += f"{var} AS ({condition}), "
 
-            return func(script=script[:-2], values=values, *args, **kwargs)
+            kwargs.update(
+                {
+                    'values': tuple(values) if not kwargs.get('values') else
+                    tuple(list(kwargs.get('values')) + list(values)),
+
+                    'script': f"{script[:-2]} " if not kwargs.get('script') else
+                    f"{script[:-2]} " + kwargs.get('script')
+                })
+
+            return func(*args, **kwargs)
+
+        return func(*args, **kwargs)
+
+    return wrapper
+
+
+def __where__(func: callable) -> callable:
+    def wrapper(*args, **kwargs):
+        if 'where' in kwargs.keys():
+            where_dict: dict = kwargs.pop('where')
+        else:
+            where_dict = {}
+
+        stmt: SQLStatement = func(*args, **kwargs)
+
+        if where_dict:
+            stmt.request.script += f"WHERE ({'=?, '.join(wh for wh in where_dict.keys())}=?) "
+            stmt.request.values = tuple(list(stmt.request.values) + list(where_dict.values()))
+
+        return stmt
+
+    return wrapper
+
+
+def __or_param__(func: callable) -> callable:
+    def wrapper(*args, **kwargs):
+        if 'OR' in kwargs.keys():
+            _or = kwargs.pop('OR')
+
+            if _or:
+                kwargs.update(
+                    {
+                        'script': kwargs.get('script') + f"OR {_or}"
+                    })
 
         return func(*args, **kwargs)
 
@@ -54,7 +97,8 @@ def args_parser(func: callable):
                 for arg in args:
                     if isinstance(arg, dict):
                         kwargs.update(arg)
-                        args = tuple(list(args).remove(arg))
+                        print(arg)
+                        args.remove(arg)
 
             args = (arg0, *args)
 
@@ -348,16 +392,13 @@ class SQLite3x:
             raise TableInfoError
 
     @__execute__
+    @__or_param__
     @__with__
-    def __insert_stmt__(self, method: AnyStr, table: AnyStr, *args: Any, **kwargs: Any):
+    def __insert_stmt__(self, *args: Any, table: AnyStr, script='', values=(), **kwargs: Any):
         """
         INSERT INTO request (aka insert-stmt) and REPLACE INTO request
         """
-        if kwargs.get('script'):  # if script has set (and have WITH)
-            script = kwargs.pop('script')
-            values = kwargs.pop('values')
-        else:
-            script, values = '', []
+        values = list(values)
 
         # parsing args or kwargs for _columns and insert_values
         if args:
@@ -378,30 +419,25 @@ class SQLite3x:
             raise ArgumentError(args_kwargs="Unset", error="No data to insert")
 
         script += f"{' ' if script else ''}" \
-                  f"{method} " \
                   f"INTO {table} (" \
-                  f"{', '.join(column for column in _columns)}) VALUES (" \
-                  f"{', '.join('?' * len(insert_values))})"
+                  f"{', '.join(column for column in _columns)}) " \
+                  f"VALUES (" \
+                  f"{', '.join('?' * len(insert_values))}) "
 
         all_values = tuple(values) + tuple(insert_values)
 
         return SQLStatement(SQLRequest(script, tuple(value for value in all_values)), self.path)
 
     @args_parser
-    def insert(self, table: AnyStr, *args: InsertData, OR: InsertOrOptions = None, WITH: WithType = None,
+    def insert(self, table: AnyStr, *args: InsertData, OR: OrOptionsType = None, WITH: WithType = None,
                **kwargs: Any) -> Union[None, SQLStatement]:
         """
         INSERT data into db's FROM
         :param table: Table name for inserting
-        :param OR: Optional parameter. If INSERT failed, type InsertOrOptions
+        :param OR: Optional parameter. If INSERT failed, type OrOptionsType
         :param WITH: Optional parameter.
         """
-        if OR:
-            method = f'INSERT OR {OR}'
-        else:
-            method = 'INSERT'
-
-        return self.__insert_stmt__(method, table, *args, **kwargs, WITH=WITH)
+        return self.__insert_stmt__(script="INSERT ", OR=OR, table=table, *args, **kwargs, WITH=WITH)
 
     @args_parser
     def replace(self, table: AnyStr, *args: Any, WITH: WithType = None, **kwargs: Any) -> Union[None, SQLStatement]:
@@ -410,7 +446,7 @@ class SQLite3x:
         :param table: Table name for inserting
         :param WITH: Optional parameter.
         """
-        return self.__insert_stmt__('REPLACE', table, *args, **kwargs, WITH=WITH)
+        return self.__insert_stmt__(script="REPLACE ", table=table, *args, **kwargs, WITH=WITH)
 
     @__executemany__
     def _insertmany_(self, table: AnyStr, *args: Union[list[list], list[tuple], tuple[list], tuple[tuple], list, tuple],
@@ -473,9 +509,10 @@ class SQLite3x:
         return self._insertmany_(table, *args, **kwargs)
 
     @__execute__
+    @__where__
     @__with__
-    def _select_stmt_(self, script='', values=(), select: Union[List[str], str] = None, table: str = None,
-                      where: dict = None, **kwargs):
+    def _select_stmt_(self, script='', values=(), method: AnyStr='SELECT', select: Union[List[str], str] = None,
+                      table: str = None, **kwargs):
         """
         SELECT data from FROM
         :param select: columns to select, have shadow name in kwargs 'columns'. Value '*' by default
@@ -485,15 +522,12 @@ class SQLite3x:
         :param execute: execute script and return db's answer (True) or return script (False)
         :return: DB answer to or script
         """
-        if not where:
-            where = {}
 
         if kwargs:
             if kwargs.get('from_table'):
                 table = kwargs.pop('from_table')
             if kwargs.get('columns'):
                 select = kwargs.pop('columns')
-            where.update(kwargs)
 
         if not table:
             raise ArgumentError(from_table="Argument unset and have not default value")
@@ -505,35 +539,49 @@ class SQLite3x:
         elif isinstance(select, str):
             select = [select]
 
-        script += f"SELECT " \
+        script += f"{method} " \
                   f"{', '.join(sel for sel in select)}" \
                   f" FROM {table} "
-
-        if where:
-            script += f"WHERE ({'=?, '.join(wh for wh in where.keys())}=?)"
-            values = tuple(list(values) + list(where.values()))
 
         return SQLStatement(SQLRequest(script, values), self.path)
 
     def select(self, select: Union[List[str], str] = None, FROM: str = None, where: dict = None,
                execute: bool = True, WITH: WithType = None, **kwargs) -> Union[SQLRequest, List]:
-        return self._select_stmt_(select=select, table=FROM, where=where, execute=execute, WITH=WITH, **kwargs)
+        return self._select_stmt_(select=select, table=FROM, method='SELECT', where=where, execute=execute,
+                                  WITH=WITH, **kwargs)
 
-    def select_distinct(self, select: Union[List[str], str] = None, table: str = None, where: dict = None,
+    def select_distinct(self, select: Union[List[str], str] = None, FROM: str = None, where: dict = None,
                         execute: bool = True, WITH: WithType = None, **kwargs) -> Union[SQLRequest, List]:
-        return self._select_stmt_(select=select, table=table, where=where, execute=execute, WITH=WITH, **kwargs)
+        return self._select_stmt_(select=select, table=FROM, method='SELECT DISTINCT', where=where, execute=execute,
+                                  WITH=WITH, **kwargs)
 
-    def select_all(self, select: Union[List[str], str] = None, table: str = None, where: dict = None,
+    def select_all(self, select: Union[List[str], str] = None, FROM: str = None, where: dict = None,
                    execute: bool = True, WITH: WithType = None, **kwargs) -> Union[SQLRequest, List]:
-        return self._select_stmt_(select=select, table=table, where=where, execute=execute, WITH=WITH, **kwargs)
+        return self._select_stmt_(select=select, table=FROM, method='SELECT ALL ', where=where, execute=execute,
+                                  WITH=WITH, **kwargs)
 
+    @__execute__
+    @__where__
+    @__with__
+    def _delete_(self, script='', values=(), table: str = None):
+        script += f"DELETE FROM {table} "
+        return SQLStatement(SQLRequest(script, values), self.path)
+
+    def delete(self, FROM: str, where: dict = None, WITH: WithType = None, **kwargs):
+        return self._delete_(table=FROM, where=where, WITH=WITH, **kwargs)
+
+    # @__execute__
+    # @__where__
+    # @__or_param__
+    # @__with__
+    # def _update_(self):
+    #
+    # def update(self):
+    #     pass
 
 # ================================================== #
 # ---------------------------------------------------------------------------
 # https://www.sitepoint.com/getting-started-sqlite3-basic-commands/
-#
-#     def delete(self):
-#         pass
 #
 #     def update(self):
 #         pass

@@ -16,11 +16,11 @@ AUTOINCREMENT: ConstrainType = "AUTOINCREMENT"
 FOREIGN_KEY: ForeignKey = "FOREIGN KEY"
 REFERENCES: ConstrainType = "REFERENCES"
 
-ABORT: InsertOrOptions = "ABORT"
-FAIL: InsertOrOptions = "FAIL"
-IGNORE: InsertOrOptions = "IGNORE"
-REPLACE: InsertOrOptions = "REPLACE"
-ROLLBACK: InsertOrOptions = "ROLLBACK"
+ABORT: OrOptionsType = "ABORT"
+FAIL: OrOptionsType = "FAIL"
+IGNORE: OrOptionsType = "IGNORE"
+REPLACE: OrOptionsType = "REPLACE"
+ROLLBACK: OrOptionsType = "ROLLBACK"
 
 
 CONSTANTS = [

@@ -9,12 +9,12 @@
 
 | METHOD | COMPLETE | URL |
 | :--- | :---: | :---: |
-| INSERT or REPLACE | 80% | https://www.sqlite.org/lang_insert.html |
+| DELETE | 80% | https://www.sqlite.org/lang_delete.html |
+| INSERT or REPLACE | 70% | https://www.sqlite.org/lang_insert.html |
 |INSERTmany | 70% | - |
 | CREATE | 50% | https://www.sqlite.org/lang_delete.html |
 | PRAGMA | 50% | https://www.sqlite.org/pragma.html |
 | SELECT | 20% | https://www.sqlite.org/lang_select.html |
 | UPDATE | 0% | https://www.sqlite.org/lang_update.html |
-| DELETE | 0% | https://www.sqlite.org/lang_delete.html |
 | DROP | 0% | https://www.sqlite.org/lang_droptable.html |
 | ALTER | 0% | https://www.sqlite.org/lang_delete.html |

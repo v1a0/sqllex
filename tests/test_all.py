@@ -139,11 +139,13 @@ db.insert("users", username="user_4", group_id=1,
           )
 
 
-db.insert("users", ["user_4", 1],
+db.insert("users", ["user_422", 1],
           OR=REPLACE,
           WITH={
               'a': "SELECT * FROM users WHERE (group_id=2)"
           })
+
+db.delete("users", where={'username': 'user_422'})
 
 sleep(0.5)
 rem = ''
