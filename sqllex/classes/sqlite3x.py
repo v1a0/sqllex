@@ -62,7 +62,6 @@ def __where__(func: callable) -> callable:
 
     return wrapper
 
-
 def __or_param__(func: callable) -> callable:
     def wrapper(*args, **kwargs):
         if 'OR' in kwargs.keys():
@@ -77,74 +76,6 @@ def __or_param__(func: callable) -> callable:
         return func(*args, **kwargs)
 
     return wrapper
-
-
-def args_parser(func: callable):
-    def wrapper(*args: tuple, **kwargs: dict):
-        if args:
-            arg0 = list(args)[0]
-            args = list(args)[1:]
-
-            if len(args) == 1:
-                if isinstance(args[0], dict):
-                    args, kwargs = None, args[0]
-                elif isinstance(args[0], list):
-                    args, kwargs = args[0], kwargs
-                elif isinstance(args[0], tuple):
-                    args, kwargs = list(args[0]), kwargs
-
-            else:
-                for arg in args:
-                    if isinstance(arg, dict):
-                        kwargs.update(arg)
-                        print(arg)
-                        args.remove(arg)
-
-            args = (arg0, *args)
-
-        # print('args:', args)
-        # print('kwargs: ', kwargs)
-        return func(*args, **kwargs)
-
-    return wrapper
-
-
-def table(col: AnyStr, params: Any):
-    if isinstance(params, (str, int, float)):
-        params = [f"{params}"]
-
-    if isinstance(params, list):
-        return f"{col} {' '.join(param for param in params)},\n"
-
-    if isinstance(params, dict) and col == FOREIGN_KEY:
-        res = ''
-        for (key, refs) in params.items():
-            res += f"FOREIGN KEY ({key}) REFERENCES {refs[0]} ({refs[1]}), \n"
-        return res[:-1]
-
-    else:
-        raise TypeError
-
-
-def crop(columns: Union[tuple, list], values: Union[tuple, list]) -> tuple:
-    """
-    Converts input lists (columns and values) to the same length for safe insert
-    :param columns: List of columns in some FROM
-    :param values: Values for insert to some FROM
-    :return:Equalized by length lists
-    """
-    if values and columns:
-        if len(values) != len(columns):
-            logger.warning(
-                f"\n"
-                f"SIZE CROP! Expecting {len(columns)} arguments but {len(values)} were given!\n"
-                f"Expecting: {columns}\n"
-                f"Given: {values}"
-            )
-            _len_ = min(len(values), len(columns))
-            return columns[:_len_], values[:_len_]
-
-    return columns, values
 
 
 def __execute__(func: callable):
@@ -200,6 +131,68 @@ def __executemany__(func: callable):
             return cur.fetchall()
 
     return wrapper
+
+
+def __exe_return_lists__(func: callable) -> callable:
+    def wrapper(*args, **kwargs):
+        ret_ = func(*args, **kwargs)
+        if isinstance(ret_, list):
+            return list(map(lambda item: list(item), func(*args, **kwargs)))
+        else:
+            return ret_
+
+    return wrapper
+
+
+def args_parser(func: callable):
+    def wrapper(*args: tuple, **kwargs: dict):
+        if args:
+            arg0 = list(args)[0]
+            args = list(args)[1:]
+
+            if len(args) == 1:
+                if isinstance(args[0], dict):
+                    args, kwargs = None, args[0]
+                elif isinstance(args[0], list):
+                    args, kwargs = args[0], kwargs
+                elif isinstance(args[0], tuple):
+                    args, kwargs = list(args[0]), kwargs
+
+            else:
+                for arg in args:
+                    if isinstance(arg, dict):
+                        kwargs.update(arg)
+                        print(arg)
+                        args.remove(arg)
+
+            args = (arg0, *args)
+
+        # print('args:', args)
+        # print('kwargs: ', kwargs)
+        return func(*args, **kwargs)
+
+    return wrapper
+
+
+def crop(columns: Union[tuple, list], values: Union[tuple, list]) -> tuple:
+    """
+    Converts input lists (columns and values) to the same length for safe insert
+    :param columns: List of columns in some table
+    :param values: Values for insert to some table
+    :return:Equalized by length lists
+    """
+    if values and columns:
+        if len(values) != len(columns):
+            logger.warning(
+                f"\n"
+                f"SIZE CROP! Expecting {len(columns)} arguments but {len(values)} were given!\n"
+                f"Expecting: {columns}\n"
+                f"Given: {values}"
+            )
+            _len_ = min(len(values), len(columns))
+            return columns[:_len_], values[:_len_]
+
+    return columns, values
 
 
 class SQLite3x:
@@ -382,7 +375,7 @@ class SQLite3x:
 
     def get_columns(self, table: AnyStr) -> Union[tuple, list]:
         """
-        Get list of FROM columns
+        Get list of table columns
         :param table: schema-name.table-name or just table-name
         """
         columns = self.table_info(table_name=table)
@@ -432,7 +425,7 @@ class SQLite3x:
     def insert(self, table: AnyStr, *args: InsertData, OR: OrOptionsType = None, WITH: WithType = None,
                **kwargs: Any) -> Union[None, SQLStatement]:
         """
-        INSERT data into db's FROM
+        INSERT data into db's table
         :param table: Table name for inserting
         :param OR: Optional parameter. If INSERT failed, type OrOptionsType
         :param WITH: Optional parameter.
@@ -442,7 +435,7 @@ class SQLite3x:
     @args_parser
     def replace(self, table: AnyStr, *args: Any, WITH: WithType = None, **kwargs: Any) -> Union[None, SQLStatement]:
         """
-        REPLACE data into db's FROM
+        REPLACE data into db's table
         :param table: Table name for inserting
         :param WITH: Optional parameter.
         """
@@ -498,30 +491,22 @@ class SQLite3x:
         return SQLStatement(SQLRequest(stmt.request.script, values), self.path)
 
     def insertmany(self, table: AnyStr, *args: Union[list[list], list[tuple], tuple[list], tuple[tuple], list, tuple],
-                   **kwargs: Any):
+                   **kwargs: Any) -> Union[None, SQLStatement]:
         """
-        INSERT many data into db's FROM
+        INSERT many data into db's table
         The same as regular insert but for lists of inserts
-        :param table: FROM name for inserting
+        :param table: table name for inserting
         :param args: 1'st way set values for insert
         :param kwargs: 2'st way set values for insert
         """
         return self._insertmany_(table, *args, **kwargs)
 
+    @__exe_return_lists__
     @__execute__
     @__where__
     @__with__
-    def _select_stmt_(self, script='', values=(), method: AnyStr='SELECT', select: Union[List[str], str] = None,
+    def _select_stmt_(self, script='', values=(), method: AnyStr = 'SELECT ', select: Union[List[str], str] = None,
                       table: str = None, **kwargs):
-        """
-        SELECT data from FROM
-        :param select: columns to select, have shadow name in kwargs 'columns'. Value '*' by default
-        :param table: FROM for selection, have shadow name in kwargs 'from_table'
-        :param where: optional parameter for conditions, example: {'name': 'Alex', 'group': 2}
-        :param kwargs: shadow names holder (columns, from_table)
-        :param execute: execute script and return db's answer (True) or return script (False)
-        :return: DB answer to or script
-        """
 
         if kwargs:
             if kwargs.get('from_table'):
@@ -540,24 +525,33 @@ class SQLite3x:
             select = [select]
 
         script += f"{method} " \
-                  f"{', '.join(sel for sel in select)}" \
-                  f" FROM {table} "
+                  f"{', '.join(sel for sel in select)} " \
+                  f"FROM {table} "
 
         return SQLStatement(SQLRequest(script, values), self.path)
 
-    def select(self, select: Union[List[str], str] = None, FROM: str = None, where: dict = None,
-               execute: bool = True, WITH: WithType = None, **kwargs) -> Union[SQLRequest, List]:
-        return self._select_stmt_(select=select, table=FROM, method='SELECT', where=where, execute=execute,
+    def select(self, select: Union[List[str], str] = None, table: str = None, where: dict = None,
+               execute: bool = True, WITH: WithType = None, **kwargs) -> Union[SQLRequest, List[List]]:
+        """
+        SELECT data from table
+        :param select: columns to select. Value '*' by default
+        :param table: table for selection
+        :param where: optional parameter for conditions, example: {'name': 'Alex', 'group': 2}
+        :param kwargs: shadow names holder (columns, from_table)
+        :param execute: execute script and return db's answer (True) or return script (False)
+        :return: DB answer to or script
+        """
+        return self._select_stmt_(select=select, table=table, method='SELECT', where=where, execute=execute,
                                   WITH=WITH, **kwargs)
 
-    def select_distinct(self, select: Union[List[str], str] = None, FROM: str = None, where: dict = None,
+    def select_distinct(self, select: Union[List[str], str] = None, table: str = None, where: dict = None,
                         execute: bool = True, WITH: WithType = None, **kwargs) -> Union[SQLRequest, List]:
-        return self._select_stmt_(select=select, table=FROM, method='SELECT DISTINCT', where=where, execute=execute,
+        return self._select_stmt_(select=select, table=table, method='SELECT DISTINCT', where=where, execute=execute,
                                   WITH=WITH, **kwargs)
 
-    def select_all(self, select: Union[List[str], str] = None, FROM: str = None, where: dict = None,
+    def select_all(self, select: Union[List[str], str] = None, table: str = None, where: dict = None,
                    execute: bool = True, WITH: WithType = None, **kwargs) -> Union[SQLRequest, List]:
-        return self._select_stmt_(select=select, table=FROM, method='SELECT ALL ', where=where, execute=execute,
+        return self._select_stmt_(select=select, table=table, method='SELECT ALL ', where=where, execute=execute,
                                   WITH=WITH, **kwargs)
 
     @__execute__
@@ -567,27 +561,60 @@ class SQLite3x:
         script += f"DELETE FROM {table} "
         return SQLStatement(SQLRequest(script, values), self.path)
 
-    def delete(self, FROM: str, where: dict = None, WITH: WithType = None, **kwargs):
-        return self._delete_(table=FROM, where=where, WITH=WITH, **kwargs)
+    def delete(self, table: str, where: dict = None, WITH: WithType = None, **kwargs) -> Union[None, SQLStatement]:
+        return self._delete_(table=table, where=where, WITH=WITH, **kwargs)
 
-    # @__execute__
-    # @__where__
-    # @__or_param__
-    # @__with__
-    # def _update_(self):
-    #
-    # def update(self):
-    #     pass
+    @__execute__
+    @__where__
+    @__or_param__
+    @__with__
+    def _update_(self, table: AnyStr, SET: Union[list, tuple, dict], script='', values=(), from_as=None, **kwargs):
+        if from_as is None:
+            from_as = {}
+        if not SET and kwargs:
+            SET = kwargs
+        if isinstance(SET, dict):
+            SET = [list(SET.keys())[0], list(SET.values())[0]]
+        elif isinstance(SET, tuple):
+            SET = list(SET)
 
-# ================================================== #
+        values += tuple(list(values) + [SET[1]])
+
+        if from_as:
+            fa_script = list(from_as.values())[0].script
+            fa_var = list(from_as.keys())[0]
+            fa_values = list(from_as.values())[0].values
+            values += tuple(list(values)+list(fa_values))
+        else:
+            fa_script = ''
+            fa_values = ''
+            fa_var = ''
+
+        script += f"UPDATE {table} " \
+                  f"SET {SET[0]} = (?) " \
+                  f"{f'FROM {fa_script} AS {fa_var} ' if (fa_script and fa_var) else ''}" \
+
+        return SQLStatement(SQLRequest(script=script, values=values), self.path)
+
+    def update(self, table: AnyStr, SET: Union[list, tuple, dict], where: dict, OR: OrOptionsType = None,
+               execute: bool = True, from_as: Mapping[str, SQLRequest] = None, WITH: WithType = None, **kwargs):
+
+        return self._update_(table=table, SET=SET, OR=OR, where=where, execute=execute,
+                             WITH=WITH, from_as=from_as, **kwargs)
+
+    @__execute__
+    def _drop_(self, table: AnyStr, if_exist: bool=True, script='', **kwargs):
+        script += f"DROP TABLE " \
+                  f"{'IF EXISTS' if if_exist else ''} " \
+                  f"{table} "
+        return SQLStatement(SQLRequest(script=script), self.path)
+
+    def drop(self, table: AnyStr, if_exist: bool=True, execute: bool = True, **kwargs):
+        return self._drop_(table=table, if_exist=if_exist, execute=execute, **kwargs)
+
 # ---------------------------------------------------------------------------
 # https://www.sitepoint.com/getting-started-sqlite3-basic-commands/
 #
-#     def update(self):
-#         pass
-#
-#     def drop(self):
-#         pass
 #
 #     def alter(self):
 #         # RENAME TO

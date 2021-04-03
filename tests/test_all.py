@@ -31,7 +31,12 @@ DB_TEMPLATE = {
         FOREIGN_KEY: {
             "group_id": ["groups", "group_id"]
         },
-    }
+    },
+
+    "remove_me": {
+        "xxx": [INTEGER, PRIMARY_KEY, UNIQUE],
+    },
+
 }
 
 
@@ -53,7 +58,7 @@ else:
 
 ####################################################
 # INSERT data int DB and SELECT
-# 1'st FROM
+# 1'st table
 db.insert("groups", group_id=1, name="Admins")
 db.insert("groups", group_id=2, name="Other")
 # Have to fail
@@ -64,7 +69,7 @@ except Exception:
 
 
 ####################################################
-# 2'nd FROM
+# 2'nd table
 db.insert("users", ["user_1", 1])
 db.insert("users", ("user_2", 2))
 db.insert("users", "user_3", 2)
@@ -128,7 +133,7 @@ db.replace("groups", [1, 'AAdmins'])
 db.replace("groups", group_id=2, name="IDK")
 
 
-db.insert("users", username="user_4", group_id=1,
+db.insert("users", username="user_411", group_id=1,
           OR=REPLACE,
           WITH={
               'a': db.select(
@@ -146,6 +151,10 @@ db.insert("users", ["user_422", 1],
           })
 
 db.delete("users", where={'username': 'user_422'})
+
+db.update("users", ['username', 'USER_upd'], {'username': "user_411"})
+
+db.drop("remove_me")
 
 sleep(0.5)
 rem = ''
