@@ -1,2 +1,2 @@
-from sqllex.classes import *
-from sqllex.constants import *
+from sqllex.classes.sqlite3x import *
+from sqllex.constants.sql import *

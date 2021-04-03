@@ -112,7 +112,7 @@ logger.info(
 
 logger.info(
     f"All from users where group_id=4: "
-    f"{db.select(from_table='users', where={'group_id': 4})}"
+    f"{db.select(from_table='users', where={'group_id': 5, 'username': 'user_1'})}"
 )
 
 logger.info(

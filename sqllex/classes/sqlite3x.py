@@ -1,4 +1,4 @@
-from sqllex.exceptions import TableInfoError, ArgumentError
+from sqllex.exceptions import TableInfoError, ArgumentError, ExecuteError
 from loguru import logger
 from sqllex.constants import *
 from sqllex.types_ import *
@@ -6,8 +6,19 @@ import sqlite3
 
 
 def __with__(func: callable) -> callable:
+    """
+    Decorator for catching WITH argument
+
+    If it has, adding into beginning of :script: with_statement.
+
+    And adding values into :values: if it has
+
+    :kwarg WITH: Mapping[str, SQLRequest]
+
+    """
+
     def wrapper(*args, **kwargs):
-        with_dict: dict = kwargs.pop('WITH')
+        with_dict: Mapping[str, SQLRequest] = kwargs.pop('WITH')
 
         if with_dict:
             script = f"WITH "
@@ -46,26 +57,46 @@ def __with__(func: callable) -> callable:
 
 
 def __where__(func: callable) -> callable:
+    """
+        Decorator for catching WHERE argument
+
+        If it has, adding into end of :script: where_statement
+
+        And adding values into :values: if it has
+
+        where : Mapping[str, SQLRequest]
+
+    """
     def wrapper(*args, **kwargs):
         if 'where' in kwargs.keys():
-            where_dict: dict = kwargs.pop('where')
+            where_dict: Mapping[str, SQLRequest] = kwargs.pop('where')
         else:
             where_dict = {}
 
         stmt: SQLStatement = func(*args, **kwargs)
 
         if where_dict:
-            stmt.request.script += f"WHERE ({'=?, '.join(wh for wh in where_dict.keys())}=?) "
+            stmt.request.script += f"WHERE ({'=? AND '.join(wh for wh in where_dict.keys())}=?) "
             stmt.request.values = tuple(list(stmt.request.values) + list(where_dict.values()))
 
         return stmt
 
     return wrapper
 
+
 def __or_param__(func: callable) -> callable:
+    """
+        Decorator for catching OR argument
+
+        If it has, adding into beginning of :param script: or_statement
+
+        OR : OrOptionsType
+
+    """
+
     def wrapper(*args, **kwargs):
         if 'OR' in kwargs.keys():
-            _or = kwargs.pop('OR')
+            _or: OrOptionsType = kwargs.pop('OR')
 
             if _or:
                 kwargs.update(
@@ -79,6 +110,16 @@ def __or_param__(func: callable) -> callable:
 
 
 def __execute__(func: callable):
+    """
+        Decorator for execute SQLStatement
+
+        execute : Boolean parameter setting execute script or not, if True - executing script with values
+        elif False - return script with values as SQLStatement()
+
+        :return: SQLStatement or None
+
+    """
+
     def wrapper(*args: tuple, **kwargs: dict):
 
         if 'execute' in kwargs.keys():
@@ -111,6 +152,16 @@ def __execute__(func: callable):
 
 
 def __executemany__(func: callable):
+    """
+        Decorator for executemany SQLStatement with multiple of values
+
+        execute : Boolean parameter setting execute script or not, if True - executing script with values
+        elif False - return script with values as SQLStatement()
+
+        :return: SQLStatement or None
+
+    """
+
     def wrapper(*args: tuple, **kwargs: dict):
         if 'execute' in kwargs.keys():
             execute = bool(kwargs.pop('execute'))
@@ -133,7 +184,18 @@ def __executemany__(func: callable):
     return wrapper
 
 
-def __exe_return_lists__(func: callable) -> callable:
+def __convert_returns_to_list__(func: callable) -> callable:
+    """
+        Decorator for executes, List(tuples) -> List(list)
+
+
+        if execute returns values as answer of database, for example select-like methods
+        it'll convert List(tuples) to List(list)
+
+        :return: SQLStatement or List[Lists]
+
+    """
+
     def wrapper(*args, **kwargs):
         ret_ = func(*args, **kwargs)
         if isinstance(ret_, list):
@@ -145,7 +207,23 @@ def __exe_return_lists__(func: callable) -> callable:
 
 
 def args_parser(func: callable):
-    def wrapper(*args: tuple, **kwargs: dict):
+    """
+        Arguments parser
+
+        If func got only one argument which contains args for function it'll unwrap it
+
+        if args is dict :
+            return args = None, kwargs = args[0]
+
+        if args is list :
+            return args = args[0], kwargs = kwargs
+
+        if args is tuple :
+            return args = list(args[0]), kwargs = kwargs
+
+    """
+
+    def wrapper(*args: Any, **kwargs: Any):
         if args:
             arg0 = list(args)[0]
             args = list(args)[1:]
@@ -167,8 +245,6 @@ def args_parser(func: callable):
 
             args = (arg0, *args)
 
-        # print('args:', args)
-        # print('kwargs: ', kwargs)
         return func(*args, **kwargs)
 
     return wrapper
@@ -176,10 +252,13 @@ def args_parser(func: callable):
 
 def crop(columns: Union[tuple, list], values: Union[tuple, list]) -> tuple:
     """
-    Converts input lists (columns and values) to the same length for safe insert
-    :param columns: List of columns in some table
-    :param values: Values for insert to some table
-    :return:Equalized by length lists
+        Converts input lists (columns and values) to the same length for safe insert
+
+        :param columns: List of columns in some table
+        :param values: Values for insert to some table
+
+        :return: Equalized by length lists
+
     """
     if values and columns:
         if len(values) != len(columns):
@@ -198,9 +277,11 @@ def crop(columns: Union[tuple, list], values: Union[tuple, list]) -> tuple:
 class SQLite3x:
     def __init__(self, path: PathType = "sql3x.db", template: DBTemplateType = None):
         """
-        SQLite3x
-        :param path: Location of database
-        :param template: template of DB structure
+            SQLite3x Database Class
+
+            :param path: Local path to database (PathType)
+            :param template: template of database structure (DBTemplateType)
+
         """
         self.path = path
         self.journal_mode(mode="WAL")  # make db little bit faster
@@ -211,16 +292,21 @@ class SQLite3x:
     def __str__(self):
         return f"{{SQLite3x: path='{self.path}'}}"
 
-    # def __bool__(self):
-    #    try:
-    #        return bool(self.execute(script="PRAGMA database_list"))
-    #    except ExecuteError:
-    #        return False
+    def __bool__(self):
+        try:
+            return bool(self.pragma("database_list"))
+        except ExecuteError:
+            return False
+        except Exception as error:
+            logger.error(error)
+            return False
 
     @logger.catch
     @__execute__
     def _execute_(self, script: AnyStr, values: tuple = None, request: SQLRequest = None):
-
+        """
+            Parent method for execute
+        """
         if not request:
             return SQLStatement(SQLRequest(script, values), self.path)
         else:
@@ -228,18 +314,23 @@ class SQLite3x:
 
     def execute(self, script: AnyStr, values: tuple = None, request: SQLRequest = None) -> Union[List, None]:
         """
-        Child method of _execute_ method
-        :param script: single SQLite script, might contains placeholders
-        :param values: Values for placeholders if script contains it
-        :param request: Instead of script and values might execute full statement
-        :return: Database answer if it has
+            Child method of _execute_ method
+
+            :param script: single SQLite script, might contains placeholders
+            :param values: Values for placeholders if script contains it
+            :param request: Instead of script and values might execute full statement
+
+            :return: Database answer if it has
+
         """
         return self._execute_(script=script, values=values, request=request)
 
     @logger.catch
     @__executemany__
     def _executemany_(self, script: AnyStr, values: tuple = None, request: SQLRequest = None):
-
+        """
+            Parent method for executemany
+        """
         if not request:
             return SQLStatement(SQLRequest(script, values), self.path)
         else:
@@ -247,17 +338,23 @@ class SQLite3x:
 
     def executemany(self, script: AnyStr, values: tuple = None, request: SQLRequest = None) -> Union[List, None]:
         """
-        Child method of __executemany__ method
-        :param script: single or multiple SQLite script(s), might contains placeholders
-        :param values: Values for placeholders if script contains it
-        :param request: Instead of script and values might execute full request
-        :return: Database answer if it has
+            Child method of __executemany__ method
+
+            :param script: single or multiple SQLite script(s), might contains placeholders
+            :param values: Values for placeholders if script contains it
+            :param request: Instead of script and values might execute full request
+
+            :return: Database answer if it has
+
         """
         return self._executemany_(script=script, values=values, request=request)
 
     @logger.catch
     @__execute__
     def _pragma_(self, *args: str, **kwargs):
+        """
+            Parent method for all pragma-like methods
+        """
         if args:
             script = f"PRAGMA {args[0]}"
         elif kwargs:
@@ -268,15 +365,43 @@ class SQLite3x:
         return SQLStatement(SQLRequest(script), self.path)
 
     def pragma(self, *args: str, **kwargs) -> Union[List, None]:
+        """
+            Set PRAGMA params
+
+            :param args: Might be execute like this:
+                            > db.pragma("database_list")
+            :param kwargs: Might be set like this:
+                            > db.pragma(foreign_keys="ON")
+
+        """
         return self._pragma_(*args, **kwargs)
 
     def foreign_keys(self, mode: Literal["ON", "OFF"]):
+        """
+            Turn on/off PRAGMA param FOREIGN KEYS
+
+            :param mode: "ON" or "OFF"
+
+        """
         return self.pragma(foreign_keys=mode)
 
     def journal_mode(self, mode: Literal["DELETE", "TRUNCATE", "PERSIST", "MEMORY", "WAL", "OFF"]):
+        """
+            Set PRAGMA param journal_mode
+
+            :param mode: "DELETE", "TRUNCATE", "PERSIST", "MEMORY", "WAL", "OFF"
+
+        """
         return self.pragma(journal_mode=mode)
 
     def table_info(self, table_name: str):
+        """
+            Send PRAGMA request table_info(table_name)
+
+            :param table_name: Name of table
+
+        """
+
         return self.pragma(f"table_info({table_name})")
 
     @logger.catch
@@ -284,7 +409,7 @@ class SQLite3x:
     def __create__(self, temp: AnyStr, name: AnyStr, columns: TableType,
                    if_not_exist: bool = None, AS: SQLRequest = None, without_rowid: bool = None):
         """
-        Parent method for all CREATE-methods
+            Parent method for all CREATE-methods
         """
         content: str = ''
         values = ()
@@ -328,55 +453,61 @@ class SQLite3x:
     def create_table(self, name: AnyStr, columns: TableType,
                      if_not_exist: bool = None, AS: SQLRequest = None, without_rowid: bool = None):
         """
-        CREATE TABLE (IF NOT EXISTS) schema-name.table-name ...
-            ... (AS select-stmt)/(column-def table-constraint) (WITHOUT ROWID)
-        :param name:
-        :param columns:
-        :param if_not_exist:
-        :param AS:
-        :param without_rowid:
-        :return:
+            CREATE TABLE table-name
+
+            Optional:
+                CREATE TABLE (IF NOT EXISTS) schema-name.table-name
+                (AS select-stmt) / (column-def table-constraint) (WITHOUT ROWID)
+
+            :param name: Table name
+            :param columns: Columns of table (TableType)
+            :param if_not_exist: Turn on/off "IF NOT EXISTS" prefix
+            :param AS:
+            :param without_rowid:
+
         """
         self.__create__(temp='', name=name, columns=columns,
                         if_not_exist=if_not_exist, AS=AS, without_rowid=without_rowid)
 
     def create_temp_table(self, name: AnyStr, columns: TableType, **kwargs):
         """
-        CREATE TEMP TABLE (IF NOT EXISTS) schema-name.table-name ...
-            ... (AS select-stmt)/(column-def table-constraint) (WITHOUT ROWID)
-        :param name:
-        :param columns:
-        :param if_not_exist:
-        :param AS:
-        :param without_rowid:
-        :return:
+            CREATE TEMP TABLE (IF NOT EXISTS) schema-name.table-name ...
+            (AS select-stmt)/(column-def table-constraint) (WITHOUT ROWID)
+
+            :param name: Table name
+            :param columns: Columns of table (TableType)
+
         """
         self.__create__(temp='TEMP', name=name, columns=columns, **kwargs)
 
     def create_temporary_table(self, name: AnyStr, columns: TableType, **kwargs):
         """
-        CREATE TEMPORARY TABLE (IF NOT EXISTS) schema-name.table-name ...
-            ... (AS select-stmt)/(column-def table-constraint) (WITHOUT ROWID)
-        :param name:
-        :param columns:
-        :param if_not_exist:
-        :param AS:
-        :param without_rowid:
-        :return:
+            CREATE TEMPORARY TABLE (IF NOT EXISTS) schema-name.table-name ...
+            (AS select-stmt)/(column-def table-constraint) (WITHOUT ROWID)
+
+            :param name: Table name
+            :param columns: Columns of table (TableType)
+
         """
         self.__create__(temp='TEMPORARY', name=name, columns=columns, **kwargs)
 
     def markup(self, template: DBTemplateType):
         """
-        Mark up table by template
+            Mark up table by template
+
+            :param template: Structure of database (DBTemplateType)
+
         """
         for (table_name, columns) in template.items():
             self.create_table(name=table_name, columns=columns, if_not_exist=True)
 
     def get_columns(self, table: AnyStr) -> Union[tuple, list]:
         """
-        Get list of table columns
-        :param table: schema-name.table-name or just table-name
+            Get list of table columns
+
+            :param table: schema-name.table-name or just table-name
+
+            :return: List[List] of columns
         """
         columns = self.table_info(table_name=table)
         if columns:
@@ -389,7 +520,7 @@ class SQLite3x:
     @__with__
     def __insert_stmt__(self, *args: Any, table: AnyStr, script='', values=(), **kwargs: Any):
         """
-        INSERT INTO request (aka insert-stmt) and REPLACE INTO request
+            INSERT INTO request (aka insert-stmt) and REPLACE INTO request
         """
         values = list(values)
 
@@ -425,26 +556,32 @@ class SQLite3x:
     def insert(self, table: AnyStr, *args: InsertData, OR: OrOptionsType = None, WITH: WithType = None,
                **kwargs: Any) -> Union[None, SQLStatement]:
         """
-        INSERT data into db's table
-        :param table: Table name for inserting
-        :param OR: Optional parameter. If INSERT failed, type OrOptionsType
-        :param WITH: Optional parameter.
+            INSERT data into db's table
+
+            :param table: Table name for inserting
+            :param OR: Optional parameter. If INSERT failed, type OrOptionsType
+            :param WITH: Optional parameter.
+
         """
         return self.__insert_stmt__(script="INSERT ", OR=OR, table=table, *args, **kwargs, WITH=WITH)
 
     @args_parser
     def replace(self, table: AnyStr, *args: Any, WITH: WithType = None, **kwargs: Any) -> Union[None, SQLStatement]:
         """
-        REPLACE data into db's table
-        :param table: Table name for inserting
-        :param WITH: Optional parameter.
+            REPLACE data into db's table
+
+            :param table: Table name for inserting
+            :param WITH: Optional parameter.
+
         """
         return self.__insert_stmt__(script="REPLACE ", table=table, *args, **kwargs, WITH=WITH)
 
     @__executemany__
     def _insertmany_(self, table: AnyStr, *args: Union[list[list], list[tuple], tuple[list], tuple[tuple], list, tuple],
                      **kwargs: Any):
-
+        """
+            Parent method for insertmany
+        """
         if args:
             values = list(map(lambda arg: list(arg), args))  # make values list[list] (yes it's necessary)
 
@@ -493,21 +630,25 @@ class SQLite3x:
     def insertmany(self, table: AnyStr, *args: Union[list[list], list[tuple], tuple[list], tuple[tuple], list, tuple],
                    **kwargs: Any) -> Union[None, SQLStatement]:
         """
-        INSERT many data into db's table
-        The same as regular insert but for lists of inserts
-        :param table: table name for inserting
-        :param args: 1'st way set values for insert
-        :param kwargs: 2'st way set values for insert
+            INSERT many data into db's table.
+            The same as regular insert but for lists of inserting values
+
+            :param table: table name for inserting
+            :param args: 1'st way set values for insert
+            :param kwargs: 2'st way set values for insert
+
         """
         return self._insertmany_(table, *args, **kwargs)
 
-    @__exe_return_lists__
+    @__convert_returns_to_list__
     @__execute__
     @__where__
     @__with__
     def _select_stmt_(self, script='', values=(), method: AnyStr = 'SELECT ', select: Union[List[str], str] = None,
                       table: str = None, **kwargs):
-
+        """
+            Parent method for all SELECT-like methods
+        """
         if kwargs:
             if kwargs.get('from_table'):
                 table = kwargs.pop('from_table')
@@ -533,13 +674,16 @@ class SQLite3x:
     def select(self, select: Union[List[str], str] = None, table: str = None, where: dict = None,
                execute: bool = True, WITH: WithType = None, **kwargs) -> Union[SQLRequest, List[List]]:
         """
-        SELECT data from table
-        :param select: columns to select. Value '*' by default
-        :param table: table for selection
-        :param where: optional parameter for conditions, example: {'name': 'Alex', 'group': 2}
-        :param kwargs: shadow names holder (columns, from_table)
-        :param execute: execute script and return db's answer (True) or return script (False)
-        :return: DB answer to or script
+            SELECT data from table
+
+            :param select: columns to select. Value '*' by default
+            :param table: table for selection
+            :param where: optional parameter for conditions, example: {'name': 'Alex', 'group': 2}
+            :param kwargs: shadow names holder (columns, from_table)
+            :param execute: execute script and return db's answer (True) or return script (False)
+
+            :return: List[List] of selects
+
         """
         return self._select_stmt_(select=select, table=table, method='SELECT', where=where, execute=execute,
                                   WITH=WITH, **kwargs)
@@ -558,10 +702,22 @@ class SQLite3x:
     @__where__
     @__with__
     def _delete_(self, script='', values=(), table: str = None):
+        """
+            Parent method for DELETE method
+        """
         script += f"DELETE FROM {table} "
         return SQLStatement(SQLRequest(script, values), self.path)
 
     def delete(self, table: str, where: dict = None, WITH: WithType = None, **kwargs) -> Union[None, SQLStatement]:
+        """
+            DELETE FROM table WHERE {something}
+
+            :param table: Table name as string
+            :param where: where_statement
+            :param WITH: with_statement
+
+        """
+
         return self._delete_(table=table, where=where, WITH=WITH, **kwargs)
 
     @__execute__
@@ -569,6 +725,10 @@ class SQLite3x:
     @__or_param__
     @__with__
     def _update_(self, table: AnyStr, SET: Union[list, tuple, dict], script='', values=(), from_as=None, **kwargs):
+        """
+            Parent method for UPDATE
+        """
+
         if from_as is None:
             from_as = {}
         if not SET and kwargs:
@@ -584,7 +744,7 @@ class SQLite3x:
             fa_script = list(from_as.values())[0].script
             fa_var = list(from_as.keys())[0]
             fa_values = list(from_as.values())[0].values
-            values += tuple(list(values)+list(fa_values))
+            values += tuple(list(values) + list(fa_values))
         else:
             fa_script = ''
             fa_values = ''
@@ -592,45 +752,41 @@ class SQLite3x:
 
         script += f"UPDATE {table} " \
                   f"SET {SET[0]} = (?) " \
-                  f"{f'FROM {fa_script} AS {fa_var} ' if (fa_script and fa_var) else ''}" \
+                  f"{f'FROM {fa_script} AS {fa_var} ' if (fa_script and fa_var) else ''}"
 
         return SQLStatement(SQLRequest(script=script, values=values), self.path)
 
     def update(self, table: AnyStr, SET: Union[list, tuple, dict], where: dict, OR: OrOptionsType = None,
                execute: bool = True, from_as: Mapping[str, SQLRequest] = None, WITH: WithType = None, **kwargs):
+        """
+            UPDATE table_name SET column_name=something WHERE x=y and more complex requests
 
+            :param table: Table name
+            :param SET: Column and value to set
+            :param where: where_statement
+
+        """
         return self._update_(table=table, SET=SET, OR=OR, where=where, execute=execute,
                              WITH=WITH, from_as=from_as, **kwargs)
 
     @__execute__
-    def _drop_(self, table: AnyStr, if_exist: bool=True, script='', **kwargs):
+    def _drop_(self, table: AnyStr, if_exist: bool = True, script='', **kwargs):
+        """
+            Parent method for drop
+        """
         script += f"DROP TABLE " \
                   f"{'IF EXISTS' if if_exist else ''} " \
                   f"{table} "
         return SQLStatement(SQLRequest(script=script), self.path)
 
-    def drop(self, table: AnyStr, if_exist: bool=True, execute: bool = True, **kwargs):
+    def drop(self, table: AnyStr, if_exist: bool = True, execute: bool = True, **kwargs):
+        """
+            DROP TABLE (IF EXIST) table_name
+
+            :param table: Table name
+            :param if_exist: Check is table exist (boolean)
+        """
         return self._drop_(table=table, if_exist=if_exist, execute=execute, **kwargs)
 
-# ---------------------------------------------------------------------------
-# https://www.sitepoint.com/getting-started-sqlite3-basic-commands/
-#
-#
-#     def alter(self):
-#         # RENAME TO
-#         # RENAME COLUMN
-#         # ADD COLUMN
-#         # https://www.sqlitetutorial.net/sqlite-alter-table/
-#         pass
-#
-#     def commit(self):
-#         # ?
-#         pass
-#
-#     def vaccom(self):
-#         # https://www.sqlitetutorial.net/sqlite-vacuum/
-#         pass
 
-
-if __name__ == "__main__":
-    __all__ = [SQLite3x]
+__all__ = ["SQLite3x"]

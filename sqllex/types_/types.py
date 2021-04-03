@@ -7,6 +7,7 @@ class SQLRequest:
     """
     SQL request contains script and values (if necessary)
     """
+
     def __init__(self, script: str, values: tuple = None):
         self.script = script
         self.values = values
@@ -19,6 +20,7 @@ class SQLStatement:
     """
     SQL request contains SQLRequest
     """
+
     def __init__(self, request: SQLRequest, path: Union[Path, AnyStr]):
         self.request = request
         self.path = path
@@ -59,21 +61,3 @@ OrOptionsType = Literal["ABORT", "FAIL", "IGNORE", "REPLACE", "ROLLBACK"]
 # Type for parameter of WITH argument
 WithType = Mapping[str, Union[SQLRequest, str]]
 
-
-if __name__ == "__main__":
-    __all__ = [
-        ForeignKey,
-        DataType,
-        ConstrainType,
-
-        ListDataType,
-        ColumnType,
-        TableType,
-        DBTemplateType,
-
-        PathType,
-        NumStr,
-        SQLRequest,
-        OrOptionsType,
-        WithType
-    ]

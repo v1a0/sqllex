@@ -29,3 +29,10 @@ class ArgumentError(UniversalException):
     """
     pass
 
+
+__all__ = [
+    "TableInfoError",
+    "UniversalException",
+    "ExecuteError",
+    "ArgumentError"
+]
