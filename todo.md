@@ -17,3 +17,6 @@
 | SELECT | 80% | https://www.sqlite.org/lang_select.html |
 | UPDATE | 80% | https://www.sqlite.org/lang_update.html |
 | DROP | 80% | https://www.sqlite.org/lang_droptable.html |
+| ORDERED BY | 80% | - |
+| LIMIT | 80% | - |
+| OFFSET | 80% | - |
