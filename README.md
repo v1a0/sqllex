@@ -42,7 +42,7 @@ db.insert('users', ['Sqllex', 33])
 # Take it back
 users = db.select('username', from_table='users', where={'age': 33})
 
-print(users)  # ['Squllex']
+print(users)  # ['Sqllex']
 ```
 
 
