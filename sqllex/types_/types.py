@@ -40,11 +40,11 @@ ConstrainType = Union[
 
 # Subtypes for DBTemplateType
 ListDataType = List[Union[DataType, ConstrainType, Number]]
-ColumnType = Union[ListDataType, DataType, AnyStr]
-TableType = Mapping[AnyStr, ColumnType]
+ColumnDataType = Union[ListDataType, DataType, AnyStr]
+ColumnsType = Mapping[AnyStr, ColumnDataType]
 
 # Type for databases template
-DBTemplateType = Mapping[AnyStr, TableType]
+DBTemplateType = Mapping[AnyStr, ColumnsType]
 
 # Universal Path type
 PathType = Union[Path, AnyStr]
@@ -61,3 +61,8 @@ OrOptionsType = Literal["ABORT", "FAIL", "IGNORE", "REPLACE", "ROLLBACK"]
 # Type for parameter of WITH argument
 WithType = Mapping[str, Union[SQLRequest, str]]
 
+# Type for parameter of ORDER BY argument
+OrderByType = Union[int, str, list, tuple, Mapping[str, Union[str, int, list, tuple]]]
+
+# Type for parameter of LIMIT argument
+LimitOffsetType = Union[int, str, float]

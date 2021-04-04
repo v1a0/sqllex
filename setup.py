@@ -8,14 +8,14 @@ with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
 setup(
     name='sqllex',
     packages=['sqllex', 'sqllex.classes', 'sqllex.constants', 'sqllex.exceptions', 'sqllex.types_'],
-    version='0.1.3',
+    version='0.1.5',
     license='gpl-3.0',
     description='Better than sqlite3',
     author='v1a0',
     url='https://github.com/v1a0/sqllex',
-    download_url='https://github.com/V1A0/sqllex/archive/refs/tags/v0.1.3.tar.gz',
+    download_url='https://github.com/V1A0/sqllex/archive/refs/tags/v0.1.5.tar.gz',
     keywords=['sql', 'sql3', 'sqlite', 'sqlite3', 'sqllex', 'db', 'database', 'easy'],
-    install_requires=[  # I get to this in a second
+    install_requires=[
         'colorama==0.4.4',
         'loguru==0.5.3',
         'win32-setctime==1.0.3',
@@ -23,10 +23,11 @@ setup(
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Intended Audience :: Developers',
-        'Topic :: Software Development :: Build Tools',     # ????
-        'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',  # Again, pick a license
+        'Topic :: Database',
+        'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
         'Programming Language :: Python :: 3.9',
     ],
     long_description=long_description,
     long_description_content_type='text/markdown',
 )
+# https://pypi.org/classifiers/

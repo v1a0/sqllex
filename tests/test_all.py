@@ -45,9 +45,10 @@ DB_TEMPLATE = {
 db = SQLite3x(path=DB_NAME, template=DB_TEMPLATE)
 
 db.insert('users', ["user_1", 1],
-          WITH={
+          with_={
               'some': db.select('*', 'users', execute=False)
-          }
+          },
+          or_=REPLACE
           )
 
 if not is_exist(DB_NAME):
@@ -91,32 +92,42 @@ except Exception:
 ####################################################
 # SELECT data from DB
 logger.info(
-    f"All from users: "
+    f"All from users: \n"
     f"{db.select(from_table='users')}\n"
 )
 
 logger.info(
-    f"All from users: "
+    f"All from users: \n"
     f"{db.select(['username', 'group_id'], 'users')}"
 )
 
 logger.info(
-    f"Usernames from users: "
+    f"Usernames from users: \n"
     f"{db.select(select=['username'], from_table='users')}"
 )
 
 logger.info(
-    f"All from users where group_id=1: "
+    f"All from users where group_id=1: \n"
     f"{db.select(from_table='users', where={'group_id': 1})}"
 )
 
 logger.info(
-    f"All from users where group_id=4: "
-    f"{db.select(from_table='users', where={'group_id': 5, 'username': 'user_1'})}"
+    f"All from users where group_id=1 and username=user_1, order_by username \n"
+    f"{db.select(from_table='users', where={'group_id': 1, 'username': 'user_1'}, order_by='username')}"
 )
 
 logger.info(
-    f"Script for the last one: "
+    f"All from users where group_id=1, order_by username DESC\n"
+    f"{db.select(from_table='users', where={'group_id': 1}, order_by={'username': 'DESC'})}"
+)
+
+logger.info(
+    f"All from users where group_id=1, order_by [2,1] \n"
+    f"{db.select(from_table='users', where={'group_id': 1}, order_by=[2,1])}"
+)
+
+logger.info(
+    f"Script for the last one: \n"
     f"{db.select(from_table='users', where={'group_id': 4}, execute=False)}"
 )
 
@@ -134,8 +145,8 @@ db.replace("groups", group_id=2, name="IDK")
 
 
 db.insert("users", username="user_411", group_id=1,
-          OR=REPLACE,
-          WITH={
+          or_=REPLACE,
+          with_={
               'a': db.select(
                   from_table='users',
                   where={'group_id': 1},
@@ -145,8 +156,8 @@ db.insert("users", username="user_411", group_id=1,
 
 
 db.insert("users", ["user_422", 1],
-          OR=REPLACE,
-          WITH={
+          or_=REPLACE,
+          with_={
               'a': "SELECT * FROM users WHERE (group_id=2)"
           })
 

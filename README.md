@@ -1,7 +1,7 @@
 
 <div align="center">
 
-# SQLLEX alpha v0.1.3 📚
+# SQLLEX alpha v0.1.5 📚
 
 ![Python:3.9](https://img.shields.io/badge/Python-3.9-green)
 [![Language grade: Python](https://img.shields.io/lgtm/grade/python/g/V1A0/sqllex.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/V1A0/sqllex/context:python)
@@ -18,7 +18,7 @@ pip install sqllex
 
 
 ## About
-Use databases without thinking about SQL. Let's see how sqllex makes
+Use databases without thinking about SQL. Let me show you how sqllex makes
 your life easier. Imagine you need create some database, save some data
 into it and take it back. That's how your code will look like.
 
@@ -70,7 +70,6 @@ DB_TEMPLATE = {
 # and do your business ...
 ```
 
-
 What if I have LARGE dataset to insert? Still easy.
 
 ```python
@@ -93,6 +92,80 @@ db.insertmany('math', dataset)
 # Done
 ```
 
-### [TODO-list](todo.md)
+# Advances
 
-### Not enough? Read more about methods and features in docs!
+Ok ok, what if you are SUPER_PRO_1337_SQL_GOY, and you need 100% of SQL features. Check this out.
+
+```python
+from sqllex import *
+
+db = SQLite3x(
+    path='./path/my_awesome.db',
+    template={
+        "groups": {
+            "group_id": [INTEGER, PRIMARY_KEY, UNIQUE],
+            "name": [TEXT, NOT_NULL, DEFAULT, 'Unknown'],
+        }
+    }
+)
+
+# Insert some groups into groups table
+db.insertmany(
+    'groups',
+    group_id=[1, 2],
+    name=["Admin", "User"],
+)
+
+
+# Let's create a new table with some FOREIGN_KEYs
+db.create_table(
+    name='users',
+    columns={
+        "username": [TEXT, NOT_NULL, DEFAULT, 'Unknown'],
+        "group_id": INTEGER,
+        FOREIGN_KEY: {
+            "group_id": ["groups", "group_id"]
+        },
+    },
+    without_rowid=True,
+    as_=__something__
+)
+
+# Insert some users into users table
+db.insertmany(
+    table='users',
+    username=['User_1', 'User_2', 'User_3', 'User_4', 'User_5', 'User_6'],
+    group_id=[1, 2, 1, 1, 2, 2]
+)
+
+db.insert(
+    or_=REPLACE,
+    table='users',
+    username='User_4',
+    group_id=1,
+)
+
+# ANd now take it back whith some conditions
+users = db.select(
+    select='username',
+    table='users',
+    where={
+        'group_id': 2
+    },
+    order_by={
+        'username': 'DESC'
+    },
+    with_=__something__,
+    limit=10,
+    offset=1,
+    execute=True,
+)
+
+# and do your business ...
+```
+
+# [Not enough? Need examples? Read more in Sqllex Wiki! (link)](https://github.com/V1A0/sqllex/wiki)
+
+-----
+### Other
+#### [TODO-list](todo.md)
