@@ -294,7 +294,9 @@ def tuples_to_lists(func: callable) -> callable:
     def wrapper(*args, **kwargs):
         ret_ = func(*args, **kwargs)
         if isinstance(ret_, list):
-            return list(map(lambda item: list(item), func(*args, **kwargs)))
+            return list(map(lambda item:
+                            list(item) if len(item) > 1 else list(item)[0],
+                            func(*args, **kwargs)))
         else:
             return ret_
 
@@ -367,6 +369,7 @@ def crop(columns: Union[tuple, list], values: Union[tuple, list]) -> tuple:
             return columns[:_len_], values[:_len_]
 
     return columns, values
+
 
 
 class SQLite3x:
