@@ -1,4 +1,5 @@
 from sqllex.exceptions import TableInfoError, ArgumentError, ExecuteError
+from typing import Literal, Mapping, Union, List, AnyStr, Any
 from loguru import logger
 from sqllex.constants.sql import *
 from sqllex.types_.types import *
