@@ -295,9 +295,15 @@ def tuples_to_lists(func: callable) -> callable:
     def wrapper(*args, **kwargs):
         ret_ = func(*args, **kwargs)
         if isinstance(ret_, list):
-            return list(map(lambda item:
-                            list(item) if len(item) > 1 else list(item)[0],
-                            func(*args, **kwargs)))
+            lists = []
+            for val in list(ret_):
+                if len(val) > 1:
+                    lists.append([list(val)])
+                else:
+                    lists.append(list(val)[0])
+
+            return lists
+
         else:
             return ret_
 
@@ -896,7 +902,7 @@ class SQLite3x:
                limit: LimitOffsetType = None,
                offset: LimitOffsetType = None,
                **kwargs
-               ) -> Union[SQLRequest, List[List]]:
+               ) -> Union[SQLStatement, List[List]]:
         """
             SELECT data from table
 

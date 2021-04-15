@@ -1,5 +1,6 @@
 from sqllex import SQLite3x, INTEGER, PRIMARY_KEY, UNIQUE, TEXT, NOT_NULL, DEFAULT, FOREIGN_KEY, REPLACE
 from os import walk, getcwd, remove
+from sqlite3 import IntegrityError
 from loguru import logger
 from time import sleep
 
@@ -39,97 +40,95 @@ DB_TEMPLATE = {
 
 }
 
-
 ####################################################
 # CREATE database by template
 db = SQLite3x(path=DB_NAME, template=DB_TEMPLATE)
-
-db.insert('users', ["user_1", 1],
-          with_={
-              'some': db.select('*', 'users', execute=False)
-          },
-          or_=REPLACE
-          )
 
 if not is_exist(DB_NAME):
     raise TestFailed("DB is not exist")
 else:
     logger.info("Creating database passed")
 
-
 ####################################################
 # INSERT data int DB and SELECT
 # 1'st table
 db.insert("groups", group_id=1, name="Admins")
 db.insert("groups", group_id=2, name="Other")
-# Have to fail
-try:
-    db.insert("groups", group_id=2, name="Other")
-except Exception:
-    logger.info("INSERT #1 passed")
 
-
-####################################################
-# 2'nd table
-db.insert("users", ["user_1", 1])
-db.insert("users", ("user_2", 2))
-db.insert("users", "user_3", 2)
-db.insert("users", username="user_4", group_id=1)
-db.insert("users", username="user_5")
-db.insert("users", {
-    'username': "user_6",
+db.insert('users', ['user_1', 1])
+db.insert('users', ('user_2', 2))
+db.insert('users', 'user_3', 2)
+db.insert('users', username='user_4', group_id=1)
+db.insert('users', username='user_5')
+db.insert('users', {
+    'username': 'user_6',
     'group_id': 1
 })
-
+db.insert('users', ['user_7', 1],
+          with_={
+              'some': db.select('*', 'users', execute=False)
+          },
+          or_=REPLACE
+          )
 
 # Have to fail
+
 try:
     db.insert("users", group_id=1)
-except Exception:
+except IntegrityError:
+    logger.info("INSERT #1 passed")
+try:
+    db.insert("groups", group_id=1, name="Fail")
+except IntegrityError as e:
     logger.info("INSERT #2 passed")
-
 
 ####################################################
 # SELECT data from DB
-logger.info(
-    f"All from users: \n"
-    f"{db.select(from_table='users')}\n"
+selects = []
+
+selects.append(
+    db.select(from_table='users')
 )
 
-logger.info(
-    f"All from users: \n"
-    f"{db.select(['username', 'group_id'], 'users')}"
+selects.append(
+    db.select(['username', 'group_id'], 'users')
 )
 
-logger.info(
-    f"Usernames from users: \n"
-    f"{db.select(select=['username'], from_table='users')}"
+selects.append(
+    db.select(select=['username'], from_table='users')
 )
 
-logger.info(
-    f"All from users where group_id=1: \n"
-    f"{db.select(from_table='users', where={'group_id': 1})}"
+selects.append(
+    db.select(from_table='users', where={'group_id': 1})
 )
 
-logger.info(
-    f"All from users where group_id=1 and username=user_1, order_by username \n"
-    f"{db.select(from_table='users', where={'group_id': 1, 'username': 'user_1'}, order_by='username')}"
+selects.append(
+    db.select(from_table='users', where={'group_id': 1, 'username': 'user_1'}, order_by='username')
 )
 
-logger.info(
-    f"All from users where group_id=1, order_by username DESC\n"
-    f"{db.select(from_table='users', where={'group_id': 1}, order_by={'username': 'DESC'})}"
+selects.append(
+    db.select(from_table='users', where={'group_id': 1}, order_by={'username': 'DESC'})
 )
 
-logger.info(
-    f"All from users where group_id=1, order_by [2,1] \n"
-    f"{db.select(from_table='users', where={'group_id': 1}, order_by=[2,1])}"
+selects.append(
+    db.select(from_table='users', where={'group_id': 1}, order_by=[2, 1])
 )
 
-logger.info(
-    f"Script for the last one: \n"
-    f"{db.select(from_table='users', where={'group_id': 4}, execute=False)}"
+
+selects.append(
+    db.select(from_table='users', where={'group_id': 4}, execute=False)
 )
+
+
+logger.info(f"\nAll from users: {selects[0]}")
+logger.info(f"\nUsernames and group_id from users: {selects[1]}")
+logger.info(f"\nUsernames from users: {selects[2]}")
+logger.info(f"\nAll from users where group_id=1: {selects[3]}")
+logger.info(f"\nAll from users where group_id=1 and username=user_1, order_by username: {selects[4]}")
+logger.info(f"\nAll from users where group_id=1, order_by username by DESC: {selects[5]}")
+logger.info(f"\nAll from users where group_id=1, order_by [2,1]: {selects[6]}")
+logger.info(f"\nScript SELECT where group_id=4: {selects[7].request.script}")
+
 
 
 ####################################################
@@ -139,10 +138,8 @@ db.insertmany("users", [(20, 1), (21, 2), (23, 3)])
 db.insertmany("users", [[30], [31, 2]])
 db.insertmany("users", username=[41, 42, 43], group_id=[1, 2])
 
-
 db.replace("groups", [1, 'AAdmins'])
 db.replace("groups", group_id=2, name="IDK")
-
 
 db.insert("users", username="user_411", group_id=1,
           or_=REPLACE,
@@ -153,7 +150,6 @@ db.insert("users", username="user_411", group_id=1,
                   execute=False
               )}
           )
-
 
 db.insert("users", ["user_422", 1],
           or_=REPLACE,
@@ -174,5 +170,3 @@ while rem.lower() not in ['y', 'n']:
     rem = input(f"\n\nAll tests passed! \nRemove {DB_NAME}?: ")
     if rem == 'y':
         remove(f"{getcwd()}/{DB_NAME}")
-
-

@@ -13,7 +13,7 @@ setup(
     description='Better than sqlite3',
     author='v1a0',
     url='https://github.com/v1a0/sqllex',
-    download_url='https://github.com/V1A0/sqllex/archive/refs/tags/v0.1.5.1.tar.gz',
+    download_url='https://github.com/V1A0/sqllex/archive/refs/tags/v0.1.5.2.tar.gz',
     keywords=['sql', 'sql3', 'sqlite', 'sqlite3', 'sqllex', 'db', 'database', 'easy'],
     install_requires=[
         'colorama==0.4.4',
