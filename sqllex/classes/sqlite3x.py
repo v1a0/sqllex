@@ -1,8 +1,8 @@
 from sqllex.exceptions import TableInfoError, ArgumentError, ExecuteError
 from typing import Literal, Mapping, Union, List, AnyStr, Any
-from loguru import logger
+from sqllex.debug import logger
 from sqllex.constants.sql import *
-from sqllex.types_.types import *
+from sqllex.types.types import *
 import sqlite3
 
 
@@ -14,12 +14,12 @@ def __with__(func: callable) -> callable:
 
     And adding values into :values: if it has
 
-    :kwarg with_: Mapping[str, SQLRequest]
+    :kwarg WITH: Mapping[str, SQLRequest]
 
     """
 
     def wrapper(*args, **kwargs):
-        with_dict: Mapping[str, SQLRequest] = kwargs.pop('with_')
+        with_dict: Mapping[str, SQLStatement] = kwargs.pop('WITH')
 
         if with_dict:
             script = f"WITH "
@@ -36,7 +36,7 @@ def __with__(func: callable) -> callable:
                     raise TypeError
 
                 if issubclass(type(condition), SQLRequest):
-                    script += f"{var} AS ({condition.script}), "
+                    script += f"{var} AS ({condition.script.strip()}), "  # .strip() removing spaces around
                     values += list(condition.values)
                 else:
                     script += f"{var} AS ({condition}), "
@@ -65,20 +65,67 @@ def __where__(func: callable) -> callable:
 
         And adding values into :values: if it has
 
-        where : Mapping[str, SQLRequest]
+        WHERE : Mapping[str, SQLRequest]
 
     """
+
     def wrapper(*args, **kwargs):
-        if 'where' in kwargs.keys():
-            where_dict: Mapping[str, SQLRequest] = kwargs.pop('where')
+        if 'WHERE' in kwargs.keys():
+            where_: WhereType = kwargs.pop('WHERE')
         else:
-            where_dict = {}
+            where_ = {}
 
         stmt: SQLStatement = func(*args, **kwargs)
 
-        if where_dict:
-            stmt.request.script += f"WHERE ({'=? AND '.join(wh for wh in where_dict.keys())}=?) "
-            stmt.request.values = tuple(list(stmt.request.values) + list(where_dict.values()))
+        if where_:
+            stmt.request.script += f"WHERE ("
+
+            if isinstance(where_, tuple):
+                where_ = list(where_)
+
+            if isinstance(where_, list):
+                if isinstance(where_[0], str):
+                    where_ = [where_]
+                if isinstance(where_[0], list):
+                    new_where = {}
+
+                    for wh in where_:
+                        if isinstance(wh[0], str) and len(wh) > 1:
+                            new_where.update({wh[0]: wh[1:]})
+                            # from [ 'age', '!=', [10, 11] ]
+                            # to { 'age': ['!=', [10, 11]] }
+                        else:
+                            raise TypeError
+
+                    where_ = new_where
+
+                else:
+                    raise TypeError
+
+            if isinstance(where_, dict):  # {'age': 11} or {'age': ['!=', 10, 11]} or {'age': [10, 11]}
+                for (key, values) in where_.items():
+                    if not isinstance(values, list):
+                        values = [values]
+
+                    if len(values) > 1 and values[0] in ['<', '>', '=', '!=']:  # {'age': ['!=', 10, 11]}
+                        operator = values.pop(0)
+                        if len(values) == 1 and isinstance(values[0], list):  # {'age': ['!=', [10, 11] ]}
+                            values = values[0]
+                    else:
+                        operator = '='  # {'age': [10, 11]}
+
+                    stmt.request.script += f"{f'{operator}? AND '.join(key for _ in values)}{operator}? AND "
+                    stmt.request.values = tuple(list(stmt.request.values) + list(values))
+
+                stmt.request.script = stmt.request.script.strip()[:-3]  # removing AND in the end
+
+            elif isinstance(where_, str):
+                stmt.request.script += f"{where_}"
+
+            else:
+                raise TypeError
+
+            stmt.request.script = f"{stmt.request.script.strip()}) "  # .strip() removing spaces around
 
         return stmt
 
@@ -91,18 +138,18 @@ def __or_param__(func: callable) -> callable:
 
         If it has, adding into beginning of :param script: or_statement
 
-        or_ : OrOptionsType
+        OR : OrOptionsType
 
     """
 
     def wrapper(*args, **kwargs):
-        if 'or_' in kwargs.keys():
-            _or: OrOptionsType = kwargs.pop('or_')
+        if 'OR' in kwargs.keys():
+            or_arg: OrOptionsType = kwargs.pop('OR')
 
-            if _or:
+            if or_arg:
                 kwargs.update(
                     {
-                        'script': kwargs.get('script') + f"OR {_or}"
+                        'script': kwargs.get('script') + f" OR {or_arg}"
                     })
 
         return func(*args, **kwargs)
@@ -112,17 +159,17 @@ def __or_param__(func: callable) -> callable:
 
 def __order_by__(func: callable) -> callable:
     """
-        Decorator for catching order_by argument
+        Decorator for catching ORDER_BY argument
 
         If it has, adding into beginning of :param script: order_by_statement
 
-        order_by : OrderByType
+        ORDER_BY : OrderByType
 
     """
 
     def wrapper(*args, **kwargs):
-        if 'order_by' in kwargs.keys():
-            order_by: OrderByType = kwargs.pop('order_by')
+        if 'ORDER_BY' in kwargs.keys():
+            order_by: OrderByType = kwargs.pop('ORDER_BY')
         else:
             order_by = False
 
@@ -151,17 +198,17 @@ def __order_by__(func: callable) -> callable:
 
 def __limit__(func: callable) -> callable:
     """
-        Decorator for catching limit argument
+        Decorator for catching LIMIT argument
 
-        If it has, adding into beginning of :param limit: order_by_statement
+        If it has, adding into beginning of :param LIMIT: order_by_statement
 
-        limit : OrderByType
+        LIMIT : OrderByType
 
     """
 
     def wrapper(*args, **kwargs):
-        if 'limit' in kwargs.keys():
-            limit: LimitOffsetType = kwargs.pop('limit')
+        if 'LIMIT' in kwargs.keys():
+            limit: LimitOffsetType = kwargs.pop('LIMIT')
         else:
             limit: bool = False
 
@@ -179,17 +226,17 @@ def __limit__(func: callable) -> callable:
 
 def __offset__(func: callable) -> callable:
     """
-        Decorator for catching limit argument
+        Decorator for catching OFFSET argument
 
-        If it has, adding into beginning of :param limit: order_by_statement
+        If it has, adding into beginning of :param OFFSET: offset_statement
 
-        limit : OrderByType
+        OFFSET : OrderByType
 
     """
 
     def wrapper(*args, **kwargs):
-        if 'offset' in kwargs.keys():
-            offset: LimitOffsetType = kwargs.pop('offset')
+        if 'OFFSET' in kwargs.keys():
+            offset: LimitOffsetType = kwargs.pop('OFFSET')
         else:
             offset: bool = False
 
@@ -224,11 +271,18 @@ def __execute__(func: callable):
             execute = True
 
         stmt: SQLStatement = func(*args, **kwargs)
+        stmt.request.script = stmt.request.script.strip()
 
         if not execute:
             return stmt
 
-        print(stmt.request.script, stmt.request.values if stmt.request.values else '', '\n')
+        logger.debug(
+            f"\n"
+            f"{stmt.request.script.strip()}\n"
+            f"{stmt.request.values if stmt.request.values else ''}"
+            f"\n"
+        )
+
         with sqlite3.connect(stmt.path) as conn:
             cur = conn.cursor()
 
@@ -265,11 +319,18 @@ def __executemany__(func: callable):
             execute = True
 
         stmt: SQLStatement = func(*args, **kwargs)
+        stmt.request.script = stmt.request.script.strip()
 
         if not execute:
             return stmt
 
-        print(stmt.request.script, stmt.request.values if stmt.request.values else '', '\n')
+        logger.debug(
+            f"\n"
+            f"{stmt.request.script.strip()}\n"
+            f"{stmt.request.values if stmt.request.values else ''}"
+            f"\n"
+        )
+
         with sqlite3.connect(stmt.path) as conn:
             cur = conn.cursor()
             cur.executemany(stmt.request.script, stmt.request.values)
@@ -344,7 +405,7 @@ def args_parser(func: callable):
                 for arg in args:
                     if isinstance(arg, dict):
                         kwargs.update(arg)
-                        print(arg)
+                        # logger.debug(arg)
                         args.remove(arg)
 
             args = (arg0, *args)
@@ -376,7 +437,6 @@ def crop(columns: Union[tuple, list], values: Union[tuple, list]) -> tuple:
             return columns[:_len_], values[:_len_]
 
     return columns, values
-
 
 
 class SQLite3x:
@@ -500,7 +560,7 @@ class SQLite3x:
     @__execute__
     @__or_param__
     @__with__
-    def _insert_stmt_(self, *args: Any, table: AnyStr, script='', values=(), **kwargs: Any):
+    def _insert_stmt_(self, *args: Any, TABLE: AnyStr, script='', values=(), **kwargs: Any):
         """
             INSERT INTO request (aka insert-stmt) and REPLACE INTO request
         """
@@ -513,7 +573,7 @@ class SQLite3x:
             if isinstance(args, (str, int)):  # if args contains only one argument
                 args = list(args)
 
-            _columns = self.get_columns(table=table)
+            _columns = self.get_columns(table=TABLE)
             _columns, args = crop(_columns, args)
             insert_values = args
 
@@ -525,7 +585,7 @@ class SQLite3x:
             raise ArgumentError(args_kwargs="Unset", error="No data to insert")
 
         script += f"{' ' if script else ''}" \
-                  f"INTO {table} (" \
+                  f"INTO {TABLE} (" \
                   f"{', '.join(column for column in _columns)}) " \
                   f"VALUES (" \
                   f"{', '.join('?' * len(insert_values))}) "
@@ -535,7 +595,7 @@ class SQLite3x:
         return SQLStatement(SQLRequest(script, tuple(value for value in all_values)), self.path)
 
     @__executemany__
-    def _insertmany_stmt_(self, table: AnyStr, *args: Union[list[list], list[tuple], tuple[list], tuple[tuple],
+    def _insertmany_stmt_(self, TABLE: AnyStr, *args: Union[list[list], list[tuple], tuple[list], tuple[tuple],
                                                             list, tuple], **kwargs: Any):
         """
             Parent method for insertmany
@@ -548,7 +608,7 @@ class SQLite3x:
 
             max_l = max(map(lambda arg: len(arg), values))  # max len of arg in values
             temp_ = [0 for _ in range(max_l)]  # example values [] for script
-            stmt = self.insert(table, temp_, execute=False)
+            stmt = self.insert(TABLE, temp_, execute=False)
             _len = len(stmt.request.values)
 
             for i in range(len(values)):
@@ -566,7 +626,7 @@ class SQLite3x:
             for i in range(len(args)):
                 temp_[columns[i]] = args[i][0]
 
-            stmt = self.insert(table, temp_, execute=False)
+            stmt = self.insert(TABLE, temp_, execute=False)
             max_l = max(map(lambda val: len(val), args))  # max len of arg in values
 
             for _ in range(max_l):
@@ -592,87 +652,85 @@ class SQLite3x:
     @__order_by__
     @__where__
     @__with__
-    def _select_stmt_(self, script='', values=(), method: AnyStr = 'SELECT ', select: Union[List[str], str] = None,
-                      table: str = None, **kwargs):
+    def _select_stmt_(self, script='', values=(), method: AnyStr = 'SELECT ', SELECT: Union[List[str], str] = None,
+                      TABLE: str = None):
         """
             Parent method for all SELECT-like methods
         """
-        if kwargs:
-            if kwargs.get('from_table'):
-                table = kwargs.pop('from_table')
-            if kwargs.get('columns'):
-                select = kwargs.pop('columns')
 
-        if not table:
-            raise ArgumentError(from_table="Argument unset and have not default value")
+        if not TABLE:
+            raise ArgumentError(TABLE="Argument unset and have not default value")
 
-        if select is None:
-            logger.warning(ArgumentError(select="Argument not specified, default value is '*'"))
-            select = ['*']
+        if SELECT is None:
+            logger.warning(ArgumentError(SELECT="Argument not specified, default value is '*'"))
+            SELECT = ['*']
 
-        elif isinstance(select, str):
-            select = [select]
+        elif isinstance(SELECT, str):
+            SELECT = [SELECT]
 
         script += f"{method} " \
-                  f"{', '.join(sel for sel in select)} " \
-                  f"FROM {table} "
+                  f"{', '.join(sel for sel in SELECT)} " \
+                  f"FROM {TABLE} "
 
         return SQLStatement(SQLRequest(script, values), self.path)
 
     @__execute__
     @__where__
     @__with__
-    def _delete_stmt_(self, script='', values=(), table: str = None):
+    def _delete_stmt_(self, script='', values=(), TABLE: str = None):
         """
             Parent method for DELETE method
         """
-        script += f"DELETE FROM {table} "
+        script += f"DELETE FROM {TABLE} "
         return SQLStatement(SQLRequest(script, values), self.path)
 
     @__execute__
     @__where__
     @__or_param__
     @__with__
-    def _update_stmt_(self, table: AnyStr, set_: Union[list, tuple, dict], script='', values=(), from_as=None,
+    def _update_stmt_(self, TABLE: AnyStr, SET: Union[list, tuple, dict] = None, script='', values=(),
                       **kwargs):
         """
             Parent method for UPDATE
         """
+        set_ = SET if SET else None
 
-        if from_as is None:
-            from_as = {}
         if not set_ and kwargs:
             set_ = kwargs
-        if isinstance(set_, dict):
-            set_ = [list(set_.keys())[0], list(set_.values())[0]]
-        elif isinstance(set_, tuple):
+
+        if isinstance(set_, tuple):
             set_ = list(set_)
 
-        values += tuple(list(values) + [set_[1]])
+        if isinstance(set_, list):
+            new_set = {}
 
-        if from_as:
-            fa_script = list(from_as.values())[0].script
-            fa_var = list(from_as.keys())[0]
-            fa_values = list(from_as.values())[0].values
-            values += tuple(list(values) + list(fa_values))
-        else:
-            fa_script = ''
-            fa_var = ''
+            if len(set_) % 2 == 0:  # for ['name', 'Alex', 'age', 2]
+                for i in range(len(set_)//2):
+                    new_set.update(
+                        {
+                            set_[2 * i]: set_[2 * i + 1]
+                        })
 
-        script += f"UPDATE {table} " \
-                  f"SET {set_[0]} = (?) " \
-                  f"{f'FROM {fa_script} AS {fa_var} ' if (fa_script and fa_var) else ''}"
+            else:
+                raise TypeError
+
+            set_ = new_set
+
+        values = tuple(list(values) + list(set_.values()))
+
+        script += f"UPDATE {TABLE} " \
+                  f"SET {'=?, '.join(s for s in list(set_.keys()))}=? "
 
         return SQLStatement(SQLRequest(script=script, values=values), self.path)
 
     @__execute__
-    def _drop_stmt_(self, table: AnyStr, if_exist: bool = True, script='', **kwargs):
+    def _drop_stmt_(self, TABLE: AnyStr, IF_EXIST: bool = True, script='', **kwargs):
         """
             Parent method for drop
         """
         script += f"DROP TABLE " \
-                  f"{'IF EXISTS' if if_exist else ''} " \
-                  f"{table} "
+                  f"{'IF EXISTS' if IF_EXIST else ''} " \
+                  f"{TABLE} "
         return SQLStatement(SQLRequest(script=script), self.path)
 
     # ============================== PUBLIC METHODS ==============================
@@ -844,164 +902,177 @@ class SQLite3x:
 
     @args_parser
     def insert(self,
-               table: AnyStr,
+               TABLE: AnyStr,
                *args: InsertData,
-               or_: OrOptionsType = None,
-               with_: WithType = None,
+               OR: OrOptionsType = None,
+               WITH: WithType = None,
+               execute: bool = True,
                **kwargs: Any
                ) -> Union[None, SQLStatement]:
         """
             INSERT data into db's table
 
-            :param table: Table name for inserting
-            :param or_: Optional parameter. If INSERT failed, type OrOptionsType
-            :param with_: Optional parameter.
+            :param TABLE: Table name for inserting
+            :param OR: Optional parameter. If INSERT failed, type OrOptionsType
+            :param WITH: Optional parameter.
+            :param execute: execute script and return db's answer (True) or return script (False)
 
         """
-        return self._insert_stmt_(script="INSERT ", or_=or_, table=table, *args, **kwargs, with_=with_)
+        return self._insert_stmt_(script="INSERT", OR=OR, TABLE=TABLE, *args, execute=execute, **kwargs, WITH=WITH)
 
     @args_parser
     def replace(self,
-                table: AnyStr,
+                TABLE: AnyStr,
                 *args: Any,
-                with_: WithType = None,
+                WITH: WithType = None,
+                execute: bool = True,
                 **kwargs: Any
                 ) -> Union[None, SQLStatement]:
         """
             REPLACE data into db's table
 
-            :param table: Table name for inserting
-            :param with_: Optional parameter.
+            :param TABLE: Table name for inserting
+            :param WITH: Optional parameter.
+            :param execute: execute script and return db's answer (True) or return script (False)
 
         """
-        return self._insert_stmt_(script="REPLACE ", table=table, *args, **kwargs, with_=with_)
+        return self._insert_stmt_(script="REPLACE", TABLE=TABLE, *args, execute=execute, **kwargs, WITH=WITH)
 
     def insertmany(self,
-                   table: AnyStr,
+                   TABLE: AnyStr,
                    *args: Union[list[list], list[tuple], tuple[list], tuple[tuple], list, tuple],
+                   execute: bool = True,
                    **kwargs: Any
                    ) -> Union[None, SQLStatement]:
         """
             INSERT many data into db's table.
             The same as regular insert but for lists of inserting values
 
-            :param table: table name for inserting
+            :param TABLE: table name for inserting
+            :param execute: execute script and return db's answer (True) or return script (False)
             :param args: 1'st way set values for insert
             :param kwargs: 2'st way set values for insert
 
         """
-        return self._insertmany_stmt_(table, *args, **kwargs)
+        return self._insertmany_stmt_(TABLE, *args, execute=execute, **kwargs)
 
     def select(self,
-               select: Union[List[str], str] = None,
-               table: str = None,
-               where: dict = None,
+               SELECT: Union[List[str], str] = None,
+               TABLE: str = None,
+               FROM: str = None,
+               WHERE: WhereType = None,
+               WITH: WithType = None,
+               ORDER_BY: OrderByType = None,
+               LIMIT: LimitOffsetType = None,
+               OFFSET: LimitOffsetType = None,
                execute: bool = True,
-               with_: WithType = None,
-               order_by: OrderByType = None,
-               limit: LimitOffsetType = None,
-               offset: LimitOffsetType = None,
                **kwargs
                ) -> Union[SQLStatement, List[List]]:
         """
             SELECT data from table
 
-            :param select: columns to select. Value '*' by default
-            :param table: table for selection
-            :param where: optional parameter for conditions, example: {'name': 'Alex', 'group': 2}
-            :param kwargs: shadow names holder (columns, from_table)
+            :param SELECT: columns to select. Value '*' by default
+            :param TABLE: table for selection
+            :param FROM: table for selection
+            :param WHERE: optional parameter for conditions, example: {'name': 'Alex', 'group': 2}
+            :param WITH: with_statement
+            :param ORDER_BY: optional parameter for conditions, example: {'name': ['NULLS', 'LAST']}
+            :param LIMIT: optional parameter for conditions, example: 10
+            :param OFFSET: optional parameter for conditions, example: 5
             :param execute: execute script and return db's answer (True) or return script (False)
-            :param with_: with_statement
-            :param order_by: optional parameter for conditions, example: {'name': ['NULLS', 'LAST']}
-            :param limit: optional parameter for conditions, example: 10
-            :param offset: optional parameter for conditions, example: 5
 
             :return: List[List] of selects
 
         """
-        return self._select_stmt_(select=select, table=table, method='SELECT', where=where, execute=execute,
-                                  with_=with_, order_by=order_by, limit=limit, offset=offset, **kwargs)
+        if not TABLE and FROM:
+            TABLE = FROM
+
+        return self._select_stmt_(SELECT=SELECT, TABLE=TABLE, method='SELECT', WHERE=WHERE, execute=execute,
+                                  WITH=WITH, ORDER_BY=ORDER_BY, LIMIT=LIMIT, OFFSET=OFFSET, **kwargs)
 
     def select_distinct(self,
-                        select: Union[List[str], str] = None,
-                        table: str = None, where: dict = None,
+                        SELECT: Union[List[str], str] = None,
+                        TABLE: str = None,
+                        WHERE: WhereType = None,
+                        WITH: WithType = None,
+                        ORDER_BY: OrderByType = None,
+                        LIMIT: LimitOffsetType = None,
+                        OFFSET: LimitOffsetType = None,
                         execute: bool = True,
-                        with_: WithType = None,
-                        order_by: OrderByType = None,
-                        limit: LimitOffsetType = None,
-                        offset: LimitOffsetType = None,
                         **kwargs
                         ) -> Union[SQLRequest, List]:
-        return self._select_stmt_(select=select, table=table, method='SELECT DISTINCT', where=where, execute=execute,
-                                  with_=with_, order_by=order_by, limit=limit, offset=offset, **kwargs)
+        return self._select_stmt_(SELECT=SELECT, TABLE=TABLE, method='SELECT DISTINCT', WHERE=WHERE, execute=execute,
+                                  WITH=WITH, ORDER_BY=ORDER_BY, LIMIT=LIMIT, OFFSET=OFFSET, **kwargs)
 
     def select_all(self,
-                   select: Union[List[str], str] = None,
-                   table: str = None, where: dict = None,
+                   SELECT: Union[List[str], str] = None,
+                   TABLE: str = None,
+                   WHERE: WhereType = None,
+                   WITH: WithType = None,
+                   ORDER_BY: OrderByType = None,
+                   LIMIT: LimitOffsetType = None,
+                   OFFSET: LimitOffsetType = None,
                    execute: bool = True,
-                   with_: WithType = None,
-                   order_by: OrderByType = None,
-                   limit: LimitOffsetType = None,
-                   offset: LimitOffsetType = None,
                    **kwargs
                    ) -> Union[SQLRequest, List]:
 
-        return self._select_stmt_(select=select, table=table, method='SELECT ALL ', where=where, execute=execute,
-                                  with_=with_, order_by=order_by, limit=limit, offset=offset, **kwargs)
+        return self._select_stmt_(method='SELECT ALL ', execute=execute, SELECT=SELECT, TABLE=TABLE, WHERE=WHERE,
+                                  WITH=WITH, ORDER_BY=ORDER_BY, LIMIT=LIMIT, OFFSET=OFFSET, **kwargs)
 
     def delete(self,
-               table: str,
-               where: dict = None,
-               with_: WithType = None,
+               TABLE: str,
+               WHERE: WhereType = None,
+               WITH: WithType = None,
+               execute: bool = True,
                **kwargs
                ) -> Union[None, SQLStatement]:
         """
             DELETE FROM table WHERE {something}
 
-            :param table: Table name as string
-            :param where: where_statement
-            :param with_: with_statement
+            :param TABLE: Table name as string
+            :param WHERE: where_statement
+            :param WITH: with_statement
+            :param execute: execute script and return db's answer (True) or return script (False)
 
         """
 
-        return self._delete_stmt_(table=table, where=where, with_=with_, **kwargs)
+        return self._delete_stmt_(TABLE=TABLE, WHERE=WHERE, WITH=WITH, execute=execute, **kwargs)
 
     def update(self,
-               table: AnyStr,
-               set_: Union[list, tuple, dict],
-               where: dict,
-               or_: OrOptionsType = None,
+               TABLE: AnyStr,
+               SET: Union[list, tuple, dict],
+               WHERE: WhereType,
+               OR: OrOptionsType = None,
                execute: bool = True,
-               from_as: Mapping[str, SQLRequest] = None,
-               with_: WithType = None, **kwargs):
+               WITH: WithType = None, **kwargs):
         """
             UPDATE table_name SET column_name=something WHERE x=y and more complex requests
 
-            :param table: Table name
-            :param set_: Column and value to set
-            :param where: where_statement
-            :param or_: Optional parameter. If INSERT failed, type OrOptionsType
+            :param TABLE: Table name
+            :param SET: Column and value to set
+            :param WHERE: where_statement
+            :param OR: Optional parameter. If INSERT failed, type OrOptionsType
             :param execute: execute script and return db's answer (True) or return script (False)
-            :param with_: with_statement
+            :param WITH: with_statement
 
         """
-        return self._update_stmt_(table=table, set_=set_, or_=or_, where=where, execute=execute,
-                                  with_=with_, from_as=from_as, **kwargs)
+        return self._update_stmt_(TABLE=TABLE, SET=SET, OR=OR, WHERE=WHERE, execute=execute,
+                                  WITH=WITH, **kwargs)
 
     def drop(self,
-             table: AnyStr,
-             if_exist: bool = True,
+             TABLE: AnyStr,
+             IF_EXIST: bool = True,
              execute: bool = True,
              **kwargs
              ):
         """
             DROP TABLE (IF EXIST) table_name
 
-            :param table: Table name
-            :param if_exist: Check is table exist (boolean)
+            :param TABLE: Table name
+            :param IF_EXIST: Check is table exist (boolean)
             :param execute: execute script and return db's answer (True) or return script (False)
         """
-        return self._drop_stmt_(table=table, if_exist=if_exist, execute=execute, **kwargs)
+        return self._drop_stmt_(TABLE=TABLE, IF_EXIST=IF_EXIST, execute=execute, **kwargs)
 
 
 __all__ = ["SQLite3x"]

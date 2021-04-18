@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Literal, Mapping, Union, List, AnyStr
+from typing import Literal, Mapping, Union, List, Tuple, AnyStr
 from numbers import Number
 
 
@@ -14,6 +14,9 @@ class SQLRequest:
 
     def __str__(self):
         return f"""{{SQLiteScript: script={self.script}, values={self.values}}}"""
+
+    def __eq__(self, other):
+        return self.script == other.script and self.values == other.values
 
 
 class SQLStatement:
@@ -34,7 +37,10 @@ DataType = Literal["TEXT", "NUMERIC", "INTEGER", "REAL", "NONE"]
 
 # Types of constants used as keywords for column settings
 ConstrainType = Union[
-    Literal["NOT NULL", "DEFAULT", "UNIQUE", "CHECK", "AUTOINCREMENT", "PRIMARY KEY", "REFERENCES", "WITH", "OR"],
+    Literal[
+        "*", "NOT NULL", "DEFAULT", "UNIQUE", "CHECK", "AUTOINCREMENT",
+        "PRIMARY KEY", "REFERENCES", "WITH", "OR", "NULL"
+    ],
     ForeignKey
 ]
 
@@ -59,7 +65,14 @@ InsertData = Union[NumStr, tuple, List, Mapping]
 OrOptionsType = Literal["ABORT", "FAIL", "IGNORE", "REPLACE", "ROLLBACK"]
 
 # Type for parameter of WITH argument
-WithType = Mapping[str, Union[SQLRequest, str]]
+WithType = Mapping[str, Union[SQLStatement, str]]
+
+# Type for parameter of WITH argument
+WhereType = Union[
+    AnyStr,
+    Tuple[NumStr], List[Union[NumStr, List[NumStr]]],
+    Mapping[str, Union[SQLStatement, NumStr]]
+]
 
 # Type for parameter of ORDER BY argument
 OrderByType = Union[int, str, list, tuple, Mapping[str, Union[str, int, list, tuple]]]
@@ -83,6 +96,7 @@ __all__ = [
     'InsertData',
     'OrOptionsType',
     'WithType',
+    'WhereType',
     'OrderByType',
     'LimitOffsetType',
 ]
