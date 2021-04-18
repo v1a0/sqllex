@@ -22,6 +22,30 @@ Use databases without thinking about SQL. Let me show you how sqllex makes
 your life easier. Imagine you need create some database, save some data
 into it and take it back. That's how your code will look like.
 
+
+```python
+from sqllex import *
+
+db = SQLite3x(                              
+    path='my_data.db',                      
+    template={                              
+        "users": {                          
+            "username": [TEXT, NOT_NULL],   
+            "age": INTEGER,                 
+        }                                   
+    }                                       
+)
+
+db.insert('users', ['Sqllex', 33])
+
+users = db.select('username', FROM='users', WHERE={'age': 33})
+
+print(users)  # ['Sqllex']
+```
+
+<details>
+<summary id="what1">What's going on there?</summary>
+
 ```python
 from sqllex import *
 
@@ -48,6 +72,7 @@ users = db.select('username', FROM='users', WHERE={'age': 33})
 print(users)  # ['Sqllex']
 ```
 
+</details>
 
 Ok, what if you need more complex structure with FOREIGN KEYs? Not a big deal.
 
