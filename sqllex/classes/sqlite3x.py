@@ -107,7 +107,7 @@ def __where__(func: callable) -> callable:
                     if not isinstance(values, list):
                         values = [values]
 
-                    if len(values) > 1 and values[0] in ['<', '>', '=', '!=']:  # {'age': ['!=', 10, 11]}
+                    if len(values) > 1 and values[0] in ['<', '<<', '<=', '>=', '>>', '>', '=', '==', '!=', '<>']:  # {'age': ['!=', 10, 11]}
                         operator = values.pop(0)
                         if len(values) == 1 and isinstance(values[0], list):  # {'age': ['!=', [10, 11] ]}
                             values = values[0]
