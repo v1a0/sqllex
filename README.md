@@ -43,8 +43,9 @@ users = db.select('username', FROM='users', WHERE={'age': 33})
 print(users)  # ['Sqllex']
 ```
 
+<br>
 <details>
-<summary id="what1">What's going on there?</summary>
+<summary id="what1"><big>WHAT IS GOING ON THERE?!</big></summary>
 
 ```python
 from sqllex import *
