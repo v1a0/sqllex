@@ -7,7 +7,10 @@ with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name='sqllex',
-    packages=['sqllex', 'sqllex.classes', 'sqllex.constants', 'sqllex.exceptions', 'sqllex.types', 'sqllex.debug'],
+    packages=[
+        'sqllex', 'sqllex.classes', 'sqllex.constants', 'sqllex.exceptions', 'sqllex.types', 'sqllex.debug',
+        'sqllex.wiki',
+    ],
     version='0.1.6.1',
     license='gpl-3.0',
     description='Better than sqlite3',

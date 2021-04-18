@@ -35,7 +35,7 @@ class Test:
 
 t = Test(n=1)
 
-debug_mode(False)
+debug_mode(True)
 
 DB_NAME = "test_database.db"
 

@@ -476,7 +476,7 @@ class SQLite3x:
 
     @logger.catch
     @__execute__
-    def _execute_stmt_(self, script: AnyStr, values: tuple = None, request: SQLRequest = None):
+    def _execute_stmt_(self, script: AnyStr = None, values: tuple = None, request: SQLRequest = None):
         """
             Parent method for execute
         """
@@ -487,7 +487,7 @@ class SQLite3x:
 
     @logger.catch
     @__executemany__
-    def _executemany_stmt(self, script: AnyStr, values: tuple = None, request: SQLRequest = None):
+    def _executemany_stmt(self, script: AnyStr = None, values: tuple = None, request: SQLRequest = None):
         """
             Parent method for executemany
         """
@@ -736,7 +736,7 @@ class SQLite3x:
     # ============================== PUBLIC METHODS ==============================
 
     def execute(self,
-                script: AnyStr,
+                script: AnyStr = None,
                 values: tuple = None,
                 request: SQLRequest = None
                 ) -> Union[List, None]:
@@ -753,7 +753,7 @@ class SQLite3x:
         return self._execute_stmt_(script=script, values=values, request=request)
 
     def executemany(self,
-                    script: AnyStr,
+                    script: AnyStr = None,
                     values: tuple = None,
                     request: SQLRequest = None
                     ) -> Union[List, None]:
