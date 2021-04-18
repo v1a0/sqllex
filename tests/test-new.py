@@ -131,7 +131,7 @@ print(users_in_db)
 
 users_group_1 = db.select(
     'username', 'users',
-    where={'user_group': 1}
+    WHERE={'user_group': 1}
 )
 
 print(users_group_1)
@@ -140,3 +140,65 @@ print(users_group_1)
 #if __name__ == '__main__':
 #    pass
 
+db.select(
+    TABLE='users',
+    WHERE={
+        'group_id': 1,
+        'username': 'user_1'
+    },
+    ORDER_BY='username'
+)
+
+db.select(
+    TABLE='users',
+    WHERE={
+        'group_id': 1,
+        'username': 'user_1'
+    },
+    ORDER_BY='username'
+)
+
+db.select(
+    TABLE='users',
+    WHERE=['age', 10],
+    ORDER_BY='username'
+)
+
+db.select(
+    TABLE='users',
+    WHERE=['age', [10, 11]],
+    ORDER_BY='username'
+)
+
+db.select(
+    TABLE='users',
+    WHERE=['age', '!=', 10],
+    ORDER_BY='username'
+)
+
+db.select(
+    TABLE='users',
+    WHERE=[
+        ['age', '=', 10],
+        ['age', 10]
+    ],
+    ORDER_BY='username'
+)
+
+db.select(
+    TABLE='users',
+    WHERE={
+        'age': 10,
+        'group': ['<', 10]
+    },
+    ORDER_BY='username'
+)
+
+db.select(
+    TABLE='users',
+    WHERE={
+        'age': 10,
+        'group': [5, 10]
+    },
+    ORDER_BY='username'
+)

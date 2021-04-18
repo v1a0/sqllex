@@ -3,6 +3,7 @@ from os import walk, getcwd, remove
 from sqlite3 import IntegrityError
 from loguru import logger
 from time import sleep
+from sqllex.debug import debug_mode
 
 
 class TestFailed(Exception):
@@ -16,6 +17,8 @@ class TestFailed(Exception):
 def is_exist(file: str = ''):
     return file in next(walk(getcwd()))[2]
 
+
+debug_mode(True)
 
 DB_NAME = "test_table.db"
 
@@ -64,12 +67,11 @@ db.insert('users', {
     'username': 'user_6',
     'group_id': 1
 })
-db.insert('users', ['user_7', 1],
-          with_={
-              'some': db.select('*', 'users', execute=False)
-          },
-          or_=REPLACE
-          )
+db.insert(
+    OR=REPLACE,
+    TABLE='users',
+    username='user_7', group_id=1
+    )
 
 # Have to fail
 
@@ -87,7 +89,7 @@ except IntegrityError as e:
 selects = []
 
 selects.append(
-    db.select(from_table='users')
+    db.select(TABLE='users')
 )
 
 selects.append(
@@ -95,28 +97,28 @@ selects.append(
 )
 
 selects.append(
-    db.select(select=['username'], from_table='users')
+    db.select(SELECT=['username'], TABLE='users')
 )
 
 selects.append(
-    db.select(from_table='users', where={'group_id': 1})
+    db.select(TABLE='users', WHERE={'group_id': 1})
 )
 
 selects.append(
-    db.select(from_table='users', where={'group_id': 1, 'username': 'user_1'}, order_by='username')
+    db.select(TABLE='users', WHERE={'group_id': 1, 'username': 'user_1'}, ORDER_BY='username')
 )
 
 selects.append(
-    db.select(from_table='users', where={'group_id': 1}, order_by={'username': 'DESC'})
+    db.select(TABLE='users', WHERE={'group_id': 1}, ORDER_BY={'username': 'DESC'})
 )
 
 selects.append(
-    db.select(from_table='users', where={'group_id': 1}, order_by=[2, 1])
+    db.select(TABLE='users', WHERE={'group_id': 1}, ORDER_BY=[2, 1])
 )
 
 
 selects.append(
-    db.select(from_table='users', where={'group_id': 4}, execute=False)
+    db.select(TABLE='users', WHERE={'group_id': 4}, execute=False)
 )
 
 
@@ -142,24 +144,24 @@ db.replace("groups", [1, 'AAdmins'])
 db.replace("groups", group_id=2, name="IDK")
 
 db.insert("users", username="user_411", group_id=1,
-          or_=REPLACE,
-          with_={
+          OR=REPLACE,
+          WITH={
               'a': db.select(
-                  from_table='users',
-                  where={'group_id': 1},
+                  TABLE='users',
+                  WHERE={'group_id': 1},
                   execute=False
               )}
           )
 
 db.insert("users", ["user_422", 1],
-          or_=REPLACE,
-          with_={
+          OR=REPLACE,
+          WITH={
               'a': "SELECT * FROM users WHERE (group_id=2)"
           })
 
-db.delete("users", where={'username': 'user_422'})
+db.delete("users", WHERE={'username': 'user_422'})
 
-db.update("users", ['username', 'USER_upd'], {'username': "user_411"})
+db.update(TABLE="users", SET={'username': 'USER_upd', 'group_id': 2}, WHERE={'username': "user_411"})
 
 db.drop("remove_me")
 
