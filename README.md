@@ -38,7 +38,7 @@ db = SQLite3x(
 
 db.insert('users', ['Sqllex', 33])
 
-users = db.select('username', FROM='users', WHERE={'age': 33})
+users = db.select(FROM='users', TABLE='username', WHERE={'age': 33})
 
 print(users)  # ['Sqllex']
 ```
@@ -67,7 +67,7 @@ db = SQLite3x(                              # create database
 db.insert('users', ['Sqllex', 33])
 
 # Dear db, please, select username(s) from table 'users' where column 'age' == 33
-users = db.select('username', FROM='users', WHERE={'age': 33})
+users = db.select(FROM='users', TABLE='username', WHERE={'age': 33})
 
 # Print it
 print(users)  # ['Sqllex']
@@ -168,8 +168,8 @@ db.insertmany('users', users_list)
     Now we need to take it back by select method (as SQL-like SELECT)
 """
 
-# SELECT (what) FROM (where)
-users_in_db = db.select('username', 'users')
+# SELECT FROM (where) (what)
+users_in_db = db.select('users', 'username')
 
 print(users_in_db)
 # It'll print:
@@ -183,7 +183,7 @@ print(users_in_db)
 
 
 users_group_1 = db.select(
-    'username', 'users',
+    'users', 'username',
     WHERE={'user_group': 1}
 )
 
