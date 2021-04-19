@@ -117,7 +117,7 @@ db.insertmany('users', users_list)
 """
 
 # SELECT (what) FROM (where)
-users_in_db = db.select('username', 'users')
+users_in_db = db.select('users', 'username')
 print(users_in_db)
 # It'll print:
 # ['User_0', 'User_1', 'User_2', 'User_3', 'User_4', 'User_5', 'User_6', 'User_7', 'User_8', 'User_9']
@@ -130,7 +130,7 @@ print(users_in_db)
 
 
 users_group_1 = db.select(
-    'username', 'users',
+    'users', 'username',
     WHERE={'user_group': 1}
 )
 

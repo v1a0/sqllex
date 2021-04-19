@@ -106,8 +106,8 @@ db.insertmany('users', users_list)
     Now we need to take it back by select method (as SQL-like SELECT)
 """
 
-# SELECT (what) FROM (where)
-users_in_db = db.select('username', 'users')
+# SELECT FROM (where) (what)
+users_in_db = db.select('users', 'username')
 
 print(users_in_db)
 # It'll print:
@@ -120,10 +120,21 @@ print(users_in_db)
 """
 
 
+from sqllex.debug import debug_mode
+
+debug_mode(True)
+
+db.update(
+    'users',
+    ['username', 'New_username_0'],
+    ['username', 'User_0']
+)
+
 users_group_1 = db.select(
-    'username', 'users',
+    'users', 'username',
     WHERE={'user_group': 1}
 )
+
 
 print(users_group_1)
 # It'll print:

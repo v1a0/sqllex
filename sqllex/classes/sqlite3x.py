@@ -957,16 +957,16 @@ class SQLite3x:
         return self._insertmany_stmt_(TABLE, *args, execute=execute, **kwargs)
 
     def select(self,
-               SELECT: Union[List[str], str] = None,
                TABLE: str = None,
-               FROM: str = None,
+               SELECT: Union[List[str], str] = None,
                WHERE: WhereType = None,
                WITH: WithType = None,
                ORDER_BY: OrderByType = None,
                LIMIT: LimitOffsetType = None,
                OFFSET: LimitOffsetType = None,
                execute: bool = True,
-               **kwargs
+               FROM: str = None,
+               **kwargs,
                ) -> Union[SQLStatement, List[List]]:
         """
             SELECT data from table
@@ -991,30 +991,39 @@ class SQLite3x:
                                   WITH=WITH, ORDER_BY=ORDER_BY, LIMIT=LIMIT, OFFSET=OFFSET, **kwargs)
 
     def select_distinct(self,
-                        SELECT: Union[List[str], str] = None,
                         TABLE: str = None,
+                        SELECT: Union[List[str], str] = None,
                         WHERE: WhereType = None,
                         WITH: WithType = None,
                         ORDER_BY: OrderByType = None,
                         LIMIT: LimitOffsetType = None,
                         OFFSET: LimitOffsetType = None,
                         execute: bool = True,
+                        FROM: str = None,
                         **kwargs
                         ) -> Union[SQLRequest, List]:
+
+        if not TABLE and FROM:
+            TABLE = FROM
+
         return self._select_stmt_(SELECT=SELECT, TABLE=TABLE, method='SELECT DISTINCT', WHERE=WHERE, execute=execute,
                                   WITH=WITH, ORDER_BY=ORDER_BY, LIMIT=LIMIT, OFFSET=OFFSET, **kwargs)
 
     def select_all(self,
-                   SELECT: Union[List[str], str] = None,
                    TABLE: str = None,
+                   SELECT: Union[List[str], str] = None,
                    WHERE: WhereType = None,
                    WITH: WithType = None,
                    ORDER_BY: OrderByType = None,
                    LIMIT: LimitOffsetType = None,
                    OFFSET: LimitOffsetType = None,
                    execute: bool = True,
+                   FROM: str = None,
                    **kwargs
                    ) -> Union[SQLRequest, List]:
+
+        if not TABLE and FROM:
+            TABLE = FROM
 
         return self._select_stmt_(method='SELECT ALL ', execute=execute, SELECT=SELECT, TABLE=TABLE, WHERE=WHERE,
                                   WITH=WITH, ORDER_BY=ORDER_BY, LIMIT=LIMIT, OFFSET=OFFSET, **kwargs)

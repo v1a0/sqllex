@@ -93,11 +93,11 @@ selects.append(
 )
 
 selects.append(
-    db.select(['username', 'group_id'], 'users')
+    db.select('users', ['username', 'group_id'])
 )
 
 selects.append(
-    db.select(SELECT=['username'], TABLE='users')
+    db.select(TABLE='users', SELECT=['username'])
 )
 
 selects.append(
