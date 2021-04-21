@@ -513,8 +513,8 @@ class SQLite3x:
 
     @logger.catch
     @__execute__
-    def _create_stmt_(self, temp: AnyStr, name: AnyStr, columns: ColumnsType, if_not_exist: bool = None,
-                      as_: SQLRequest = None, without_rowid: bool = None):
+    def _create_stmt_(self, temp: AnyStr, name: AnyStr, columns: ColumnsType, IF_NOT_EXIST: bool = None,
+                      AS: SQLRequest = None, without_rowid: bool = None):
         """
             Parent method for all CREATE-methods
         """
@@ -522,10 +522,10 @@ class SQLite3x:
         values = ()
 
         # AS fork
-        if as_:
+        if AS:
             # AS fork
-            content = as_.script
-            values = as_.values
+            content = AS.script
+            values = AS.values
         else:
             # column-def
             for (col, params) in columns.items():
@@ -550,7 +550,7 @@ class SQLite3x:
         script = f"CREATE " \
                  f"{temp} " \
                  f" TABLE " \
-                 f"{'IF NOT EXISTS' if if_not_exist else ''} " \
+                 f"{'IF NOT EXISTS' if IF_NOT_EXIST else ''} " \
                  f"'{name}' " \
                  f" (\n{content}\n) " \
                  f"{'WITHOUT ROWID' if without_rowid else ''};"
@@ -560,7 +560,7 @@ class SQLite3x:
     @__execute__
     @__or_param__
     @__with__
-    def _insert_stmt_(self, *args: Any, TABLE: AnyStr, script='', values=(), **kwargs: Any):
+    def _insert_stmt_(self, TABLE: AnyStr, *args: Any,  script='', values=(), **kwargs: Any):
         """
             INSERT INTO request (aka insert-stmt) and REPLACE INTO request
         """
@@ -652,8 +652,7 @@ class SQLite3x:
     @__order_by__
     @__where__
     @__with__
-    def _select_stmt_(self, script='', values=(), method: AnyStr = 'SELECT ', SELECT: Union[List[str], str] = None,
-                      TABLE: str = None):
+    def _select_stmt_(self, TABLE: str, script='', values=(), method: AnyStr = 'SELECT ', SELECT: Union[List[str], str] = None):
         """
             Parent method for all SELECT-like methods
         """
@@ -677,7 +676,7 @@ class SQLite3x:
     @__execute__
     @__where__
     @__with__
-    def _delete_stmt_(self, script='', values=(), TABLE: str = None):
+    def _delete_stmt_(self, TABLE: str, script='', values=()):
         """
             Parent method for DELETE method
         """
@@ -821,8 +820,8 @@ class SQLite3x:
     def create_table(self,
                      name: AnyStr,
                      columns: ColumnsType,
-                     if_not_exist: bool = None,
-                     as_: SQLRequest = None,
+                     IF_NOT_EXIST: bool = None,
+                     AS: SQLRequest = None,
                      without_rowid: bool = None
                      ):
         """
@@ -834,13 +833,13 @@ class SQLite3x:
 
             :param name: Table name
             :param columns: Columns of table (ColumnsType)
-            :param if_not_exist: Turn on/off "IF NOT EXISTS" prefix
-            :param as_:
+            :param IF_NOT_EXIST: Turn on/off "IF NOT EXISTS" prefix
+            :param AS:
             :param without_rowid:
 
         """
         self._create_stmt_(temp='', name=name, columns=columns,
-                           if_not_exist=if_not_exist, as_=as_, without_rowid=without_rowid)
+                           IF_NOT_EXIST=IF_NOT_EXIST, AS=AS, without_rowid=without_rowid)
 
     def create_temp_table(self,
                           name: AnyStr,
@@ -957,8 +956,8 @@ class SQLite3x:
         return self._insertmany_stmt_(TABLE, *args, execute=execute, **kwargs)
 
     def select(self,
-               TABLE: str = None,
-               SELECT: Union[List[str], str] = None,
+               TABLE: str,
+               SELECT: Union[List[str], str] = ALL,
                WHERE: WhereType = None,
                WITH: WithType = None,
                ORDER_BY: OrderByType = None,
@@ -991,8 +990,8 @@ class SQLite3x:
                                   WITH=WITH, ORDER_BY=ORDER_BY, LIMIT=LIMIT, OFFSET=OFFSET, **kwargs)
 
     def select_distinct(self,
-                        TABLE: str = None,
-                        SELECT: Union[List[str], str] = None,
+                        TABLE: str,
+                        SELECT: Union[List[str], str] = ALL,
                         WHERE: WhereType = None,
                         WITH: WithType = None,
                         ORDER_BY: OrderByType = None,
@@ -1010,7 +1009,7 @@ class SQLite3x:
                                   WITH=WITH, ORDER_BY=ORDER_BY, LIMIT=LIMIT, OFFSET=OFFSET, **kwargs)
 
     def select_all(self,
-                   TABLE: str = None,
+                   TABLE: str,
                    SELECT: Union[List[str], str] = None,
                    WHERE: WhereType = None,
                    WITH: WithType = None,

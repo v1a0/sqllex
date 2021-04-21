@@ -10,7 +10,7 @@
 #
 # temp = "TEMP"
 # name = "groups"
-# if_not_exist = True
+# IF_NOT_EXIST = True
 #
 # result: str = ''
 #
