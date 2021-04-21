@@ -38,7 +38,7 @@ db = SQLite3x(
 
 db.insert('users', ['Sqllex', 33])
 
-users = db.select('username', FROM='users', WHERE={'age': 33})
+users = db.select('users', 'username', WHERE={'age': 33})
 
 print(users)  # ['Sqllex']
 ```
@@ -63,11 +63,11 @@ db = SQLite3x(                              # create database
 
 # Ok, now you have database with table inside it. 
 # Let's add record of  33 years old user named 'Sqllex'
-# Dear db, please, into 'users' table values ['Sqllex', 33]
+# Dear db, please insert into 'users' table values ['Sqllex', 33]
 db.insert('users', ['Sqllex', 33])
 
-# Dear db, please, select username(s) from table 'users' where column 'age' == 33
-users = db.select('username', FROM='users', WHERE={'age': 33})
+# Dear db, please select from table 'users' username(s) where column 'age' == 33
+users = db.select('users', 'username', WHERE={'age': 33})
 
 # Print it
 print(users)  # ['Sqllex']
@@ -168,8 +168,8 @@ db.insertmany('users', users_list)
     Now we need to take it back by select method (as SQL-like SELECT)
 """
 
-# SELECT (what) FROM (where)
-users_in_db = db.select('username', 'users')
+# SELECT FROM (table) (what)
+users_in_db = db.select('users', 'username')
 
 print(users_in_db)
 # It'll print:
@@ -183,7 +183,7 @@ print(users_in_db)
 
 
 users_group_1 = db.select(
-    'username', 'users',
+    'users', 'username',
     WHERE={'user_group': 1}
 )
 
@@ -191,6 +191,72 @@ print(users_group_1)
 # It'll print:
 # ['User_0', 'User_3', 'User_6', 'User_9']
 ```
+
+<details>
+<summary id="just_code_1">Code without comments</summary>
+
+
+
+```python
+
+from sqllex import *
+
+
+db = SQLite3x(path='my_awesome_db.db')
+
+db.create_table(
+    'groups',
+    {
+        'id': [INTEGER, PRIMARY_KEY, UNIQUE],
+        'name': [TEXT, NOT_NULL, DEFAULT, 'Unknown']
+    }
+)
+
+db.create_table(
+    name='users',
+    columns={
+        'id': [INTEGER, PRIMARY_KEY, UNIQUE],
+        'username': [TEXT, NOT_NULL, DEFAULT, 'Unknown'],
+        'user_group': INTEGER,
+        FOREIGN_KEY: {
+            "user_group": ["groups", "id"]
+        }
+    })
+
+db.insert('groups', id=1, name="Admin")
+
+db.insert('groups', [2, "User"])
+
+db.insert('groups', 3, 'Guest')
+
+
+users_list = [
+    [0, "User_0", 1],
+    [1, "User_1", 2],
+    [2, "User_2", 3],
+    [3, "User_3", 1],
+    [4, "User_4", 2],
+    [5, "User_5", 3],
+    [6, "User_6", 1],
+    [7, "User_7", 2],
+    [8, "User_8", 3],
+    [9, "User_9", 1],
+]
+
+db.insertmany('users', users_list)
+
+users_in_db = db.select('users', 'username')
+
+print(users_in_db)
+
+users_group_1 = db.select(
+    'users', 'username', 
+    WHERE={'user_group': 1}
+)
+
+print(users_group_1)
+```
+</details>
 
 # [Not enough? Need examples? Read more in Sqllex Wiki! (link)](https://github.com/V1A0/sqllex/wiki)
 

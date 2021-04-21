@@ -164,8 +164,8 @@ db.insertmany('users', users_list)
     Now we need to take it back by select method (as SQL-like SELECT)
 """
 
-# SELECT (what) FROM (where)
-users_in_db = db.select('username', 'users')
+# SELECT FROM (table) (what)
+users_in_db = db.select('users', 'username')
 
 print(users_in_db)
 # It'll print:
@@ -179,7 +179,7 @@ print(users_in_db)
 
 
 users_group_1 = db.select(
-    'username', 'users',
+    'users', 'username',
     WHERE={'user_group': 1}
 )
 
@@ -241,12 +241,12 @@ users_list = [
 
 db.insertmany('users', users_list)
 
-users_in_db = db.select('username', 'users')
+users_in_db = db.select('users', 'username')
 
 print(users_in_db)
 
 users_group_1 = db.select(
-    'username', 'users',
+    'users', 'username', 
     WHERE={'user_group': 1}
 )
 
@@ -260,25 +260,27 @@ print(users_group_1)
 
 ## Public SQLite3x methods:
 
-- insert
-- insertmany
-- update
-- replace
-- select
+# SQLite3x
+
+- [insert](https://github.com/V1A0/sqllex/wiki/SQLite3x.insert)
+- [insertmany](https://github.com/V1A0/sqllex/wiki/SQLite3x.insertmany)
+- [update](https://github.com/V1A0/sqllex/wiki/SQLite3x.update)
+- [replace](https://github.com/V1A0/sqllex/wiki/SQLite3x.replace)
+- [select](https://github.com/V1A0/sqllex/wiki/SQLite3x.select)
 - - select_distinct
 - - select_all
-- markup
-- create_table
+- [markup](https://github.com/V1A0/sqllex/wiki/SQLite3x.markup)
+- [create_table](https://github.com/V1A0/sqllex/wiki/SQLite3x.create_table)
 - - create_temp_table
 - - create_temporary_table
-- delete
-- drop
+- [delete](https://github.com/V1A0/sqllex/wiki/SQLite3x.delete)
+- [drop](https://github.com/V1A0/sqllex/wiki/SQLite3x.drop)
 - get_columns
-- pragma
-- - foreign_keys
-- - journal_mode
-- - table_info
-- execute
-- executemany
+- [pragma](https://github.com/V1A0/sqllex/wiki/SQLite3x.pragma)
+- - [foreign_keys](https://github.com/V1A0/sqllex/wiki/SQlite3x.pragma#sqlite3xforeign_keys)
+- - [journal_mode](https://github.com/V1A0/sqllex/wiki/SQlite3x.pragma#sqlite3xjournal_mode)
+- - [table_info](https://github.com/V1A0/sqllex/wiki/SQlite3x.pragma#sqlite3xtable_info)
+- [execute](https://github.com/V1A0/sqllex/wiki/SQLite3x.execute)
+- [executemany](https://github.com/V1A0/sqllex/wiki/SQLite3x.executemany)
 
 
