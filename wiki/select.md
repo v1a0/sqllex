@@ -10,28 +10,30 @@ Method to SELECT data from table
 
 ```python
 def select(self,
-           SELECT: Union[List[str], str] = None,
            TABLE: str = None,
-           FROM: str = None,
+           SELECT: Union[List[str], str] = None,
            WHERE: WhereType = None,
            WITH: WithType = None,
            ORDER_BY: OrderByType = None,
            LIMIT: LimitOffsetType = None,
            OFFSET: LimitOffsetType = None,
            execute: bool = True,
+           FROM: str = None,
+           JOIN: Union[str, List[str], List[List[str]]] = None,
            **kwargs
            ) -> Union[SQLStatement, List[List]]:
 ```
 
-> :param SELECT: columns to select. Value '*' by default
 
 > :param TABLE: table for selection
 
-> :param FROM: table for selection
+> :param SELECT: columns to select. Value '*' by default
 
 > :param WHERE: optional parameter for conditions, example: {'name': 'Alex', 'group': 2}
 
 > :param WITH: with_statement
+
+> :param JOIN: optional parameter for joining data from other tables ['groups'],
 
 > :param ORDER_BY: optional parameter for conditions, example: {'name': ['NULLS', 'LAST']}
 
@@ -40,6 +42,8 @@ def select(self,
 > :param OFFSET: optional parameter for conditions, example: 5
 
 > :param :param execute: Execute script and return db's answer if True, return script if False
+
+> :param FROM: table for selection
 
 > :return: List[List] of selects
 
@@ -63,15 +67,18 @@ db.create_table(
 
 ...
 
-db.select(ALL, 'users')
+db.select('users', ALL)
 
 db.select(FROM='users')
 
-db.select(ALL, 'users', ORDER_BY='age')
+
+db.select('users')
+
+db.select('users', ALL, ORDER_BY='age')
 
 db.select(
-    SELECT='name',
     TABLE='users',
+    SELECT='name',
     WHERE={
         'age': 10,    # where age = 10
     },
@@ -116,8 +123,8 @@ db.select(
 
 
 db.select(
-    SELECT=['id', 'name'],
     FROM='users',
+    SELECT=['id', 'name'],
     WHERE={
         'age': ['>', 10],       # where age > 10
         'group': ['!=', 1]      # where group != 1
@@ -129,8 +136,8 @@ db.select(
 
 
 db.select(
-    SELECT=ALL,
     TABLE='users',
+    SELECT=ALL,
     WHERE={
         'age': ['=', 10],       # where age = 10
         'group': ['<>', 1]      # where group <> 1
@@ -139,6 +146,24 @@ db.select(
     LIMIT=50,
     OFFSET=20
 )
+
+
+db.select(
+        SELECT=['username', 'group_name', 'description'],
+        FROM=['users', AS, 'us'],
+        JOIN=[                                                            # JOIN data from other tables
+            ['groups', AS, 'gr', ON, 'us.group_id == gr.group_id'],       # JOIN  
+            [INNER_JOIN, 'about', 'ab', ON, 'ab.group_id == gr.group_id']
+        ],
+        WHERE={'username': 'user_1'}
+    )
+
+# SELECT username, group_name, description 
+# FROM users AS us 
+# INNER JOIN groups AS gr ON us.group_id == gr.group_id 
+# INNER JOIN about ab ON ab.group_id == gr.group_id 
+# WHERE (username='user_1')
+
 
 ```
 

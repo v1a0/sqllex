@@ -1,7 +1,7 @@
 
 <div align="center">
 
-# SQLLEX alpha v0.1.6 📚
+# SQLLEX alpha v0.1.7 📚
 
 ![Python:3.9](https://img.shields.io/badge/Python-3.9-green)
 [![Language grade: Python](https://img.shields.io/lgtm/grade/python/g/V1A0/sqllex.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/V1A0/sqllex/context:python)
@@ -190,7 +190,35 @@ users_group_1 = db.select(
 print(users_group_1)
 # It'll print:
 # ['User_0', 'User_3', 'User_6', 'User_9']
+
+
+# And for some another table
+
+db.select(
+        SELECT=['username', 'group_name', 'description'],                 # SELECT username, group_name, description 
+        FROM=['users', AS, 'us'],                                         # FROM users AS us 
+        JOIN=[                                                            # JOIN 
+            ['groups', AS, 'gr', ON, 'us.group_id == gr.group_id'],       ## INNER JOIN groups AS gr ON us.group_id == gr.group_id
+            [CROSS_JOIN, 'about', 'ab', ON, 'ab.group_id == gr.group_id'] ## INNER JOIN about ab ON ab.group_id == gr.group_id 
+        ],
+        WHERE={'username': 'user_1'},                                     # WHERE (username='user_1')
+        ORDER_BY='age DESC',                                              # order by age ASC
+        LIMIT=50,
+        OFFSET=20                                                           
+    )
+
+# Same as SQL script like
+# SELECT username, group_name, description 
+# FROM users AS us 
+# INNER JOIN groups AS gr ON us.group_id == gr.group_id 
+# CROSS_JOIN about ab ON ab.group_id == gr.group_id 
+# WHERE (username='user_1')
+# ORDER BY age DESC 
+# LIMIT 50 
+# OFFSET 20
+
 ```
+
 
 <details>
 <summary id="just_code_1">Code without comments</summary>

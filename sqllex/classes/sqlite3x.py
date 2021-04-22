@@ -15,15 +15,37 @@ def col_types_sort(val: str) -> int:
         return prior
 
 
+def __from_as__(func: callable):
+    """
+        Decorator for catching AS argument from TABLE or FROM args
+
+        AS : AS
+
+    """
+
+    def wrapper(*args, **kwargs):
+        if 'TABLE' in kwargs.keys():
+
+            if isinstance(kwargs.get('TABLE'), list):
+
+                TABLE = ' '.join(targ for targ in kwargs.pop('TABLE'))
+
+                kwargs.update({'TABLE': TABLE})
+
+        return func(*args, **kwargs)
+
+    return wrapper
+
+
 def __with__(func: callable) -> callable:
     """
-    Decorator for catching WITH argument
+        Decorator for catching WITH argument
 
-    If it has, adding into beginning of :script: with_statement.
+        If it has, adding into beginning of :script: with_statement.
 
-    And adding values into :values: if it has
+        And adding values into :values: if it has
 
-    :kwarg WITH: Mapping[str, SQLRequest]
+        :kwarg WITH: Mapping[str, SQLRequest]
 
     """
 
@@ -135,6 +157,44 @@ def __where__(func: callable) -> callable:
                 raise TypeError
 
             stmt.request.script = f"{stmt.request.script.strip()}) "  # .strip() removing spaces around
+
+        return stmt
+
+    return wrapper
+
+
+def __join__(func: callable) -> callable:
+    """
+        Decorator for catching JOIN argument
+
+        If it has, adding into beginning of :param script: or_statement
+
+        OR : OrOptionsType
+
+    """
+
+    def wrapper(*args, **kwargs):
+        if 'JOIN' in kwargs.keys():
+            JOIN = kwargs.pop('JOIN')
+        else:
+            JOIN = None
+
+        stmt: SQLStatement = func(*args, **kwargs)
+
+        if JOIN:
+            if isinstance(JOIN, list):
+                if not isinstance(JOIN[0], list):
+                    JOIN = [JOIN]
+
+                for join_ in JOIN:
+                    if join_[0] not in [INNER_JOIN, LEFT_JOIN, CROSS_JOIN]:
+                        join_method = INNER_JOIN
+                    else:
+                        join_method = join_.pop(0)
+
+                    stmt.request.script += f"{join_method} {' '.join(jarg for jarg in join_)} "
+            else:
+                raise TypeError
 
         return stmt
 
@@ -505,7 +565,7 @@ class SQLite3x:
         else:
             return SQLStatement(request, self.path)
 
-    @logger.catch
+#    @logger.catch
     @__execute__
     def _pragma_stmt_(self, *args: str, **kwargs):
         """
@@ -520,7 +580,7 @@ class SQLite3x:
 
         return SQLStatement(SQLRequest(script), self.path)
 
-    @logger.catch
+#    @logger.catch
     @__execute__
     def _create_stmt_(self, temp: AnyStr, name: AnyStr, columns: ColumnsType, IF_NOT_EXIST: bool = None,
                       AS: SQLRequest = None, without_rowid: bool = None):
@@ -530,6 +590,7 @@ class SQLite3x:
         content: str = ''
         values = ()
 
+
         # AS fork
         if AS:
             # AS fork
@@ -538,7 +599,8 @@ class SQLite3x:
         else:
             # column-def
             for (col, params) in columns.items():
-                params = sorted(params, key=lambda par: col_types_sort(par))
+                if isinstance(params, list):
+                    params = sorted(params, key=lambda par: col_types_sort(par))
 
                 if isinstance(params, (str, int, float)):
                     params = [f"{params}"]
@@ -560,7 +622,7 @@ class SQLite3x:
 
         script = f"CREATE " \
                  f"{temp} " \
-                 f" TABLE " \
+                 f"TABLE " \
                  f"{'IF NOT EXISTS' if IF_NOT_EXIST else ''} " \
                  f"'{name}' " \
                  f" (\n{content}\n) " \
@@ -571,7 +633,8 @@ class SQLite3x:
     @__execute__
     @__or_param__
     @__with__
-    def _insert_stmt_(self, TABLE: AnyStr, *args: Any,  script='', values=(), **kwargs: Any):
+    @__from_as__
+    def _insert_stmt_(self, *args: Any, TABLE: AnyStr,  script='', values=(), **kwargs: Any):
         """
             INSERT INTO request (aka insert-stmt) and REPLACE INTO request
         """
@@ -606,6 +669,7 @@ class SQLite3x:
         return SQLStatement(SQLRequest(script, tuple(value for value in all_values)), self.path)
 
     @__executemany__
+    @__from_as__
     def _insertmany_stmt_(self, TABLE: AnyStr, *args: Union[list[list], list[tuple], tuple[list], tuple[tuple],
                                                             list, tuple], **kwargs: Any):
         """
@@ -613,6 +677,7 @@ class SQLite3x:
         """
         if args:
             values = list(map(lambda arg: list(arg), args))  # make values list[list] (yes it's necessary)
+            print(values)
 
             if len(values) == 1 and isinstance(values[0], list):
                 values = values[0]
@@ -662,7 +727,9 @@ class SQLite3x:
     @__limit__
     @__order_by__
     @__where__
+    @__join__
     @__with__
+    @__from_as__
     def _select_stmt_(self, TABLE: str, script='', values=(), method: AnyStr = 'SELECT ', SELECT: Union[List[str], str] = None):
         """
             Parent method for all SELECT-like methods
@@ -967,15 +1034,16 @@ class SQLite3x:
         return self._insertmany_stmt_(TABLE, *args, execute=execute, **kwargs)
 
     def select(self,
-               TABLE: str,
-               SELECT: Union[List[str], str] = ALL,
+               TABLE: Union[str, List[str]] = None,
+               SELECT: Union[str, List[str]] = ALL,
                WHERE: WhereType = None,
                WITH: WithType = None,
                ORDER_BY: OrderByType = None,
                LIMIT: LimitOffsetType = None,
                OFFSET: LimitOffsetType = None,
                execute: bool = True,
-               FROM: str = None,
+               FROM: Union[str, List[str]] = None,
+               JOIN: Union[str, List[str], List[List[str]]] = None,
                **kwargs,
                ) -> Union[SQLStatement, List[List]]:
         """
@@ -986,6 +1054,7 @@ class SQLite3x:
             :param FROM: table for selection
             :param WHERE: optional parameter for conditions, example: {'name': 'Alex', 'group': 2}
             :param WITH: with_statement
+            :param JOIN: optional parameter for joining data from other tables ['groups'],
             :param ORDER_BY: optional parameter for conditions, example: {'name': ['NULLS', 'LAST']}
             :param LIMIT: optional parameter for conditions, example: 10
             :param OFFSET: optional parameter for conditions, example: 5
@@ -997,8 +1066,11 @@ class SQLite3x:
         if not TABLE and FROM:
             TABLE = FROM
 
+        if not TABLE:
+            raise ArgumentError(TABLE="UNSET")
+
         return self._select_stmt_(SELECT=SELECT, TABLE=TABLE, method='SELECT', WHERE=WHERE, execute=execute,
-                                  WITH=WITH, ORDER_BY=ORDER_BY, LIMIT=LIMIT, OFFSET=OFFSET, **kwargs)
+                                  WITH=WITH, ORDER_BY=ORDER_BY, LIMIT=LIMIT, OFFSET=OFFSET, JOIN=JOIN, **kwargs)
 
     def select_distinct(self,
                         TABLE: str,
