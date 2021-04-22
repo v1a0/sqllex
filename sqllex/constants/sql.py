@@ -6,6 +6,7 @@ NUMERIC: DataType = "NUMERIC"
 INTEGER: DataType = "INTEGER"
 REAL: DataType = "REAL"
 NONE: DataType = "NONE"
+BLOB: DataType = "BLOB"
 
 
 # Options of column value
@@ -29,12 +30,59 @@ REPLACE: OrOptionsType = "REPLACE"
 ROLLBACK: OrOptionsType = "ROLLBACK"
 
 
+CONST_PRIORITY = {
+    TEXT: 0,
+    NUMERIC: 0,
+    INTEGER: 0,
+    REAL: 0,
+    NONE: 1,
+    BLOB: 0,
+
+    ALL: None,
+    AUTOINCREMENT: 1,
+    CHECK: None,
+    DEFAULT: 1,
+    FOREIGN_KEY: None,
+    NOT_NULL: 2,
+    NULL: 1,
+    PRIMARY_KEY: 2,
+    REFERENCES: None,
+    UNIQUE: 1,
+
+    ABORT: None,
+    FAIL: None,
+    IGNORE: None,
+    REPLACE: None,
+    ROLLBACK: None,
+}
+
+
 CONSTANTS = [
-    ALL, TEXT, NUMERIC, INTEGER, REAL, NONE,
-    NOT_NULL, DEFAULT, UNIQUE, PRIMARY_KEY, CHECK,
-    AUTOINCREMENT, FOREIGN_KEY, REFERENCES, ABORT,
-    FAIL, IGNORE, REPLACE, ROLLBACK, NULL
+    TEXT,
+    NUMERIC,
+    INTEGER,
+    REAL,
+    NONE,
+    BLOB,
+
+    ALL,
+    AUTOINCREMENT,
+    CHECK,
+    DEFAULT,
+    FOREIGN_KEY,
+    NOT_NULL,
+    NULL,
+    PRIMARY_KEY,
+    REFERENCES,
+    UNIQUE,
+
+    ABORT,
+    FAIL,
+    IGNORE,
+    REPLACE,
+    ROLLBACK,
 ]
+
 
 __all__ = [
     "ALL",
@@ -43,6 +91,7 @@ __all__ = [
     "INTEGER",
     "REAL",
     "NONE",
+    "BLOB",
     "NOT_NULL",
     "DEFAULT",
     "UNIQUE",
@@ -57,4 +106,6 @@ __all__ = [
     "REPLACE",
     "ROLLBACK",
     "NULL",
+
+    "CONST_PRIORITY"
 ]
