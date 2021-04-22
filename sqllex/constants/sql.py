@@ -20,6 +20,14 @@ NULL: ConstrainType = "NULL"
 PRIMARY_KEY: ConstrainType = "PRIMARY KEY"
 REFERENCES: ConstrainType = "REFERENCES"
 UNIQUE: ConstrainType = "UNIQUE"
+AS: ConstrainType = "AS"
+ON: ConstrainType = "ON"
+
+
+# Options for JOIN-ing
+INNER_JOIN: JoinType = "INNER JOIN"
+LEFT_JOIN: JoinType = "LEFT JOIN"
+CROSS_JOIN: JoinType = "CROSS JOIN"
 
 
 # Options for "OR" argument
@@ -48,6 +56,8 @@ CONST_PRIORITY = {
     PRIMARY_KEY: 2,
     REFERENCES: None,
     UNIQUE: 1,
+    AS: None,
+    ON: None,
 
     ABORT: None,
     FAIL: None,
@@ -75,6 +85,8 @@ CONSTANTS = [
     PRIMARY_KEY,
     REFERENCES,
     UNIQUE,
+    AS,
+    ON,
 
     ABORT,
     FAIL,
@@ -95,6 +107,9 @@ __all__ = [
     "NOT_NULL",
     "DEFAULT",
     "UNIQUE",
+    "AS",
+    "ON",
+
     "PRIMARY_KEY",
     "CHECK",
     "AUTOINCREMENT",
@@ -107,5 +122,10 @@ __all__ = [
     "ROLLBACK",
     "NULL",
 
-    "CONST_PRIORITY"
+    "CONST_PRIORITY",
+
+    "INNER_JOIN",
+    "LEFT_JOIN",
+    "CROSS_JOIN",
+
 ]

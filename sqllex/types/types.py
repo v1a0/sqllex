@@ -39,7 +39,7 @@ DataType = Literal["TEXT", "NUMERIC", "INTEGER", "REAL", "NONE", "BLOB"]
 ConstrainType = Union[
     Literal[
         "*", "NOT NULL", "DEFAULT", "UNIQUE", "CHECK", "AUTOINCREMENT",
-        "PRIMARY KEY", "REFERENCES", "WITH", "OR", "NULL"
+        "PRIMARY KEY", "REFERENCES", "WITH", "OR", "NULL", "AS", "ON"
     ],
     ForeignKey
 ]
@@ -80,6 +80,9 @@ OrderByType = Union[int, str, list, tuple, Mapping[str, Union[str, int, list, tu
 # Type for parameter of LIMIT argument
 LimitOffsetType = Union[int, str, float]
 
+# Type for parameter of JOIN argument
+JoinType = Literal["INNER JOIN", "LEFT JOIN", "CROSS JOIN"]
+
 
 __all__ = [
     'SQLRequest',
@@ -99,4 +102,5 @@ __all__ = [
     'WhereType',
     'OrderByType',
     'LimitOffsetType',
+    'JoinType'
 ]

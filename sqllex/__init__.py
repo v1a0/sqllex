@@ -27,7 +27,13 @@ __all__ = [
     "REPLACE",          # lgtm [py/undefined-export]
     "ROLLBACK",         # lgtm [py/undefined-export]
     "NULL",             # lgtm [py/undefined-export]
+    "AS",               # lgtm [py/undefined-export]
+    "ON",               # lgtm [py/undefined-export]
     "ALL",              # lgtm [py/undefined-export]
+    "INNER_JOIN",       # lgtm [py/undefined-export]
+    "LEFT_JOIN",        # lgtm [py/undefined-export]
+    "CROSS_JOIN",       # lgtm [py/undefined-export]
+
 
     # debug tools
     "logger",           # lgtm [py/undefined-export]

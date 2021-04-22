@@ -25,12 +25,21 @@ DB_NAME = "test_table.db"
 DB_TEMPLATE = {
     "groups": {
         "group_id": [INTEGER, PRIMARY_KEY, UNIQUE],
-        "name": [TEXT, NOT_NULL, DEFAULT, 'Unknown'],
+        "group_name": [TEXT, NOT_NULL, DEFAULT, 'Unknown'],
     },
 
     "users": {
         "username": [TEXT, NOT_NULL],
         "group_id": INTEGER,
+
+        FOREIGN_KEY: {
+            "group_id": ["groups", "group_id"]
+        },
+    },
+
+    "about": {
+        "group_id": [INTEGER, PRIMARY_KEY, UNIQUE],
+        "description": TEXT,
 
         FOREIGN_KEY: {
             "group_id": ["groups", "group_id"]
@@ -55,8 +64,8 @@ else:
 ####################################################
 # INSERT data int DB and SELECT
 # 1'st table
-db.insert("groups", group_id=1, name="Admins")
-db.insert("groups", group_id=2, name="Other")
+db.insert("groups", group_id=1, group_name="Admins")
+db.insert("groups", group_id=2, group_name="Other")
 
 db.insert('users', ['user_1', 1])
 db.insert('users', ('user_2', 2))
@@ -73,6 +82,11 @@ db.insert(
     username='user_7', group_id=1
     )
 
+db.insertmany(
+    'about', group_id=[1, 2], description=['Damn cool goy', 'Just regular user']
+)
+
+
 # Have to fail
 
 try:
@@ -80,7 +94,7 @@ try:
 except IntegrityError:
     logger.info("INSERT #1 passed")
 try:
-    db.insert("groups", group_id=1, name="Fail")
+    db.insert("groups", group_id=1, group_name="Fail")
 except IntegrityError as e:
     logger.info("INSERT #2 passed")
 
@@ -141,7 +155,7 @@ db.insertmany("users", [[30], [31, 2]])
 db.insertmany("users", username=[41, 42, 43], group_id=[1, 2])
 
 db.replace("groups", [1, 'AAdmins'])
-db.replace("groups", group_id=2, name="IDK")
+db.replace("groups", group_id=2, group_name="IDK")
 
 db.insert("users", username="user_411", group_id=1,
           OR=REPLACE,
@@ -164,6 +178,22 @@ db.delete("users", WHERE={'username': 'user_422'})
 db.update(TABLE="users", SET={'username': 'USER_upd', 'group_id': 2}, WHERE={'username': "user_411"})
 
 db.drop("remove_me")
+
+from sqllex import *
+
+# DAAAAAAAAAAMMMNNNN COOOL
+join_test = db.select(
+        SELECT=['username', 'group_name', 'description'],
+        FROM=['users', AS, 'us'],
+        JOIN=[
+            [INNER_JOIN, 'groups', AS, 'gr', ON, 'us.group_id == gr.group_id'],
+            ['about', 'ab', ON, 'ab.group_id == gr.group_id']
+        ],
+        #WHERE={'username': 'user_1'}
+    )
+
+logger.info(join_test)
+
 
 sleep(0.5)
 rem = ''
