@@ -33,7 +33,7 @@ class SQLStatement:
 ForeignKey = Literal["FOREIGN KEY"]
 
 # Types of data for data types of column
-DataType = Literal["TEXT", "NUMERIC", "INTEGER", "REAL", "NONE"]
+DataType = Literal["TEXT", "NUMERIC", "INTEGER", "REAL", "NONE", "BLOB"]
 
 # Types of constants used as keywords for column settings
 ConstrainType = Union[

@@ -6,6 +6,15 @@ from sqllex.types.types import *
 import sqlite3
 
 
+def col_types_sort(val: str) -> int:
+    prior = CONST_PRIORITY.get(val)
+
+    if prior is None:
+        return 1
+    else:
+        return prior
+
+
 def __with__(func: callable) -> callable:
     """
     Decorator for catching WITH argument
@@ -529,6 +538,8 @@ class SQLite3x:
         else:
             # column-def
             for (col, params) in columns.items():
+                params = sorted(params, key=lambda par: col_types_sort(par))
+
                 if isinstance(params, (str, int, float)):
                     params = [f"{params}"]
 
@@ -881,7 +892,7 @@ class SQLite3x:
 
         """
         for (table_name, columns) in template.items():
-            self.create_table(name=table_name, columns=columns, if_not_exist=True)
+            self.create_table(name=table_name, columns=columns, IF_NOT_EXIST=True)
 
     def get_columns(self,
                     table: AnyStr
