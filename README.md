@@ -1,6 +1,8 @@
 
 <div align="center">
 
+<img src="./pics/sqllex-logo.svg" width="300px">
+
 # SQLLEX alpha v0.1.7 📚
 
 ![Python:3.9](https://img.shields.io/badge/Python-3.9-green)
@@ -61,7 +63,7 @@ db = SQLite3x(                              # create database
     }                                       # end of schema (template)
 )
 
-# Ok, now you have database with table inside it. 
+# Ok, now you have database with table inside it.
 # Let's add record of  33 years old user named 'Sqllex'
 # Dear db, please insert into 'users' table values ['Sqllex', 33]
 db.insert('users', ['Sqllex', 33])
@@ -91,7 +93,7 @@ db = SQLite3x(path='my_awesome_db.db')
 
 
 """
-    Ok, now we need to create your tables into a database, 
+    Ok, now we need to create your tables into a database,
     use create_table method (as SQL-like CREATE TABLE)
 """
 
@@ -115,7 +117,7 @@ db.create_table(
     columns={
         'id': [INTEGER, PRIMARY_KEY, UNIQUE],                # user id
         'username': [TEXT, NOT_NULL, DEFAULT, 'Unknown'],    # user name
-        'user_group': INTEGER,                               # the group user belongs to 
+        'user_group': INTEGER,                               # the group user belongs to
         FOREIGN_KEY: {
             "user_group": ["groups", "id"]                   # link to table groups, column id
         }
@@ -125,14 +127,14 @@ db.create_table(
 """
     Well done, now let's add some groups and some users into your database
     For example:
-        1: Admin 
+        1: Admin
         2: User
         3: Guest
 """
 
 # Record some groups for the first
 
-db.insert('groups', id=1, name="Admin") # You can add data like this 
+db.insert('groups', id=1, name="Admin") # You can add data like this
 
 db.insert('groups', [2, "User"])        # Or like this
 
@@ -177,7 +179,7 @@ print(users_in_db)
 
 
 """
-    Prefect, and now select some specific records 
+    Prefect, and now select some specific records
     (only usernames where group_id parameter equalized 1)
 """
 
@@ -195,11 +197,11 @@ print(users_group_1)
 # And for some another table
 
 db.select(
-        SELECT=['username', 'group_name', 'description'],                 # SELECT username, group_name, description 
-        FROM=['users', AS, 'us'],                                         # FROM users AS us 
-        JOIN=[                                                            # JOIN 
+        SELECT=['username', 'group_name', 'description'],                 # SELECT username, group_name, description
+        FROM=['users', AS, 'us'],                                         # FROM users AS us
+        JOIN=[                                                            # JOIN
             ['groups', AS, 'gr', ON, 'us.group_id == gr.group_id'],       ## INNER JOIN groups AS gr ON us.group_id == gr.group_id
-            [CROSS_JOIN, 'about', 'ab', ON, 'ab.group_id == gr.group_id'] ## INNER JOIN about ab ON ab.group_id == gr.group_id 
+            [CROSS_JOIN, 'about', 'ab', ON, 'ab.group_id == gr.group_id'] ## INNER JOIN about ab ON ab.group_id == gr.group_id
         ],
         WHERE={'username': 'user_1'},                                     # WHERE (username='user_1')
         ORDER_BY='age DESC',                                              # order by age ASC
@@ -208,13 +210,13 @@ db.select(
     )
 
 # Same as SQL script like
-# SELECT username, group_name, description 
-# FROM users AS us 
-# INNER JOIN groups AS gr ON us.group_id == gr.group_id 
-# CROSS_JOIN about ab ON ab.group_id == gr.group_id 
+# SELECT username, group_name, description
+# FROM users AS us
+# INNER JOIN groups AS gr ON us.group_id == gr.group_id
+# CROSS_JOIN about ab ON ab.group_id == gr.group_id
 # WHERE (username='user_1')
-# ORDER BY age DESC 
-# LIMIT 50 
+# ORDER BY age DESC
+# LIMIT 50
 # OFFSET 20
 
 ```
@@ -278,7 +280,7 @@ users_in_db = db.select('users', 'username')
 print(users_in_db)
 
 users_group_1 = db.select(
-    'users', 'username', 
+    'users', 'username',
     WHERE={'user_group': 1}
 )
 

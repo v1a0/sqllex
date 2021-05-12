@@ -410,6 +410,20 @@ def __executemany__(func: callable):
     return wrapper
 
 
+def lister(ret_):
+    if isinstance(ret_, tuple):
+        ret_ = list(ret_)
+
+    if isinstance(ret_, list):
+        if len(ret_) == 1:
+            return lister(ret_[0])
+
+        for r in range(len(ret_)):
+            ret_[r] = lister(ret_[r])
+
+    return ret_
+
+
 def tuples_to_lists(func: callable) -> callable:
     """
         Decorator for executes, List(tuples) -> List(list)
@@ -423,19 +437,8 @@ def tuples_to_lists(func: callable) -> callable:
     """
 
     def wrapper(*args, **kwargs):
-        ret_ = func(*args, **kwargs)
-        if isinstance(ret_, list):
-            lists = []
-            for val in list(ret_):
-                if len(val) > 1:
-                    lists.append([list(val)])
-                else:
-                    lists.append(list(val)[0])
+        return lister(func(*args, **kwargs))
 
-            return lists
-
-        else:
-            return ret_
 
     return wrapper
 
@@ -677,7 +680,7 @@ class SQLite3x:
         """
         if args:
             values = list(map(lambda arg: list(arg), args))  # make values list[list] (yes it's necessary)
-            print(values)
+            #print(values)
 
             if len(values) == 1 and isinstance(values[0], list):
                 values = values[0]
@@ -1045,7 +1048,7 @@ class SQLite3x:
                FROM: Union[str, List[str]] = None,
                JOIN: Union[str, List[str], List[List[str]]] = None,
                **kwargs,
-               ) -> Union[SQLStatement, List[List]]:
+               ) -> Union[SQLStatement, List[Any]]:
         """
             SELECT data from table
 
