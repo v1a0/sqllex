@@ -1,4 +1,4 @@
-from sqllex import SQLite3x, INTEGER, PRIMARY_KEY, UNIQUE, TEXT, NOT_NULL, DEFAULT, FOREIGN_KEY, REPLACE
+from sqllex import SQLite3x, INTEGER, PRIMARY_KEY, UNIQUE, TEXT, NOT_NULL, DEFAULT, FOREIGN_KEY, REPLACE, AUTOINCREMENT
 from os import walk, getcwd, remove
 from sqlite3 import IntegrityError
 from loguru import logger
@@ -47,7 +47,8 @@ DB_TEMPLATE = {
     },
 
     "remove_me": {
-        "xxx": [INTEGER, PRIMARY_KEY, UNIQUE],
+        "tester1": [AUTOINCREMENT, INTEGER, PRIMARY_KEY],
+        "xxx": [INTEGER, UNIQUE],
     },
 
 }
