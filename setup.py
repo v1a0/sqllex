@@ -9,7 +9,6 @@ setup(
     name='sqllex',
     packages=[
         'sqllex', 'sqllex.classes', 'sqllex.constants', 'sqllex.exceptions', 'sqllex.types', 'sqllex.debug',
-        'sqllex.pics',
     ],
     version='0.1.7.2',
     license='gpl-3.0',
