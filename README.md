@@ -24,6 +24,7 @@ Use databases without thinking about SQL. Let me show you how sqllex makes
 your life easier. Imagine you need create some database, save some data
 into it and take it back. That's how your code will look like.
 
+### If you never used SQLite before read [this awesome example](https://github.com/v1a0/sqllex/wiki/SQLite3x-%7C-SIMPLEST-EXAMPLE#simplest-sqlite3x-example)  
 
 ```python
 from sqllex import *
