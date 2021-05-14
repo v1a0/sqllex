@@ -209,6 +209,9 @@ join_test = users_table.select(
 
 logger.info(join_test)
 
+print(db.execute("SELECT sql FROM sqlite_schema WHERE name = 'users';"))
+
+print(*db.tables)
 db.disconnect()
 
 sleep(0.5)

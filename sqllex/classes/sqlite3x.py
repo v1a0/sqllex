@@ -823,6 +823,7 @@ class SQLite3x:
     def _update_constants_(self):
         self._update_tables_()
 
+    @tuples_to_lists
     @__execute__
     def _execute_stmt_(self, script: AnyStr = None, values: Tuple = None, request: SQLRequest = None):
         """
@@ -833,6 +834,7 @@ class SQLite3x:
         else:
             return SQLStatement(request, self.path, self.connection)
 
+    @tuples_to_lists
     @__executemany__
     def _executemany_stmt(self, script: AnyStr = None, values: Tuple = None, request: SQLRequest = None):
         """
@@ -843,6 +845,7 @@ class SQLite3x:
         else:
             return SQLStatement(request, self.path)
 
+    @tuples_to_lists
     @__executescript__
     def _executescript_stmt(self, script: AnyStr = None, values: Tuple = None, request: SQLRequest = None):
         """
@@ -853,6 +856,7 @@ class SQLite3x:
         else:
             return SQLStatement(request, self.path)
 
+    @tuples_to_lists
     @__execute__
     def _pragma_stmt_(self, *args: str, **kwargs):
         """
@@ -867,6 +871,7 @@ class SQLite3x:
 
         return SQLStatement(SQLRequest(script), self.path, self.connection)
 
+    @tuples_to_lists
     @__execute__
     def _create_stmt_(self, temp: AnyStr, name: AnyStr, columns: ColumnsType, IF_NOT_EXIST: bool = None,
                       AS: SQLRequest = None, without_rowid: bool = None):
