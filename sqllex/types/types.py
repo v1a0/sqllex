@@ -9,7 +9,7 @@ class SQLRequest:
     SQL request contains script and values (if necessary)
     """
 
-    def __init__(self, script: str, values: tuple = None):
+    def __init__(self, script: AnyStr, values: Tuple = None):
         self.script = script
         self.values = values
 
@@ -61,26 +61,26 @@ PathType = Union[Path, AnyStr]
 NumStr = Union[Number, AnyStr]
 
 # Type of data INSERT awaiting
-InsertData = Union[NumStr, tuple, List, Mapping]
+InsertData = Union[NumStr, Tuple, List, Mapping]
 
 # Type for parameter of OR argument in INSERT method (?)
 OrOptionsType = Literal["ABORT", "FAIL", "IGNORE", "REPLACE", "ROLLBACK"]
 
 # Type for parameter of WITH argument
-WithType = Mapping[str, Union[SQLStatement, str]]
+WithType = Mapping[AnyStr, Union[SQLStatement, AnyStr]]
 
 # Type for parameter of WITH argument
 WhereType = Union[
     AnyStr,
     Tuple[NumStr], List[Union[NumStr, List[NumStr]]],
-    Mapping[str, Union[SQLStatement, NumStr]]
+    Mapping[AnyStr, Union[SQLStatement, NumStr]]
 ]
 
 # Type for parameter of ORDER BY argument
-OrderByType = Union[int, str, list, tuple, Mapping[str, Union[str, int, list, tuple]]]
+OrderByType = Union[NumStr, List, Tuple, Mapping[AnyStr, Union[AnyStr, Number, List, Tuple]]]
 
 # Type for parameter of LIMIT argument
-LimitOffsetType = Union[int, str, float]
+LimitOffsetType = Union[Number, AnyStr, float, int]
 
 # Type for parameter of JOIN argument
 JoinType = Literal["INNER JOIN", "LEFT JOIN", "CROSS JOIN"]

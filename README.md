@@ -39,9 +39,11 @@ db = SQLite3x(
     }                                       
 )
 
-db.insert('users', ['Sqllex', 33])
+users = db["users"]
 
-users = db.select('users', 'username', WHERE={'age': 33})
+users.insert('Sqllex', 33)
+
+user = users.select('username', WHERE={'age': 33})
 
 print(users)  # ['Sqllex']
 ```
@@ -92,6 +94,7 @@ from sqllex import *
 # Init-ing your databse
 db = SQLite3x(path='my_awesome_db.db')
 
+db.connect()    # It'll lock yor database until you disconnect, but makes sqllex work damn faster
 
 """
     Ok, now we need to create your tables into a database,
@@ -135,12 +138,19 @@ db.create_table(
 
 # Record some groups for the first
 
-db.insert('groups', id=1, name="Admin") # You can add data like this
+groups = db['groups']
 
-db.insert('groups', [2, "User"])        # Or like this
+groups.insert(id=1, name="Admin") # You can add data like this
 
-db.insert('groups', 3, 'Guest')         # Or like this
+groups.insert([2, "User"])        # Or like this
 
+groups.insert(3, 'Guest')         # Or like this
+
+
+# Same but without table object
+# db.insert('groups', id=1, name="Admin")
+# db.insert('groups', [2, "User"])
+# db.insert('groups', 3, 'Guest')
 
 """
     Now let's add many users
@@ -161,8 +171,10 @@ users_list = [
     [9, "User_9", 1],
 ]
 
+users = db['users']
+
 # Insert it by one line
-db.insertmany('users', users_list)
+users.insertmany(users_list)
 
 # Done!
 
@@ -172,7 +184,7 @@ db.insertmany('users', users_list)
 """
 
 # SELECT FROM (table) (what)
-users_in_db = db.select('users', 'username')
+users_in_db = users.select('username')
 
 print(users_in_db)
 # It'll print:
@@ -185,8 +197,8 @@ print(users_in_db)
 """
 
 
-users_group_1 = db.select(
-    'users', 'username',
+users_group_1 = users.select(
+    'username',
     WHERE={'user_group': 1}
 )
 
@@ -197,9 +209,9 @@ print(users_group_1)
 
 # And for some another table
 
-db.select(
+users.select(
         SELECT=['username', 'group_name', 'description'],                 # SELECT username, group_name, description
-        FROM=['users', AS, 'us'],                                         # FROM users AS us
+        WITH=['users', AS, 'us'],                                         # FROM users AS us
         JOIN=[                                                            # JOIN
             ['groups', AS, 'gr', ON, 'us.group_id == gr.group_id'],       ## INNER JOIN groups AS gr ON us.group_id == gr.group_id
             [CROSS_JOIN, 'about', 'ab', ON, 'ab.group_id == gr.group_id'] ## INNER JOIN about ab ON ab.group_id == gr.group_id
@@ -220,6 +232,8 @@ db.select(
 # LIMIT 50
 # OFFSET 20
 
+db.disconnect() # unlock your database
+
 ```
 
 
@@ -232,12 +246,14 @@ db.select(
 
 from sqllex import *
 
-
 db = SQLite3x(path='my_awesome_db.db')
 
+db.connect()
+
+
 db.create_table(
-    'groups',
-    {
+    'groups',                                            
+    {                  
         'id': [INTEGER, PRIMARY_KEY, UNIQUE],
         'name': [TEXT, NOT_NULL, DEFAULT, 'Unknown']
     }
@@ -254,12 +270,13 @@ db.create_table(
         }
     })
 
-db.insert('groups', id=1, name="Admin")
+groups = db['groups']
 
-db.insert('groups', [2, "User"])
+groups.insert(id=1, name="Admin")
 
-db.insert('groups', 3, 'Guest')
+groups.insert([2, "User"])
 
+groups.insert(3, 'Guest')
 
 users_list = [
     [0, "User_0", 1],
@@ -274,18 +291,36 @@ users_list = [
     [9, "User_9", 1],
 ]
 
-db.insertmany('users', users_list)
+users = db['users']
 
-users_in_db = db.select('users', 'username')
+users.insertmany(users_list)
+
+users_in_db = users.select('username')
 
 print(users_in_db)
 
-users_group_1 = db.select(
-    'users', 'username',
+users_group_1 = users.select(
+    'username',
     WHERE={'user_group': 1}
 )
 
 print(users_group_1)
+
+users.select(
+        SELECT=['username', 'group_name', 'description'], 
+        WITH=['users', AS, 'us'],
+        JOIN=[                                   
+            ['groups', AS, 'gr', ON, 'us.group_id == gr.group_id'],
+            [CROSS_JOIN, 'about', 'ab', ON, 'ab.group_id == gr.group_id']
+        ],
+        WHERE={'username': 'user_1'},                                     
+        ORDER_BY='age DESC',                                             
+        LIMIT=50,
+        OFFSET=20                                                           
+    )
+
+db.disconnect()
+
 ```
 </details>
 
