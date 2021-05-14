@@ -871,7 +871,6 @@ class SQLite3x:
 
         return SQLStatement(SQLRequest(script), self.path, self.connection)
 
-    @tuples_to_lists
     @__execute__
     def _create_stmt_(self, temp: AnyStr, name: AnyStr, columns: ColumnsType, IF_NOT_EXIST: bool = None,
                       AS: SQLRequest = None, without_rowid: bool = None):

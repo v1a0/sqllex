@@ -2,7 +2,7 @@ import time
 import sqlite3
 import sqllex
 
-sqllex.debug.debug_mode(False)
+sqllex.debug.debug_mode(True)
 
 
 def bench_sqllex_connect():
