@@ -1,6 +1,7 @@
 from pathlib import Path
 from typing import Literal, Mapping, Union, List, Tuple, AnyStr
 from numbers import Number
+from sqlite3 import Connection
 
 
 class SQLRequest:
@@ -24,9 +25,10 @@ class SQLStatement:
     SQL request contains SQLRequest
     """
 
-    def __init__(self, request: SQLRequest, path: Union[Path, AnyStr]):
+    def __init__(self, request: SQLRequest, path: Union[Path, AnyStr], conn: Connection=None):
         self.request = request
         self.path = path
+        self.connection = conn
 
 
 # FOREIGN_KEY const type
@@ -82,7 +84,6 @@ LimitOffsetType = Union[int, str, float]
 
 # Type for parameter of JOIN argument
 JoinType = Literal["INNER JOIN", "LEFT JOIN", "CROSS JOIN"]
-
 
 __all__ = [
     'SQLRequest',

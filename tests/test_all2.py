@@ -70,37 +70,42 @@ print(*db.tables)
 
 db.connect()
 
-db.insert("groups", group_id=1, group_name="Admins")
-db.insert("groups", group_id=2, group_name="Other")
+groups_table = db["groups"]
+users_table = db["users"]
+about_table = db["about"]
 
-db.insert('users', ['user_1', 1])
-db.insert('users', ('user_2', 2))
-db.insert('users', 'user_3', 2)
-db.insert('users', username='user_4', group_id=1)
-db.insert('users', username='user_5')
-db.insert('users', {
-    'username': 'user_6',
-    'group_id': 1
-})
-db.insert(
+print(groups_table.columns())
+
+groups_table.insert(group_id=1, group_name="Admins")
+groups_table.insert(group_id=2, group_name="Other")
+
+users_table.insert(['user_1', 1])
+users_table.insert(('user_2', 2))
+users_table.insert('user_3', 2)
+users_table.insert(username='user_4', group_id=1)
+users_table.insert(username='user_5')
+users_table.insert(
+    {
+        'username': 'user_6',
+        'group_id': 1
+    })
+users_table.insert(
     OR=REPLACE,
-    TABLE='users',
     username='user_7', group_id=1
-    )
-
-db.insertmany(
-    'about', group_id=[1, 2], description=['Damn cool goy', 'Just regular user']
 )
 
+about_table.insertmany(
+    group_id=[1, 2], description=['Damn cool goy', 'Just regular user']
+)
 
 # Have to fail
 
 try:
-    db.insert("users", group_id=1)
+    users_table.insert(group_id=1)
 except IntegrityError:
     logger.info("INSERT #1 passed")
 try:
-    db.insert("groups", group_id=1, group_name="Fail")
+    groups_table.insert(group_id=1, group_name="Fail")
 except IntegrityError as e:
     logger.info("INSERT #2 passed")
 
@@ -109,38 +114,36 @@ except IntegrityError as e:
 selects = []
 
 selects.append(
-    db.select(TABLE='users')
+    users_table.select_all()
 )
 
 selects.append(
-    db.select('users', ['username', 'group_id'])
+    users_table.select(['username', 'group_id'])
 )
 
 selects.append(
-    db.select(TABLE='users', SELECT=['username'])
+    users_table.select(SELECT=['username'])
 )
 
 selects.append(
-    db.select(TABLE='users', WHERE={'group_id': 1})
+    users_table.select(WHERE={'group_id': 1})
 )
 
 selects.append(
-    db.select(TABLE='users', WHERE={'group_id': 1, 'username': 'user_1'}, ORDER_BY='username')
+    users_table.select(WHERE={'group_id': 1, 'username': 'user_1'}, ORDER_BY='username')
 )
 
 selects.append(
-    db.select(TABLE='users', WHERE={'group_id': 1}, ORDER_BY={'username': 'DESC'})
+    users_table.select(WHERE={'group_id': 1}, ORDER_BY={'username': 'DESC'})
 )
 
 selects.append(
-    db.select(TABLE='users', WHERE={'group_id': 1}, ORDER_BY=[2, 1])
+    users_table.select(WHERE={'group_id': 1}, ORDER_BY=[2, 1])
 )
-
 
 selects.append(
-    db.select(TABLE='users', WHERE={'group_id': 4}, execute=False)
+    users_table.select(WHERE={'group_id': 4}, execute=False)
 )
-
 
 logger.info(f"\nAll from users: {selects[0]}")
 logger.info(f"\nUsernames and group_id from users: {selects[1]}")
@@ -151,56 +154,58 @@ logger.info(f"\nAll from users where group_id=1, order_by username by DESC: {sel
 logger.info(f"\nAll from users where group_id=1, order_by [2,1]: {selects[6]}")
 logger.info(f"\nScript SELECT where group_id=4: {selects[7].request.script}")
 
-
-
 ####################################################
 # SELECT data from DB
-db.insertmany("users", [10, 1], [11, 2], [12, 3])
-db.insertmany("users", [(20, 1), (21, 2), (23, 3)])
-db.insertmany("users", [[30], [31, 2]])
-db.insertmany("users", username=[41, 42, 43], group_id=[1, 2])
+users_table.insertmany([10, 1], [11, 2], [12, 3])
+users_table.insertmany([(20, 1), (21, 2), (23, 3)])
+users_table.insertmany([[30], [31, 2]])
+users_table.insertmany(username=[41, 42, 43], group_id=[1, 2])
 
-db.replace("groups", [1, 'AAdmins'])
-db.replace("groups", group_id=2, group_name="IDK")
+groups_table.replace([1, 'AAdmins'])
+groups_table.replace(group_id=2, group_name="IDK")
 
-db.insert("users", username="user_411", group_id=1,
-          OR=REPLACE,
-          WITH={
-              'a': db.select(
-                  TABLE='users',
-                  WHERE={'group_id': 1},
-                  execute=False
-              )}
-          )
+users_table.insert(
+    username="user_411", group_id=1,
+    OR=REPLACE,
+    WITH={
+        'a': db.select(
+            TABLE='users',
+            WHERE={'group_id': 1},
+            execute=False
+        )}
+)
 
-db.insert("users", ["user_422", 1],
-          OR=REPLACE,
-          WITH={
-              'a': "SELECT * FROM users WHERE (group_id=2)"
-          })
+users_table.insert(
+    ["user_422", 1],
+    OR=REPLACE,
+    WITH={
+        'a': "SELECT * FROM users WHERE (group_id=2)"
+    })
 
-db.delete("users", WHERE={'username': 'user_422'})
+users_table.delete(WHERE={'username': 'user_422'})
 
-db.update(TABLE="users", SET={'username': 'USER_upd', 'group_id': 2}, WHERE={'username': "user_411"})
+users_table.update(SET={'username': 'USER_upd', 'group_id': 2}, WHERE={'username': "user_411"})
 
 print(*db.tables)
 
-db.drop("remove_me")
+remove_me_table = db['remove_me']
+remove_me_table.drop()
+
+print(remove_me_table)
 
 print(*db.tables)
 
 from sqllex import *
 
 # DAAAAAAAAAAMMMNNNN COOOL
-join_test = db.select(
-        SELECT=['username', 'group_name', 'description'],
-        FROM=['users', AS, 'us'],
-        JOIN=[
-            [INNER_JOIN, 'groups', AS, 'gr', ON, 'us.group_id == gr.group_id'],
-            ['about', 'ab', ON, 'ab.group_id == gr.group_id']
-        ],
-        #WHERE={'username': 'user_1'}
-    )
+join_test = users_table.select(
+    SELECT=['username', 'group_name', 'description'],
+    JOIN=[
+        [INNER_JOIN, 'groups', AS, 'gr', ON, 'users.group_id == gr.group_id'],
+        ['about', 'ab', ON, 'ab.group_id == gr.group_id']
+    ],
+    # WHERE={'username': 'user_1'}
+)
 
 logger.info(join_test)
 
