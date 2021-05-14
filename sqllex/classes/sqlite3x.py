@@ -1336,6 +1336,8 @@ class SQLite3x:
             :return: List[List] of columns
         """
         columns = self.table_info(table_name=table)
+        if not isinstance(columns[0], list):
+            columns = [columns]
 
         if columns:
             return tuple(map(lambda item: item[1], columns))

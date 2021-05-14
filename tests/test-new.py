@@ -10,7 +10,7 @@ def bench_sqllex_connect():
     db.connect()
     db.create_table("numbers", {"value": [sqllex.INTEGER]}, IF_NOT_EXIST=True)
     for i in range(1000):
-        db.insert("numbers", i, execute=False)
+        db.insert("numbers", i)
     db.disconnect()
 
 
@@ -34,7 +34,7 @@ end = time.time()
 print(f"sqllex_connect\t{end - beg:.3}s")
 
 beg = time.time()
-bench_sqllex_without_connect()
+#bench_sqllex_without_connect()
 end = time.time()
 print(f"sqllex_without_connect\t{end - beg:.3}s")
 
