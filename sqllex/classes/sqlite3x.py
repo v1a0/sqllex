@@ -5,8 +5,6 @@ from sqllex.constants.sql import *
 from sqllex.types.types import *
 import sqlite3
 
-from time import time
-
 
 def col_types_sort(val: str) -> int:
     prior = CONST_PRIORITY.get(val)
@@ -374,7 +372,6 @@ def __execute__(func: callable):
         else:
             return executor(stmt.connection, stmt)
 
-
     return wrapper
 
 
@@ -592,7 +589,7 @@ class SQLite3xTable:
         return f"{{SQLite3x Table: name: '{self.name}', db: '{self.db}'}}"
 
     def __bool__(self):
-        return bool(self.db)
+        return bool(self.columns())
 
     def foreign_keys(self):
         """
@@ -643,7 +640,7 @@ class SQLite3xTable:
             :param execute: execute script and return db's answer (True) or return script (False)
 
         """
-        return self.db.insert(OR=OR, TABLE=self.name, *args, execute=execute, **kwargs, WITH=WITH)
+        return self.db.insert(self.name, *args, OR=OR, execute=execute, WITH=WITH, **kwargs)
 
     def replace(self,
                 *args: Any,
@@ -658,7 +655,7 @@ class SQLite3xTable:
             :param execute: execute script and return db's answer (True) or return script (False)
 
         """
-        return self.db.replace(TABLE=self.name, *args, execute=execute, **kwargs, WITH=WITH)
+        return self.db.replace(self.name, *args, execute=execute, **kwargs, WITH=WITH)
 
     def insertmany(self,
                    *args: Union[list[list], list[tuple], tuple[list], tuple[tuple], list, tuple],
@@ -703,7 +700,7 @@ class SQLite3xTable:
 
         """
 
-        return self.db.select(SELECT=SELECT, TABLE=self.name, WHERE=WHERE, execute=execute,
+        return self.db.select(self.name, SELECT=SELECT, WHERE=WHERE, execute=execute,
                               WITH=WITH, ORDER_BY=ORDER_BY, LIMIT=LIMIT, OFFSET=OFFSET, JOIN=JOIN, **kwargs)
 
     def select_distinct(self,
@@ -716,9 +713,8 @@ class SQLite3xTable:
                         execute: bool = True,
                         **kwargs
                         ) -> Union[SQLRequest, List]:
-
-        return self.db.select_distinct(SELECT=SELECT, TABLE=self.name, WHERE=WHERE, execute=execute, WITH=WITH, ORDER_BY=ORDER_BY, LIMIT=LIMIT, OFFSET=OFFSET,
-                                       **kwargs)
+        return self.db.select_distinct(self.name, SELECT=SELECT, WHERE=WHERE, execute=execute, WITH=WITH,
+                                       ORDER_BY=ORDER_BY, LIMIT=LIMIT, OFFSET=OFFSET, **kwargs)
 
     def select_all(self,
                    WHERE: WhereType = None,
@@ -727,12 +723,10 @@ class SQLite3xTable:
                    LIMIT: LimitOffsetType = None,
                    OFFSET: LimitOffsetType = None,
                    execute: bool = True,
-                   FROM: str = None,
                    **kwargs
                    ) -> Union[SQLRequest, List]:
-
-        return self.db.select_all(execute=execute, TABLE=self.name, WHERE=WHERE,
-                                  WITH=WITH, ORDER_BY=ORDER_BY, LIMIT=LIMIT, OFFSET=OFFSET, **kwargs)
+        return self.db.select_all(self.name, execute=execute, WHERE=WHERE, WITH=WITH, ORDER_BY=ORDER_BY,
+                                  LIMIT=LIMIT, OFFSET=OFFSET, **kwargs)
 
     def delete(self,
                WHERE: WhereType = None,
@@ -749,7 +743,7 @@ class SQLite3xTable:
 
         """
 
-        return self.db.delete(TABLE=self.name, WHERE=WHERE, WITH=WITH, execute=execute, **kwargs)
+        return self.db.delete(self.name, WHERE=WHERE, WITH=WITH, execute=execute, **kwargs)
 
     def update(self,
                SET: Union[list, tuple, dict],
@@ -767,8 +761,7 @@ class SQLite3xTable:
             :param WITH: with_statement
 
         """
-        return self.db.update(TABLE=self.name, SET=SET, OR=OR, WHERE=WHERE, execute=execute,
-                                  WITH=WITH, **kwargs)
+        return self.db.update(self.name, SET=SET, OR=OR, WHERE=WHERE, execute=execute, WITH=WITH, **kwargs)
 
     def drop(self,
              IF_EXIST: bool = True,
@@ -781,7 +774,7 @@ class SQLite3xTable:
             :param IF_EXIST: Check is table exist (boolean)
             :param execute: execute script and return db's answer (True) or return script (False)
         """
-        return self.db.drop(TABLE=self.name, IF_EXIST=IF_EXIST, execute=execute, **kwargs)
+        self.db.drop(self.name, IF_EXIST=IF_EXIST, execute=execute, **kwargs)
 
 
 class SQLite3x:
@@ -1172,10 +1165,10 @@ class SQLite3x:
         return self._executemany_stmt(script=script, values=values, request=request)
 
     def executescript(self,
-                    script: AnyStr = None,
-                    values: tuple = None,
-                    request: SQLRequest = None
-                    ) -> Union[List, None]:
+                      script: AnyStr = None,
+                      values: tuple = None,
+                      request: SQLRequest = None
+                      ) -> Union[List, None]:
         """
             Child method of __executemany__ method
 
@@ -1511,9 +1504,6 @@ class SQLite3x:
             :param execute: execute script and return db's answer (True) or return script (False)
         """
         return self._drop_stmt_(TABLE=TABLE, IF_EXIST=IF_EXIST, execute=execute, **kwargs)
-
-
-
 
 
 __all__ = ["SQLite3x"]
