@@ -1,25 +1,23 @@
-a = (
-    ((1, (2, (3,))),),
-    (1, 2)
-)
+def decorator_function(target):
+    def wrap(self, *args, **kwargs):
+        self.upd()
+        return target(self, *args, **kwargs)
 
-
-def lister(ret_):
-    if isinstance(ret_, tuple):
-        ret_ = list(ret_)
-
-    if isinstance(ret_, list):
-        if len(ret_) == 1:
-            return lister(ret_[0])
-
-        for r in range(len(ret_)):
-            ret_[r] = lister(ret_[r])
-
-    return ret_
-
-a = lister(a)
-
-print(a)
+    return wrap
 
 
 
+class Target:
+
+    def upd(self):
+        print(0)
+
+    @decorator_function
+    def qq(self):
+        print(12)
+
+
+a = Target()
+a.qq()
+a.qq()
+a.qq()

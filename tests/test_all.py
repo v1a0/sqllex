@@ -62,9 +62,14 @@ if not is_exist(DB_NAME):
 else:
     logger.info("Creating database passed")
 
+print(*db.tables)
+
 ####################################################
 # INSERT data int DB and SELECT
 # 1'st table
+
+db.connect()
+
 db.insert("groups", group_id=1, group_name="Admins")
 db.insert("groups", group_id=2, group_name="Other")
 
@@ -178,7 +183,11 @@ db.delete("users", WHERE={'username': 'user_422'})
 
 db.update(TABLE="users", SET={'username': 'USER_upd', 'group_id': 2}, WHERE={'username': "user_411"})
 
+print(*db.tables)
+
 db.drop("remove_me")
+
+print(*db.tables)
 
 from sqllex import *
 
@@ -195,6 +204,7 @@ join_test = db.select(
 
 logger.info(join_test)
 
+db.disconnect()
 
 sleep(0.5)
 rem = ''
