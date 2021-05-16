@@ -10,12 +10,12 @@ setup(
     packages=[
         'sqllex', 'sqllex.classes', 'sqllex.constants', 'sqllex.exceptions', 'sqllex.types', 'sqllex.debug',
     ],
-    version='0.1.8.5',
+    version='0.1.8.6',
     license='gpl-3.0',
     description='Better than sqlite3',
     author='v1a0',
     url='https://github.com/v1a0/sqllex',
-    download_url='https://github.com/V1A0/sqllex/archive/refs/tags/v0.1.8.5.tar.gz',
+    download_url='https://github.com/V1A0/sqllex/archive/refs/tags/v0.1.8.6.tar.gz',
     keywords=['sql', 'sql3', 'sqlite', 'sqlite3', 'sqllex', 'db', 'database', 'easy'],
     install_requires=[
         'colorama==0.4.4',
