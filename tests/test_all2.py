@@ -18,7 +18,7 @@ def is_exist(file: str = ''):
     return file in next(walk(getcwd()))[2]
 
 
-debug_mode(True)
+debug_mode(False)
 
 DB_NAME = "test_table.db"
 
@@ -62,7 +62,7 @@ if not is_exist(DB_NAME):
 else:
     logger.info("Creating database passed")
 
-print(*db.tables)
+# print(*db.tables)
 
 ####################################################
 # INSERT data int DB and SELECT
@@ -73,8 +73,6 @@ db.connect()
 groups_table = db["groups"]
 users_table = db["users"]
 about_table = db["about"]
-
-print(groups_table.columns())
 
 groups_table.insert(group_id=1, group_name="Admins")
 groups_table.insert(group_id=2, group_name="Other")
@@ -93,6 +91,7 @@ users_table.insert(
     OR=REPLACE,
     username='user_7', group_id=1
 )
+
 
 about_table.insertmany(
     group_id=[1, 2], description=['Damn cool goy', 'Just regular user']
@@ -186,14 +185,14 @@ users_table.delete(WHERE={'username': 'user_422'})
 
 users_table.update(SET={'username': 'USER_upd', 'group_id': 2}, WHERE={'username': "user_411"})
 
-print(*db.tables)
+# print(*db.tables)
 
 remove_me_table = db['remove_me']
 remove_me_table.drop()
 
-print(remove_me_table)
-
-print(*db.tables)
+# print(remove_me_table)
+#
+# print(*db.tables)
 
 from sqllex import *
 
@@ -209,11 +208,12 @@ join_test = users_table.select(
 
 logger.info(join_test)
 
-print(db.execute("SELECT sql FROM sqlite_schema WHERE name = 'users';"))
+# print(db.execute("SELECT sql FROM sqlite_schema WHERE name = 'users';"))
+# print(*db.tables)
+sleep(0.2)
+print(users_table.find(group_id=['!=', 2]))
 
-print(*db.tables)
 db.disconnect()
-
 sleep(0.5)
 rem = ''
 

@@ -1,44 +1,29 @@
-import time
-import sqlite3
-import sqllex
-
-sqllex.debug.debug_mode(True)
+from sqllex import SQLite3x, INTEGER, PRIMARY_KEY, UNIQUE, TEXT, NOT_NULL, DEFAULT, FOREIGN_KEY, REPLACE, AUTOINCREMENT
+from sqllex.debug import debug_mode
 
 
-def bench_sqllex_connect():
-    db = sqllex.SQLite3x('db-1')
-    db.connect()
-    db.create_table("numbers", {"value": [sqllex.INTEGER]}, IF_NOT_EXIST=True)
-    for i in range(1000):
-        db.insert("numbers", i)
-    db.disconnect()
+def test(d):
+    table = d["nums"]
+    table.select_all()
 
 
-def bench_sqllex_without_connect():
-    db = sqllex.SQLite3x('db-2')
-    db.create_table("numbers", {"value": [sqllex.INTEGER]}, IF_NOT_EXIST=True)
-    for i in range(1000):
-        db.insert("numbers", i, execute=False)
+debug_mode(False)
 
+DB_NAME = "test_table1.db"
 
-def bench_sqlite3():
-    with sqlite3.connect('db-3') as db:
-        db.execute("CREATE TABLE numbers (value INTEGER)")
-        for i in range(1000):
-            db.execute("INSERT INTO numbers (value) VALUES (?)", (i,))
+DB_TEMPLATE = {
+    "nums": {
+        "id": INTEGER
+    }
+}
 
+db = SQLite3x(path=DB_NAME, template=DB_TEMPLATE)
 
-beg = time.time()
-bench_sqllex_connect()
-end = time.time()
-print(f"sqllex_connect\t{end - beg:.3}s")
+db.connect()
+test(db)
 
-beg = time.time()
-#bench_sqllex_without_connect()
-end = time.time()
-print(f"sqllex_without_connect\t{end - beg:.3}s")
+print(db.connection)
 
-beg = time.time()
-bench_sqlite3()
-end = time.time()
-print(f"sqlite3\t{end - beg:.3}s")
+db.disconnect()
+
+print(db.connection)

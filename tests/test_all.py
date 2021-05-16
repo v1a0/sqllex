@@ -62,7 +62,7 @@ if not is_exist(DB_NAME):
 else:
     logger.info("Creating database passed")
 
-print(*db.tables)
+# print(*db.tables)
 
 ####################################################
 # INSERT data int DB and SELECT
@@ -183,11 +183,11 @@ db.delete("users", WHERE={'username': 'user_422'})
 
 db.update(TABLE="users", SET={'username': 'USER_upd', 'group_id': 2}, WHERE={'username': "user_411"})
 
-print(*db.tables)
+# print(*db.tables)
 
 db.drop("remove_me")
 
-print(*db.tables)
+# print(*db.tables)
 
 from sqllex import *
 
