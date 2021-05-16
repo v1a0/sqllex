@@ -141,6 +141,10 @@ selects.append(
     db.select(TABLE='users', WHERE={'group_id': 4}, execute=False)
 )
 
+selects.append(
+    db.select(TABLE='users', SELECT='username', WHERE={'group_id': 1}, LIMIT=1)
+)
+
 
 logger.info(f"\nAll from users: {selects[0]}")
 logger.info(f"\nUsernames and group_id from users: {selects[1]}")
@@ -150,7 +154,7 @@ logger.info(f"\nAll from users where group_id=1 and username=user_1, order_by us
 logger.info(f"\nAll from users where group_id=1, order_by username by DESC: {selects[5]}")
 logger.info(f"\nAll from users where group_id=1, order_by [2,1]: {selects[6]}")
 logger.info(f"\nScript SELECT where group_id=4: {selects[7].request.script}")
-
+logger.info(f"\nOne record, one value: {selects[8]}")
 
 
 ####################################################

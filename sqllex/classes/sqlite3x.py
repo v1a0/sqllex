@@ -510,6 +510,11 @@ def tuples_to_lists(func: callable) -> callable:
 
     def wrapper(*args, **kwargs):
         ret = lister(func(*args, **kwargs))
+
+        if not issubclass(ret.__class__, SQLStatement):
+            if not isinstance(ret, list):
+                ret = [ret]
+
         return ret
 
     return wrapper
