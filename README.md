@@ -43,9 +43,9 @@ users = db["users"]
 
 users.insert('Sqllex', 33)
 
-user = users.select('username', WHERE={'age': 33})
+user = users.find(age=33)
 
-print(users)  # ['Sqllex']
+print(users)  # ['Sqllex', 33]
 ```
 
 <br>
