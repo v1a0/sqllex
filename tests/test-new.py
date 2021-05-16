@@ -1,61 +1,29 @@
-from sqllex import *
-from time import time
+from sqllex import SQLite3x, INTEGER, PRIMARY_KEY, UNIQUE, TEXT, NOT_NULL, DEFAULT, FOREIGN_KEY, REPLACE, AUTOINCREMENT
+from sqllex.debug import debug_mode
 
-path = 'my_awesome_db.db'
 
-# Init-ing your databse
-db = SQLite3x(path='my_awesome_db.db')
+def test(d):
+    table = d["nums"]
+    table.select_all()
 
-db.create_table(
-    name='users',  # here is name of table
-    columns={
-        'id': [INTEGER, PRIMARY_KEY],  # user id
-        'username': [TEXT, NOT_NULL, DEFAULT, 'Unknown'],  # user name
-    },
-    IF_NOT_EXIST=True
-)
 
-t = time()
+debug_mode(False)
+
+DB_NAME = "test_table1.db"
+
+DB_TEMPLATE = {
+    "nums": {
+        "id": INTEGER
+    }
+}
+
+db = SQLite3x(path=DB_NAME, template=DB_TEMPLATE)
 
 db.connect()
+test(db)
 
-users = db['users']
+print(db.connection)
 
-# users.insertmany(
-#     [
-#         [1, '12'],
-#     ]
-# )
+db.disconnect()
 
-import time
-import sqlite3
-import sqllex
-
-sqllex.debug.debug_mode(False)
-
-
-def bench_sqllex():
-    db = sqllex.SQLite3x('db-1')
-    db.connect()
-    db.create_table("numbers", {"value": [sqllex.INTEGER]}, IF_NOT_EXIST=True)
-    for i in range(1000):
-        db.insert("numbers", i, execute=False)
-    db.disconnect()
-
-
-def bench_sqlite3():
-    with sqlite3.connect('db-2') as db:
-        db.execute("CREATE TABLE numbers (value INTEGER)")
-        for i in range(1000):
-            db.execute("INSERT INTO numbers (value) VALUES (?)", (i,))
-
-
-beg = time.time()
-bench_sqllex()
-end = time.time()
-print(f"sqllex\t{end - beg:.3}s")
-
-beg = time.time()
-bench_sqlite3()
-end = time.time()
-print(f"sqlite3\t{end - beg:.3}s")
+print(db.connection)

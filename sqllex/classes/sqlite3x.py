@@ -1,5 +1,5 @@
 from sqllex.exceptions import TableInfoError, ArgumentError, ExecuteError
-from typing import Literal, Mapping, Union, List, AnyStr, Any
+from typing import Literal, Mapping, Union, List, AnyStr, Any, Tuple
 from sqllex.debug import logger
 from sqllex.constants.sql import *
 from sqllex.types.types import *
@@ -332,16 +332,17 @@ def __execute__(func: callable):
 
     """
 
-    def wrapper(*args: tuple, **kwargs: dict):
+    def wrapper(*args: Tuple, **kwargs: Mapping):
         def executor(conn: sqlite3.Connection, stmt: SQLStatement):
             cur = conn.cursor()
 
             try:
                 if stmt.request.values:
+                    # t = time()
                     cur.execute(stmt.request.script, stmt.request.values)
+                    # if time() - t: print(time() - t, stmt.request.script)
                 else:
                     cur.execute(stmt.request.script)
-                conn.commit()
 
                 return cur.fetchall()
 
@@ -368,7 +369,9 @@ def __execute__(func: callable):
 
         if not stmt.connection:
             with sqlite3.connect(stmt.path) as conn:
-                return executor(conn, stmt)
+                ret_ = executor(conn, stmt)
+                conn.commit()
+                return ret_
         else:
             return executor(stmt.connection, stmt)
 
@@ -386,11 +389,11 @@ def __executemany__(func: callable):
 
     """
 
-    def wrapper(*args: tuple, **kwargs: dict):
+    def wrapper(*args: Tuple, **kwargs: Mapping):
         def executor(conn: sqlite3.Connection, stmt: SQLStatement):
             cur = conn.cursor()
             cur.executemany(stmt.request.script, stmt.request.values)
-            conn.commit()
+            # conn.commit()
 
             return cur.fetchall()
 
@@ -414,7 +417,9 @@ def __executemany__(func: callable):
 
         if not stmt.connection:
             with sqlite3.connect(stmt.path) as conn:
-                return executor(conn, stmt)
+                ret_ = executor(conn, stmt)
+                conn.commit()
+                return ret_
         else:
             return executor(stmt.connection, stmt)
 
@@ -432,11 +437,11 @@ def __executescript__(func: callable):
 
     """
 
-    def wrapper(*args: tuple, **kwargs: dict):
+    def wrapper(*args: Tuple, **kwargs: Mapping):
         def executor(conn: sqlite3.Connection, stmt: SQLStatement):
             cur = conn.cursor()
             cur.executescript(stmt.request.script)
-            conn.commit()
+            # conn.commit()
 
             return cur.fetchall()
 
@@ -460,7 +465,9 @@ def __executescript__(func: callable):
 
         if not stmt.connection:
             with sqlite3.connect(stmt.path) as conn:
-                return executor(conn, stmt)
+                ret_ = executor(conn, stmt)
+                conn.commit()
+                return ret_
         else:
             return executor(stmt.connection, stmt)
 
@@ -502,7 +509,8 @@ def tuples_to_lists(func: callable) -> callable:
     """
 
     def wrapper(*args, **kwargs):
-        return lister(func(*args, **kwargs))
+        ret = lister(func(*args, **kwargs))
+        return ret
 
     return wrapper
 
@@ -532,10 +540,11 @@ def args_parser(func: callable):
             if len(args) == 1:
                 if isinstance(args[0], dict):
                     args, kwargs = None, args[0]
-                elif isinstance(args[0], list):
-                    args, kwargs = args[0], kwargs
                 elif isinstance(args[0], tuple):
                     args, kwargs = list(args[0]), kwargs
+
+                if isinstance(args[0], list):
+                    args, kwargs = args[0], kwargs
 
             else:
                 for arg in args:
@@ -551,7 +560,7 @@ def args_parser(func: callable):
     return wrapper
 
 
-def crop(columns: Union[tuple, list], values: Union[tuple, list]) -> tuple:
+def crop(columns: Union[Tuple, List], values: Union[Tuple, List]) -> Tuple:
     """
         Converts input lists (columns and values) to the same length for safe insert
 
@@ -617,7 +626,7 @@ class SQLite3xTable:
         """
         return None
 
-    def columns(self) -> Union[tuple, list]:
+    def columns(self) -> Union[Tuple, List]:
         """
             Get list of table columns
 
@@ -658,7 +667,7 @@ class SQLite3xTable:
         return self.db.replace(self.name, *args, execute=execute, **kwargs, WITH=WITH)
 
     def insertmany(self,
-                   *args: Union[list[list], list[tuple], tuple[list], tuple[tuple], list, tuple],
+                   *args: Union[List[List], List[Tuple], Tuple[List], Tuple[Tuple], List, Tuple],
                    execute: bool = True,
                    **kwargs: Any
                    ) -> Union[None, SQLStatement]:
@@ -746,7 +755,7 @@ class SQLite3xTable:
         return self.db.delete(self.name, WHERE=WHERE, WITH=WITH, execute=execute, **kwargs)
 
     def update(self,
-               SET: Union[list, tuple, dict],
+               SET: Union[List, Tuple, Mapping],
                WHERE: WhereType,
                OR: OrOptionsType = None,
                execute: bool = True,
@@ -775,6 +784,18 @@ class SQLite3xTable:
             :param execute: execute script and return db's answer (True) or return script (False)
         """
         self.db.drop(self.name, IF_EXIST=IF_EXIST, execute=execute, **kwargs)
+
+    def find(self,
+             WHERE: WhereType = None,
+             ORDER_BY: OrderByType = None,
+             LIMIT: LimitOffsetType = None,
+             **kwargs
+             ) -> Union[SQLRequest, List]:
+
+        if not WHERE:
+            WHERE = kwargs
+
+        return self.select_all(WHERE=WHERE, ORDER_BY=ORDER_BY, LIMIT=LIMIT)
 
 
 class SQLite3x:
@@ -812,11 +833,15 @@ class SQLite3x:
             logger.error(error)
             return False
 
-    def __getitem__(self, key):
-        if not (key in self.tables_list()):
+    def __getitem__(self, key) -> SQLite3xTable:
+        if not (key in self.tables_str()):
             raise KeyError(key, "No such table in database")
 
         return SQLite3xTable(db=self, name=key)
+
+    def __del__(self):
+        if self.connection:
+            self.disconnect()
 
     # ============================== PRIVATE METHODS ==============================
 
@@ -824,34 +849,34 @@ class SQLite3x:
         self._update_tables_()
 
     @__execute__
-    def _execute_stmt_(self, script: AnyStr = None, values: tuple = None, request: SQLRequest = None):
+    def _execute_stmt_(self, script: AnyStr = None, values: Tuple = None, request: SQLRequest = None):
         """
             Parent method for execute
         """
         if not request:
-            return SQLStatement(SQLRequest(script, values), self.path)
+            return SQLStatement(SQLRequest(script, values), self.path, self.connection)
         else:
             return SQLStatement(request, self.path, self.connection)
 
     @__executemany__
-    def _executemany_stmt(self, script: AnyStr = None, values: tuple = None, request: SQLRequest = None):
+    def _executemany_stmt(self, script: AnyStr = None, values: Tuple = None, request: SQLRequest = None):
         """
             Parent method for executemany
         """
         if not request:
-            return SQLStatement(SQLRequest(script, values), self.path)
+            return SQLStatement(SQLRequest(script, values), self.path, self.connection)
         else:
-            return SQLStatement(request, self.path)
+            return SQLStatement(request, self.path, self.connection)
 
     @__executescript__
-    def _executescript_stmt(self, script: AnyStr = None, values: tuple = None, request: SQLRequest = None):
+    def _executescript_stmt(self, script: AnyStr = None, values: Tuple = None, request: SQLRequest = None):
         """
             Parent method for executescript
         """
         if not request:
-            return SQLStatement(SQLRequest(script, values), self.path)
+            return SQLStatement(SQLRequest(script, values), self.path, self.connection)
         else:
-            return SQLStatement(request, self.path)
+            return SQLStatement(request, self.path, self.connection)
 
     @__execute__
     def _pragma_stmt_(self, *args: str, **kwargs):
@@ -919,6 +944,7 @@ class SQLite3x:
     @__or_param__
     @__with__
     @__from_as__
+    @args_parser
     def _insert_stmt_(self, *args: Any, TABLE: AnyStr, script='', values=(), **kwargs: Any):
         """
             INSERT INTO request (aka insert-stmt) and REPLACE INTO request
@@ -927,6 +953,7 @@ class SQLite3x:
 
         # parsing args or kwargs for _columns and insert_values
         if args:
+
             arg_0 = list(args)[0]
 
             if isinstance(arg_0, (list, tuple)):  # if args[0] : list or tuple
@@ -956,10 +983,31 @@ class SQLite3x:
 
         return SQLStatement(SQLRequest(script, tuple(value for value in all_values)), self.path, self.connection)
 
+    @__execute__
+    @__or_param__
+    @__with__
+    @__from_as__
+    def _fast_insert_stmt_(self, *arg, TABLE: AnyStr, script='', values=(), **kwargs: Any):
+        """
+            'INSERT INTO' request and 'REPLACE INTO' request without columns names
+            (without get_columns req because it's f-g slow)
+        """
+        values_0 = list(values)[0]
+
+        if isinstance(values_0, (list, tuple)):  # if args[0] : list or tuple
+            values = tuple(values_0)
+
+        script += f"{' ' if script else ''}" \
+                  f"INTO {TABLE} " \
+                  f"VALUES (" \
+                  f"{', '.join('?' * len(values))}) "
+
+        return SQLStatement(SQLRequest(script, values), self.path, self.connection)
+
     @__executemany__
     @__from_as__
-    def _insertmany_stmt_(self, TABLE: AnyStr, *args: Union[list[list], list[tuple], tuple[list], tuple[tuple],
-                                                            list, tuple], **kwargs: Any):
+    def _insertmany_stmt_(self, TABLE: AnyStr, *args: Union[List[List], List[Tuple], Tuple[List], Tuple[Tuple],
+                                                            List, Tuple], **kwargs: Any):
         """
             Parent method for insertmany
         """
@@ -1007,7 +1055,7 @@ class SQLite3x:
 
         values = tuple(map(lambda arg: tuple(arg), values))  # make values tuple[tuple] (yes it's necessary)
 
-        return SQLStatement(SQLRequest(stmt.request.script, values), self.path)
+        return SQLStatement(SQLRequest(stmt.request.script, values), self.path, self.connection)
 
     @tuples_to_lists
     @__execute__
@@ -1028,7 +1076,8 @@ class SQLite3x:
             raise ArgumentError(TABLE="Argument unset and have not default value")
 
         if SELECT is None:
-            logger.warning(ArgumentError(SELECT="Argument not specified, default value is '*'"))
+            if method != 'SELECT ALL ':
+                logger.warning(ArgumentError(SELECT="Argument not specified, default value is '*'"))
             SELECT = ['*']
 
         elif isinstance(SELECT, str):
@@ -1054,7 +1103,7 @@ class SQLite3x:
     @__where__
     @__or_param__
     @__with__
-    def _update_stmt_(self, TABLE: AnyStr, SET: Union[list, tuple, dict] = None, script='', values=(),
+    def _update_stmt_(self, TABLE: AnyStr, SET: Union[List, Tuple, Mapping] = None, script='', values=(),
                       **kwargs):
         """
             Parent method for UPDATE
@@ -1100,27 +1149,11 @@ class SQLite3x:
                   f"{TABLE} "
         return SQLStatement(SQLRequest(script=script), self.path, self.connection)
 
-    def _update_tables_(self):
-        self.tables = self.get_tables()
-
-    # ============================== PUBLIC METHODS ==============================
-
-    def connect(self):
-        self.connection = sqlite3.connect(self.path)
-
-    def disconnect(self):
-        self.connection.close()
-        self.connection = None
-
-    @tuples_to_lists
-    def tables_list(self):
-        return self.execute("SELECT name FROM sqlite_master WHERE type='table'")
-
-    def get_tables(self) -> List[SQLite3xTable]:
+    def _get_tables_(self) -> List[SQLite3xTable]:
 
         tables = []
 
-        table_names = self.tables_list()
+        table_names = self.tables_str()
 
         if 'sqlite_sequence' in table_names:
             table_names.remove('sqlite_sequence')
@@ -1130,9 +1163,45 @@ class SQLite3x:
 
         return tables
 
+    def _update_tables_(self):
+        self.tables = self._get_tables_()
+
+    # ============================== PUBLIC METHODS ==============================
+
+    def connect(self):
+        """
+            Create connection to database
+
+            :return: None
+        """
+        self.connection = sqlite3.connect(self.path)
+
+    def disconnect(self):
+        """
+            Drop connection to database
+
+            :return: None
+        """
+        self.connection.commit()
+        self.connection.close()
+        self.connection = None
+
+    @tuples_to_lists
+    def tables_str(self) -> List[str]:
+        """
+            Get list of tables names
+
+            :return: None
+        """
+
+        return self.execute("SELECT name FROM sqlite_master WHERE type='table'")
+
+    def get_table(self, name: AnyStr) -> SQLite3xTable:
+        return self.__getitem__(key=name)
+
     def execute(self,
                 script: AnyStr = None,
-                values: tuple = None,
+                values: Tuple = None,
                 request: SQLRequest = None
                 ) -> Union[List, None]:
         """
@@ -1149,7 +1218,7 @@ class SQLite3x:
 
     def executemany(self,
                     script: AnyStr = None,
-                    values: tuple = None,
+                    values: Tuple = None,
                     request: SQLRequest = None
                     ) -> Union[List, None]:
         """
@@ -1166,7 +1235,7 @@ class SQLite3x:
 
     def executescript(self,
                       script: AnyStr = None,
-                      values: tuple = None,
+                      values: Tuple = None,
                       request: SQLRequest = None
                       ) -> Union[List, None]:
         """
@@ -1302,7 +1371,7 @@ class SQLite3x:
 
     def get_columns(self,
                     table: AnyStr
-                    ) -> Union[tuple, list]:
+                    ) -> Union[Tuple, List]:
         """
             Get list of table columns
 
@@ -1310,10 +1379,13 @@ class SQLite3x:
 
             :return: List[List] of columns
         """
-        columns = self.table_info(table_name=table)
+        columns = self.execute(f"SELECT name FROM PRAGMA_TABLE_INFO('{table}')")
+
+        if not isinstance(columns, list):
+            columns = [columns]
 
         if columns:
-            return tuple(map(lambda item: item[1], columns))
+            return list(map(lambda item: item[0], columns))
         else:
             raise TableInfoError
 
@@ -1335,6 +1407,14 @@ class SQLite3x:
             :param execute: execute script and return db's answer (True) or return script (False)
 
         """
+
+        if args:
+            try:
+                return self._fast_insert_stmt_(script="INSERT", values=args, OR=OR, TABLE=TABLE, execute=execute,
+                                               **kwargs, WITH=WITH)
+            except sqlite3.OperationalError:
+                pass
+
         return self._insert_stmt_(script="INSERT", OR=OR, TABLE=TABLE, *args, execute=execute, **kwargs, WITH=WITH)
 
     @args_parser
@@ -1353,11 +1433,18 @@ class SQLite3x:
             :param execute: execute script and return db's answer (True) or return script (False)
 
         """
+        if args:
+            try:
+                return self._fast_insert_stmt_(script="REPLACE", values=args, TABLE=TABLE, execute=execute, **kwargs,
+                                               WITH=WITH)
+            except sqlite3.OperationalError:
+                pass
+
         return self._insert_stmt_(script="REPLACE", TABLE=TABLE, *args, execute=execute, **kwargs, WITH=WITH)
 
     def insertmany(self,
                    TABLE: AnyStr,
-                   *args: Union[list[list], list[tuple], tuple[list], tuple[tuple], list, tuple],
+                   *args: Union[List[List], List[Tuple], Tuple[List], Tuple[Tuple], List, Tuple],
                    execute: bool = True,
                    **kwargs: Any
                    ) -> Union[None, SQLStatement]:
@@ -1409,6 +1496,9 @@ class SQLite3x:
         if not TABLE:
             raise ArgumentError(TABLE="UNSET")
 
+        if not WHERE:
+            WHERE = kwargs
+
         return self._select_stmt_(SELECT=SELECT, TABLE=TABLE, method='SELECT', WHERE=WHERE, execute=execute,
                                   WITH=WITH, ORDER_BY=ORDER_BY, LIMIT=LIMIT, OFFSET=OFFSET, JOIN=JOIN, **kwargs)
 
@@ -1428,12 +1518,14 @@ class SQLite3x:
         if not TABLE and FROM:
             TABLE = FROM
 
+        if not WHERE:
+            WHERE = kwargs
+
         return self._select_stmt_(SELECT=SELECT, TABLE=TABLE, method='SELECT DISTINCT', WHERE=WHERE, execute=execute,
                                   WITH=WITH, ORDER_BY=ORDER_BY, LIMIT=LIMIT, OFFSET=OFFSET, **kwargs)
 
     def select_all(self,
                    TABLE: str,
-                   SELECT: Union[List[str], str] = None,
                    WHERE: WhereType = None,
                    WITH: WithType = None,
                    ORDER_BY: OrderByType = None,
@@ -1447,7 +1539,10 @@ class SQLite3x:
         if not TABLE and FROM:
             TABLE = FROM
 
-        return self._select_stmt_(method='SELECT ALL ', execute=execute, SELECT=SELECT, TABLE=TABLE, WHERE=WHERE,
+        if not WHERE:
+            WHERE = kwargs
+
+        return self._select_stmt_(method='SELECT ALL ', execute=execute, TABLE=TABLE, WHERE=WHERE,
                                   WITH=WITH, ORDER_BY=ORDER_BY, LIMIT=LIMIT, OFFSET=OFFSET, **kwargs)
 
     def delete(self,
@@ -1466,12 +1561,14 @@ class SQLite3x:
             :param execute: execute script and return db's answer (True) or return script (False)
 
         """
+        if not WHERE:
+            WHERE = kwargs
 
-        return self._delete_stmt_(TABLE=TABLE, WHERE=WHERE, WITH=WITH, execute=execute, **kwargs)
+        return self._delete_stmt_(TABLE=TABLE, WHERE=WHERE, WITH=WITH, execute=execute)
 
     def update(self,
                TABLE: AnyStr,
-               SET: Union[list, tuple, dict],
+               SET: Union[List, Tuple, Mapping],
                WHERE: WhereType,
                OR: OrOptionsType = None,
                execute: bool = True,
