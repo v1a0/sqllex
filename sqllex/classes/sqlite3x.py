@@ -1390,11 +1390,13 @@ class SQLite3x:
         """
 
         columns = self.execute(f"SELECT name FROM PRAGMA_TABLE_INFO('{table}')")
+
         if not isinstance(columns, list):
             columns = [columns]
 
         if columns:
-            return list(map(lambda item: item[0], columns))
+            #return list(map(lambda item: item[0], columns))
+            return columns
         else:
             raise TableInfoError
 
