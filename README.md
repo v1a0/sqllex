@@ -14,11 +14,11 @@ Better than <b>sqlite3</b>. Seriously, try it out<br>
 </div><br>
 
 ## Installation
-```
+```shell
 pip install sqllex
-
-# If you need most stable version install sqllex==0.1.8.11
 ```
+
+<small> If you need most stable version install <u>sqllex==0.1.8.11</u> </small>
 
 
 ## About
