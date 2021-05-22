@@ -16,6 +16,8 @@ Better than <b>sqlite3</b>. Seriously, try it out<br>
 ## Installation
 ```
 pip install sqllex
+
+# If you need most stable version install sqllex==0.1.8.11
 ```
 
 
@@ -55,9 +57,9 @@ print(users)  # ['Sqllex', 33]
 from sqllex import *
 
 # Create some database, with simple structure
-db = SQLite3x(                              # create database
+db = SQLite3x(                              # create database 
     path='my_data.db',                      # path to your database, or where you would like it locate
-    template={                              # schema for tables inside your database
+    template={                              # schema for tables inside your database                              
         "users": {                          # name for the 1'st table
             "username": [TEXT, NOT_NULL],   # 1'st column of table, named "username", contains text-data, can't be NULL
             "age": INTEGER,                 # 2'nd column of table, named "age", contains integer value
@@ -66,15 +68,18 @@ db = SQLite3x(                              # create database
 )
 
 # Ok, now you have database with table inside it.
-# Let's add record of  33 years old user named 'Sqllex'
-# Dear db, please insert into 'users' table values ['Sqllex', 33]
-db.insert('users', ['Sqllex', 33])
+# Let's take this table as variable
+users = db["users"]
 
-# Dear db, please select from table 'users' username(s) where column 'age' == 33
-users = db.select('users', 'username', WHERE={'age': 33})
+# Now add record of 33 years old user named 'Sqllex' into it
+# Dear table, please insert ['Sqllex', 33] values 
+users.insert('Sqllex', 33)
 
-# Print it
-print(users)  # ['Sqllex']
+# Dear table, please find records where column 'age' == 33
+user = users.find(age=33)
+
+# Print results
+print(users)  # ['Sqllex', 33]
 ```
 
 </details>
