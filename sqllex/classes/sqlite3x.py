@@ -719,6 +719,7 @@ class SQLite3xTable:
     def insertmany(
             self,
             *args: Union[List[List], List[Tuple], Tuple[List], Tuple[Tuple], List, Tuple],
+            OR: OrOptionsType = None,
             execute: bool = True,
             **kwargs: Any,
     ) -> Union[None, SQLStatement]:
@@ -726,16 +727,18 @@ class SQLite3xTable:
         INSERT many data into table.
         The same as regular insert but for lists of inserting values
 
+        :param OR: Optional parameter. If INSERT failed, type OrOptionsType
         :param execute: execute script and return db's answer (True) or return script (False)
         :param args: 1'st way set values for insert
         :param kwargs: 2'st way set values for insert
         """
 
-        return self.db.insertmany(self.name, *args, execute=execute, **kwargs)
+        return self.db.insertmany(self.name, *args, OR=OR, execute=execute, **kwargs)
 
     def select(
             self,
-            SELECT: Union[str, List[str]] = ALL,
+            *args: Union[str, List[str]],
+            SELECT: Union[str, List[str]] = None,
             WHERE: WhereType = None,
             WITH: WithType = None,
             ORDER_BY: OrderByType = None,
@@ -762,6 +765,7 @@ class SQLite3xTable:
 
         return self.db.select(
             self.name,
+            *args,
             SELECT=SELECT,
             WHERE=WHERE,
             execute=execute,
@@ -804,6 +808,7 @@ class SQLite3xTable:
             LIMIT: LimitOffsetType = None,
             OFFSET: LimitOffsetType = None,
             execute: bool = True,
+            FROM: str = None,
             **kwargs,
     ) -> Union[SQLRequest, List]:
         return self.db.select_all(
