@@ -1194,7 +1194,10 @@ class SQLite3x:
             args = list(map(lambda vals: list(vals), kwargs.values()))
 
             for i in range(len(args)):
-                temp_[columns[i]] = args[i][0]
+                try:
+                    temp_[columns[i]] = args[i][0]
+                except IndexError:
+                    temp_[columns[i]] = None
 
             stmt = self._insert_stmt_(temp_, script="INSERT", TABLE=TABLE,
                                       execute=False)  # getting stmt for maxsize value
