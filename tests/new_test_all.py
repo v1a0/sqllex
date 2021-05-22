@@ -2,7 +2,7 @@ from sqllex import *
 from sqllex.debug import debug_mode
 from sqllex.types import *
 from os import remove
-from time import sleep
+from time import sleep, time
 
 DB_NAME = "temp_table.db"
 
@@ -19,11 +19,10 @@ DB_TEMPLATE: DBTemplateType = {
 
 db = SQLite3x(path=DB_NAME)
 
-debug_mode(True)
+debug_mode(True, log_file='sqllex-test.log')
 
 
 def remove_db():
-    sleep(0.5)
     print("Table removed")
     remove(f"{DB_NAME}")
 
@@ -306,6 +305,13 @@ def get_tables_test():
             raise FileExistsError
 
 
+# Start time counting
+t = time()
+
+# Connection
+db.connect()
+
+# Testes
 tables_test()
 insert_test()
 select_test()
@@ -314,4 +320,19 @@ update_test()
 delete_test()
 replace_test()
 get_tables_test()
+
+
+# Disconnect
+db.disconnect()
+
+# Time counting
+t = time()-t
+
+# Little sleep and printing
+sleep(0.1)
+print(t)
+
+# Remove db
 remove_db()
+
+
