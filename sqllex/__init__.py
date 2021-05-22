@@ -13,6 +13,7 @@ __all__ = [
     "INTEGER",          # lgtm [py/undefined-export]
     "REAL",             # lgtm [py/undefined-export]
     "NONE",             # lgtm [py/undefined-export]
+    "BLOB",             # lgtm [py/undefined-export]
     "NOT_NULL",         # lgtm [py/undefined-export]
     "DEFAULT",          # lgtm [py/undefined-export]
     "UNIQUE",           # lgtm [py/undefined-export]

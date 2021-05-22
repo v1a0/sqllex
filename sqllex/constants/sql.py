@@ -127,5 +127,4 @@ __all__ = [
     "INNER_JOIN",
     "LEFT_JOIN",
     "CROSS_JOIN",
-
 ]

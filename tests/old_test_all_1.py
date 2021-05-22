@@ -193,20 +193,7 @@ db.drop("remove_me")
 
 # print(*db.tables)
 
-from sqllex import *
-
-# DAAAAAAAAAAMMMNNNN COOOL
-join_test = db.select(
-        SELECT=['username', 'group_name', 'description'],
-        FROM=['users', AS, 'us'],
-        JOIN=[
-            [INNER_JOIN, 'groups', AS, 'gr', ON, 'us.group_id == gr.group_id'],
-            ['about', 'ab', ON, 'ab.group_id == gr.group_id']
-        ],
-        #WHERE={'username': 'user_1'}
-    )
-
-logger.info(join_test)
+print(db.execute("SELECT sql FROM sqlite_master WHERE type='table' AND name='about'")[0].split('\n'))
 
 db.disconnect()
 

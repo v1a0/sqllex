@@ -25,7 +25,7 @@ class SQLStatement:
     SQL request contains SQLRequest
     """
 
-    def __init__(self, request: SQLRequest, path: Union[Path, AnyStr], conn: Connection=None):
+    def __init__(self, request: SQLRequest, path: Union[Path, AnyStr], conn: Connection = None):
         self.request = request
         self.path = path
         self.connection = conn
@@ -35,13 +35,32 @@ class SQLStatement:
 ForeignKey = Literal["FOREIGN KEY"]
 
 # Types of data for data types of column
-DataType = Literal["TEXT", "NUMERIC", "INTEGER", "REAL", "NONE", "BLOB"]
+DataType = Literal[
+    "TEXT",
+    "NUMERIC",
+    "INTEGER",
+    "REAL",
+    "NONE",
+    "BLOB",
+]
+
 
 # Types of constants used as keywords for column settings
 ConstrainType = Union[
     Literal[
-        "*", "NOT NULL", "DEFAULT", "UNIQUE", "CHECK", "AUTOINCREMENT",
-        "PRIMARY KEY", "REFERENCES", "WITH", "OR", "NULL", "AS", "ON"
+        "*",
+        "NOT NULL",
+        "DEFAULT",
+        "UNIQUE",
+        "CHECK",
+        "AUTOINCREMENT",
+        "PRIMARY KEY",
+        "REFERENCES",
+        "WITH",
+        "OR",
+        "NULL",
+        "AS",
+        "ON"
     ],
     ForeignKey
 ]
@@ -52,38 +71,113 @@ ColumnDataType = Union[ListDataType, DataType, AnyStr]
 ColumnsType = Mapping[AnyStr, ColumnDataType]
 
 # Type for databases template
-DBTemplateType = Mapping[AnyStr, ColumnsType]
+DBTemplateType = Union[
+    Mapping[
+        AnyStr,
+        ColumnsType
+    ]
+]
 
 # Universal Path type
-PathType = Union[Path, AnyStr]
+PathType = Union[
+    Path,
+    AnyStr
+]
 
 # Type for string or numeric data
-NumStr = Union[Number, AnyStr]
+NumStr = Union[
+    Number,
+    AnyStr
+]
 
 # Type of data INSERT awaiting
-InsertData = Union[NumStr, Tuple, List, Mapping]
+InsertData = Union[
+    NumStr,
+    Tuple,
+    List,
+    Mapping
+]
 
 # Type for parameter of OR argument in INSERT method (?)
-OrOptionsType = Literal["ABORT", "FAIL", "IGNORE", "REPLACE", "ROLLBACK"]
+OrOptionsType = Literal[
+    "ABORT",
+    "FAIL",
+    "IGNORE",
+    "REPLACE",
+    "ROLLBACK"
+]
 
 # Type for parameter of WITH argument
-WithType = Mapping[AnyStr, Union[SQLStatement, AnyStr]]
+WithType = Mapping[
+    AnyStr,
+    Union[
+        SQLStatement,
+        AnyStr
+    ]
+]
 
-# Type for parameter of WITH argument
+# Type for parameter of WHERE argument
 WhereType = Union[
     AnyStr,
-    Tuple[NumStr], List[Union[NumStr, List[NumStr]]],
-    Mapping[AnyStr, Union[SQLStatement, NumStr]]
+    Tuple[NumStr],
+    List[Union[NumStr, List[NumStr]]],
+    Mapping[AnyStr, Union[SQLStatement, NumStr, List]],
 ]
 
 # Type for parameter of ORDER BY argument
-OrderByType = Union[NumStr, List, Tuple, Mapping[AnyStr, Union[AnyStr, Number, List, Tuple]]]
+OrderByType = Union[
+    NumStr,
+    List,
+    Tuple,
+    Mapping[
+        AnyStr,
+        Union[
+            AnyStr,
+            Number,
+            List,
+            Tuple
+        ]
+    ]
+]
 
 # Type for parameter of LIMIT argument
-LimitOffsetType = Union[Number, AnyStr, float, int]
+LimitOffsetType = Union[
+    Number,
+    AnyStr,
+]
 
 # Type for parameter of JOIN argument
-JoinType = Literal["INNER JOIN", "LEFT JOIN", "CROSS JOIN"]
+JoinType = Union[
+    Literal[
+        "INNER JOIN",
+        "LEFT JOIN",
+        "CROSS JOIN"
+    ],
+]
+
+JoinArgType = Union[
+    List[
+        List[
+            Union[
+                JoinType,
+                NumStr,
+                ConstrainType,
+            ]
+        ]
+    ],
+    List[
+        Union[
+            JoinType,
+            NumStr,
+            ConstrainType,
+        ]
+    ],
+    Union[
+        JoinType,
+        NumStr,
+        ConstrainType,
+    ],
+]
 
 __all__ = [
     'SQLRequest',
@@ -103,5 +197,6 @@ __all__ = [
     'WhereType',
     'OrderByType',
     'LimitOffsetType',
-    'JoinType'
+    'JoinType',
+    'JoinArgType',
 ]

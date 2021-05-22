@@ -35,7 +35,7 @@ def bench_sqlite3():
 beg = time.time()
 bench_sqllex_connect()
 end = time.time()
-print(f"sqllex_connect\t{end - beg:.3}s")   # sqllex_connect	1.98s
+print(f"sqllex_connect\t{end - beg:.3}s")   # sqllex_connect	0.069s
 
 beg = time.time()
 bench_sqllex_without_connect()
@@ -45,4 +45,4 @@ print(f"sqllex_without_connect\t{end - beg:.3}s")
 beg = time.time()
 bench_sqlite3()
 end = time.time()
-print(f"sqlite3\t{end - beg:.3}s")  # sqlite3	0.0282s
+print(f"sqlite3\t{end - beg:.3}s")  # sqlite3	0.0212s
