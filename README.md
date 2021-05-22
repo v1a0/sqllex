@@ -18,7 +18,7 @@ Better than <b>sqlite3</b>. Seriously, try it out<br>
 pip install sqllex
 ```
 
-<small> If you need most stable version install <u>sqllex==0.1.8.11</u> </small>
+If you need most stable version install **sqllex==0.1.8.11**
 
 
 ## About
@@ -31,7 +31,7 @@ into it and take it back. That's how your code will look like.
 from sqllex import *
 
 db = SQLite3x(                              
-    path='my_data.db',                      
+    path='my_database.db',                      
     template={                              
         "users": {                          
             "username": [TEXT, NOT_NULL],   
