@@ -28,7 +28,8 @@ If you need most stable version install **sqllex==0.1.8.12**
 | version |  status |
 | :--------: | :---------------------------- |
 | `0.1.8.12` | ✔️ (most) stable           |
-| `0.1.9.0`  | ⚠️ unstable (experimental) |
+| `0.1.9.1`  | ⭐️ new (might be unstable) |
+| `0.1.9.0`  | ⚠️ unstable |
 
 
 ## About
