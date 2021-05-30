@@ -57,7 +57,7 @@ users.insert('Sqllex', 33)
 
 user = users.find(age=33)
 
-print(users)  # ['Sqllex', 33]
+print(users)  # [['Sqllex', 33]]
 ```
 
 <br>
@@ -90,7 +90,7 @@ users.insert('Sqllex', 33)
 user = users.find(age=33)
 
 # Print results
-print(users)  # ['Sqllex', 33]
+print(users)  # [['Sqllex', 33]]
 ```
 
 </details>
@@ -203,7 +203,7 @@ users_in_db = users.select('username')
 
 print(users_in_db)
 # It'll print:
-# ['User_0', 'User_1', 'User_2', 'User_3', 'User_4', 'User_5', 'User_6', 'User_7', 'User_8', 'User_9']
+# [['User_0',] ['User_1'], ['User_2'], ['User_3'], ['User_4'], ['User_5'], ['User_6'], ['User_7'], ['User_8'], ['User_9']]
 
 
 """
@@ -219,7 +219,7 @@ users_group_1 = users.select(
 
 print(users_group_1)
 # It'll print:
-# ['User_0', 'User_3', 'User_6', 'User_9']
+# [['User_0'], ['User_3'], ['User_6'], ['User_9']]
 
 
 # And for some another table
