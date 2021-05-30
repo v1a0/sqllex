@@ -20,6 +20,11 @@ pip install sqllex
 
 If you need most stable version install **sqllex==0.1.8.12**
 
+| version |  status |
+| :--------: | :---------------------------- |
+| `0.1.8.12` | ✔️ (most) stable           |
+| `0.1.9.0`  | ⚠️ unstable (experimental) |
+
 
 ## About
 Use databases without thinking about SQL. Let me show you how sqllex makes

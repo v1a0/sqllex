@@ -14,7 +14,7 @@ def col_types_sort(val: Union[DataType, AnyStr]) -> int:
     :return: index of priority, if unknown returns 1
     """
 
-    prior = CONST_PRIORITY.get(val)
+    prior = CONST_PRIORITY.get(val)     # How about set dict.setdefault(1) ?
 
     if prior is None:
         return 1
@@ -60,7 +60,7 @@ def __with__(func: callable) -> callable:
             with_dict: None = None
 
         if with_dict:
-            script = f"WITH "
+            script = f"WITH RECURSIVE "
             values = []
 
             for (var, statement) in with_dict.items():
@@ -112,6 +112,7 @@ def __where__(func: callable) -> callable:
     def where_wrapper(*args, **kwargs):
         if "WHERE" in kwargs.keys():
             where_: WhereType = kwargs.pop("WHERE")
+
         else:
             where_: None = None
 
@@ -134,6 +135,7 @@ def __where__(func: callable) -> callable:
                 for wh in where_:
 
                     # List[List] -> Dict[val[0], val[1]]
+
                     if isinstance(wh[0], str) and len(wh) > 1:
                         new_where.update({wh[0]: wh[1:]})
                     else:
@@ -143,6 +145,7 @@ def __where__(func: callable) -> callable:
 
             if isinstance(where_, dict):
                 for (key, values) in where_.items():
+
                     if not isinstance(values, list):
                         values = [values]
 
@@ -159,6 +162,7 @@ def __where__(func: callable) -> callable:
                         "<>",
                     ]:
                         operator = values.pop(0)
+
                         if len(values) == 1 and isinstance(
                                 values[0], list
                         ):
@@ -531,12 +535,13 @@ def __update_constants__(func: callable) -> callable:
     return wrap
 
 
-def lister(value: Any):
+def lister(value: Any, remove_one_len: bool = False):
     """
     Function converting input value from
     Tuple[Any] or List[Tuple] with any deepness to List[List]
 
     :param value: Any value contains tuples
+    :param remove_one_len: Convert
     :return: Decorated method with update after it was run
     """
 
@@ -544,12 +549,18 @@ def lister(value: Any):
         value = list(value)
 
     if isinstance(value, list):
-        if len(value) == 1:
-            return lister(value[0])
+        if remove_one_len and (len(value) == 1):
+            return lister(
+                value[0],
+                remove_one_len
+            )
 
         for r in range(len(value)):
             if isinstance(value[r], (list, tuple)):
-                value[r] = lister(value[r])
+                value[r] = lister(
+                    value[r],
+                    remove_one_len
+                )
 
     return value
 
@@ -563,9 +574,11 @@ def tuples_to_lists(func: callable) -> callable:
     """
 
     def t2l_wrapper(*args, **kwargs):
-        ret = lister(func(*args, **kwargs))
+        ret = func(*args, **kwargs)
 
         if not issubclass(ret.__class__, SQLStatement):
+            ret = lister(ret)
+
             if not isinstance(ret, list):
                 ret = [ret]
 
@@ -964,7 +977,6 @@ class SQLite3x:
         # make it never end, because in the end of generation it'll be overridden
         self.tables = self._get_tables_()
 
-    @tuples_to_lists
     def _get_tables_names_(self) -> List[str]:
         """
         Get list of tables names
@@ -972,7 +984,10 @@ class SQLite3x:
         :return: None
         """
 
-        return self.execute("SELECT name FROM sqlite_master WHERE type='table'")
+        return lister(
+            self.execute("SELECT name FROM sqlite_master WHERE type='table'"),
+            remove_one_len=True
+        )
 
     @tuples_to_lists
     @__execute__
@@ -1248,7 +1263,6 @@ class SQLite3x:
         """
         Parent method for all SELECT-like methods
         """
-
         if not TABLE:
             raise ArgumentError(TABLE="Argument unset and have not default value")
 
@@ -1345,7 +1359,7 @@ class SQLite3x:
         """
         Create connection to database
 
-        :return: sqlite3.connection
+        :return: None
         """
 
         if not self.connection:
@@ -1571,7 +1585,7 @@ class SQLite3x:
     def get_columns(
             self,
             table: AnyStr
-    ) -> Union[Tuple, List]:
+    ) -> List[str]:
         """
         Get list of table columns
 
@@ -1579,15 +1593,15 @@ class SQLite3x:
         :return: List[List] of columns
         """
 
-        columns = self.execute(f"SELECT name FROM PRAGMA_TABLE_INFO('{table}')")
+        columns_: List[List[str]] = self.execute(f"SELECT name FROM PRAGMA_TABLE_INFO('{table}')")
 
-        if not isinstance(columns, list):
-            columns = [columns]
-
-        if columns:
-            return columns
-        else:
+        if not columns_:
             raise TableInfoError
+
+        # if not isinstance(columns, list):
+        #     columns = [columns]
+
+        return list(map(lambda columns: columns[0], columns_))
 
     def insert(
             self,
@@ -1743,6 +1757,8 @@ class SQLite3x:
         if not WHERE:
             WHERE = kwargs
             kwargs = {}
+
+
 
         return self._select_stmt_(
             SELECT=SELECT,
