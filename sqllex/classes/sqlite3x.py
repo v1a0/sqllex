@@ -857,7 +857,7 @@ class SQLite3xTable:
     def update(
             self,
             SET: Union[List, Tuple, Mapping],
-            WHERE: WhereType,
+            WHERE: WhereType = None,
             OR: OrOptionsType = None,
             execute: bool = True,
             WITH: WithType = None,
@@ -1895,7 +1895,7 @@ class SQLite3x:
             self,
             TABLE: AnyStr,
             SET: Union[List, Tuple, Mapping],
-            WHERE: WhereType,
+            WHERE: WhereType = None,
             OR: OrOptionsType = None,
             execute: bool = True,
             WITH: WithType = None,
@@ -1911,6 +1911,9 @@ class SQLite3x:
         :param execute: execute script and return db's answer (True) or return script (False)
         :param WITH: with_statement
         """
+
+        if not WHERE:
+            WHERE = kwargs
 
         return self._update_stmt_(
             TABLE=TABLE,
