@@ -21,6 +21,7 @@ ut2 = db['users2']   # get table as object
 
 ut2.insert(1, 'A')
 ut2.insert(2, 'B')
+ut2.update(SET={'username': 'new_uname'})
 
 print(users_table.columns)  # ['id', 'username']
 
