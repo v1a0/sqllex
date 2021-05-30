@@ -193,7 +193,7 @@ db.drop("remove_me")
 
 # print(*db.tables)
 
-print(db.execute("SELECT sql FROM sqlite_master WHERE type='table' AND name='about'")[0].split('\n'))
+print(db.execute("SELECT sql FROM sqlite_master WHERE type='table' AND name='about'")[0][0].split('\n'))
 
 db.disconnect()
 

@@ -1,14 +1,30 @@
-# import all from sqllex package
 from sqllex import *
 
-# Create database file 'database.db'
 db = SQLite3x(path='database.db')
 
-# Create table inside database
-db.create_table(
-    'users',
+db.markup({
+    'users':
+    {
+        'id': [INTEGER, UNIQUE],
+        'username': TEXT
+    },
+    'users2':
     {
         'id': [INTEGER, UNIQUE],
         'username': TEXT
     }
+}
 )
+
+users_table = db['users']   # get table as object
+ut2 = db['users2']   # get table as object
+
+ut2.insert(1, 'A')
+ut2.insert(2, 'B')
+
+print(users_table.columns)  # ['id', 'username']
+
+users_table.insert(1, "New_user")   # insert new record in table
+
+print(users_table.select())
+print(ut2.select())

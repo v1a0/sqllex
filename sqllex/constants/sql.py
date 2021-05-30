@@ -97,34 +97,44 @@ CONSTANTS = [
 
 
 __all__ = [
-    "ALL",
-    "TEXT",
-    "NUMERIC",
-    "INTEGER",
-    "REAL",
-    "NONE",
-    "BLOB",
-    "NOT_NULL",
-    "DEFAULT",
-    "UNIQUE",
-    "AS",
-    "ON",
+    'ABORT',
+    'ALL',
+    'AS',
+    'AUTOINCREMENT',
 
-    "PRIMARY_KEY",
-    "CHECK",
-    "AUTOINCREMENT",
-    "FOREIGN_KEY",
-    "REFERENCES",
-    "ABORT",
-    "FAIL",
-    "IGNORE",
-    "REPLACE",
-    "ROLLBACK",
-    "NULL",
+    'BLOB',
 
-    "CONST_PRIORITY",
+    'CHECK',
+    'CONST_PRIORITY',
+    'CROSS_JOIN',
 
-    "INNER_JOIN",
-    "LEFT_JOIN",
-    "CROSS_JOIN",
+    'DEFAULT',
+
+    'FAIL',
+    'FOREIGN_KEY',
+
+    'IGNORE',
+    'INNER_JOIN',
+    'INTEGER',
+
+    'LEFT_JOIN',
+
+    'NONE',
+    'NOT_NULL',
+    'NULL',
+    'NUMERIC',
+
+    'ON',
+
+    'PRIMARY_KEY',
+
+    'REAL',
+    'REFERENCES',
+    'REPLACE',
+    'ROLLBACK',
+
+    'TEXT',
+
+    'UNIQUE'
 ]
+
