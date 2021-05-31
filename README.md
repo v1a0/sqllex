@@ -8,10 +8,6 @@
 ![Python:3.9](https://img.shields.io/badge/Python-3.9-green)
 [![Language grade: Python](https://img.shields.io/lgtm/grade/python/g/V1A0/sqllex.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/V1A0/sqllex/context:python)
 [![Total alerts](https://img.shields.io/lgtm/alerts/g/V1A0/sqllex.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/V1A0/sqllex/alerts/)
-
-    
-[![Upload Python Package](https://github.com/v1a0/sqllex/actions/workflows/python-publish.yml/badge.svg)](https://github.com/v1a0/sqllex/actions/workflows/python-publish.yml)
-[![CodeQL](https://github.com/v1a0/sqllex/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/v1a0/sqllex/actions/workflows/codeql-analysis.yml)
     
     
 <br>
@@ -25,11 +21,11 @@ pip install sqllex
 
 If you need most stable version install **sqllex==0.1.8.12**
 
-| version |  status |
-| :--------: | :---------------------------- |
-| `0.1.8.12` | ✔️ (most) stable           |
-| `0.1.9.1`  | ⭐️ new (might be unstable) |
-| `0.1.9.0`  | ⚠️ unstable |
+| Version |  Status | Tests, and actions |
+| :--------: | :----------------------------: | :---: |
+| `0.1.9.2`  | ⚠️ unstable | [![CodeQL](https://github.com/v1a0/sqllex/actions/workflows/codeql-analysis.yml/badge.svg?branch=main)](https://github.com/v1a0/sqllex/actions/workflows/codeql-analysis.yml) </br> [![Test Sqlite3x](https://github.com/v1a0/sqllex/actions/workflows/test_sqlite3x.yml/badge.svg?branch=main)](https://github.com/v1a0/sqllex/actions/workflows/test_sqlite3x.yml) </br> [![Upload Python Package](https://github.com/v1a0/sqllex/actions/workflows/python-publish.yml/badge.svg)](https://github.com/v1a0/sqllex/actions/workflows/python-publish.yml) |
+| `0.1.8.12` | ✔️ stable           ||
+
 
 
 ## About
