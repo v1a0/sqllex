@@ -1593,15 +1593,19 @@ class SQLite3x:
         :return: List[List] of columns
         """
 
-        columns_: List[List[str]] = self.execute(f"SELECT name FROM PRAGMA_TABLE_INFO('{table}')")
+        try:
+            columns_: List[List[str]] = self.execute(f"SELECT name FROM PRAGMA_TABLE_INFO('{table}')")
+            columns: List[str] = list(map(lambda item: item[0], columns_))
 
-        if not columns_:
+        except sqlite3.OperationalError:
+            # Fix for compatibility issues #19, by some reason it can't find PRAGMA_TABLE_INFO table
+            columns_: List[List[str]] = self.pragma(f"table_info('{table}')")
+            columns: List[str] = list(map(lambda item: item[1], columns_))
+
+        if not columns:
             raise TableInfoError
 
-        # if not isinstance(columns, list):
-        #     columns = [columns]
-
-        return list(map(lambda columns: columns[0], columns_))
+        return columns
 
     def insert(
             self,
