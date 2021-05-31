@@ -3,7 +3,7 @@
 
 <img src="./pics/sqllex-logo.svg" width="300px">
 
-# SQLLEX alpha v0.1.8 📚
+# SQLLEX alpha v0.1.9 📚
 
 ![Python:3.9](https://img.shields.io/badge/Python-3.9-green)
 [![Language grade: Python](https://img.shields.io/lgtm/grade/python/g/V1A0/sqllex.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/V1A0/sqllex/context:python)
