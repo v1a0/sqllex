@@ -7,7 +7,10 @@ assignees: ''
 
 ---
 
-## DESCRIBE THE BUG
+============== TEMPLATE ============== 
+
+
+## ✅ DESCRIBE THE BUG 
 A clear description of what the bug is and what might be the reason of it.
 Show logs or error message you got.
 
@@ -22,7 +25,7 @@ sqlite3.OperationalError: no such table: PRAGMA_TABLE_INFO
 ```
 
 
-## CODE
+## ✅ CODE
 Show the code (or just a few lines) raise this bug. Show what methods you call and what the input data is. MAKE SURE IT DOESN'T CONTAINS ANY PRIVATE DATA! 
 
 For example:
@@ -37,7 +40,7 @@ table.insert(a, b)
 If applicable, add screenshots to help explain your problem.
 
 
-## CONFIGURATIONS
+## ⚠️ CONFIGURATIONS
  - OS: [Windows10, Ubuntu 20.04, ...]
  - Python version: [3.8, 3.9, 3.9.5, ...]
  - Sqllex version: [0.1.8.12, 0.1.9, 0.1.9.2]
