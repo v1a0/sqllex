@@ -61,14 +61,14 @@ def tables_test():
     for x in db.tables_names:
         if not (x in ['t1', 'groups', 'users', 'remove_me', 'sqlite_sequence']):
             print(db.tables_names)
-            raise FileExistsError
+            raise MemoryError
 
     db.drop('remove_me')
 
     for x in db.tables_names:
         if not (x in ['t1', 'groups', 'users', 'sqlite_sequence']):
             print(db.tables_names)
-            raise FileExistsError
+            raise MemoryError
 
 
 def insert_test():
@@ -101,22 +101,22 @@ def insert_test():
             db['t1'].select(ALL):
         sel_all = db.select_all('t1')
     else:
-        raise FileExistsError
+        raise MemoryError
 
     if not sel_all == [['asdf', 10.0, 1, 3.14, None, 2]] * 10:
         print(sel_all)
         print([['asdf', 10.0, 1, 3.14, None, 2]] * 10)
-        raise FileExistsError
+        raise MemoryError
 
 
 def select_test():
     if not db.select('t1', 'text_t') == [['asdf']] * 10:
         print(db.select('t1', 'text_t'))
-        raise FileExistsError
+        raise MemoryError
 
     if not db.select('t1', 'text_t', 'num_t') == [['asdf', 10.0]] * 10:
         print(db.select('t1', ['text_t', 'num_t']))
-        raise FileExistsError
+        raise MemoryError
 
     db.insert('t1', ['qwerty1', 11.1, 2, 4.14, None, 5])
     db.insert('t1', ['qwerty2', 11.1, 2, 4.14, None, 6])
@@ -124,32 +124,32 @@ def select_test():
     # WHERE as dict
     if not db.select('t1', ['text_t', 'num_t'], WHERE={'num_t': 11.1}) == [['qwerty1', 11.1], ['qwerty2', 11.1]]:
         print(db.select('t1', ['text_t', 'num_t'], WHERE={'num_t': 11.1}))
-        raise FileExistsError
+        raise MemoryError
 
     # WHERE as dict
     if not db.select('t1', 'text_t', 'num_t', WHERE={'num_t': ['=', 11.1], 'blob_t': ['<=', 5]}) == [['qwerty1', 11.1]]:
         print(db.select('t1', ['text_t', 'num_t'], WHERE={'num_t': 11.1, 'blob_t': 5}))
-        raise FileExistsError
+        raise MemoryError
 
     # WHERE as kwarg
     if not db.select('t1', ['text_t', 'num_t'], num_t=11.1) == [['qwerty1', 11.1], ['qwerty2', 11.1]]:
         print(db.select('t1', ['text_t', 'num_t'], num_t=11.1))
-        raise FileExistsError
+        raise MemoryError
 
     # WHERE as kwargs
     if not db.select('t1', 'text_t', 'num_t', num_t=11.1, blob_t=6) == [['qwerty2', 11.1]]:
         print(db.select('t1', 'text_t', 'num_t', num_t=11.1, blob_t=6))
-        raise FileExistsError
+        raise MemoryError
 
     # LIMIT test
     if not db.select('t1', text_t='asdf', LIMIT=5) == [['asdf', 10.0, 1, 3.14, None, 2]] * 5:
         print(db.select('t1', text_t='asdf', LIMIT=5))
-        raise FileExistsError
+        raise MemoryError
 
     # OFFSET
     if not db.select('t1', text_t='asdf', LIMIT=5, OFFSET=6) == [['asdf', 10.0, 1, 3.14, None, 2]] * 4:
         print(db.select('t1', text_t='asdf', LIMIT=5, OFFSET=6))
-        raise FileExistsError
+        raise MemoryError
 
     db.create_table(
         "t2",
@@ -164,12 +164,12 @@ def select_test():
     # ORDER_BY ASC
     if not db.select('t2', 'id', ORDER_BY='id ASC') == [[1], [2], [3], [4]]:
         print(db.select('t2', 'id', ORDER_BY='id ASC'))
-        raise FileExistsError
+        raise MemoryError
 
     # ORDER_BY DESC
     if not db.select('t2', 'id', ORDER_BY='id DESC') == [[4], [3], [2], [1]]:
         print(db.select('t2', 'id', ORDER_BY='id DESC'))
-        raise FileExistsError
+        raise MemoryError
 
     # WITH & WHERE
     if not db.select(
@@ -184,7 +184,7 @@ def select_test():
                 'xxx': db.select('t2', 'MAX(id)', execute=False)
             }
         ))
-        raise FileExistsError
+        raise MemoryError
 
     if not db.select(
             't2',
@@ -193,7 +193,7 @@ def select_test():
             },
     ) == [[1, 8], [2, 8]]:
         print(db.select('t2', WHERE={'id': ['<', 3]}))
-        raise FileExistsError
+        raise MemoryError
 
     # JOIN
     if not db.select(
@@ -209,7 +209,7 @@ def select_test():
                [4], [4], [4], [4], [4], [4], [4], [4], [4], [4], [4], [4]
            ]:
         print(db.select('t2', 'id', JOIN=[[CROSS_JOIN, 't1', AS, 't', ON, 't.num_t > t2.value']]))
-        raise FileExistsError
+        raise MemoryError
 
 
 def insertmany_test():
@@ -250,7 +250,7 @@ def update_test():
 
     if not db.select('t4', 'id', WHERE={"val": 'NEW_VAL'}) == [[x] for x in range(50)]:
         print(db.select('t4', 'id', WHERE={"val": 'NEW_VAL'}))
-        raise FileExistsError
+        raise MemoryError
 
 
 def delete_test():
@@ -258,7 +258,7 @@ def delete_test():
 
     if not db.select('t4', 'id', WHERE={"val": 'NEW_VAL'}) == []:
         print(db.select_all('t4'))
-        raise FileExistsError
+        raise MemoryError
 
 
 def replace_test():
@@ -276,28 +276,28 @@ def replace_test():
 
     if not db.select('t5', val='O_O') == [[99, 'O_O']]:
         print(db.select('t5', val='O_O'))
-        raise FileExistsError
+        raise MemoryError
 
 
 def get_tables_test():
     if "<generator object SQLite3x._get_tables_" not in str(db.tables):
         print(db.tables)
-        raise FileExistsError
+        raise MemoryError
 
     for table in db.tables:
         if table.name not in ['t1', 'groups', 'users', 'sqlite_sequence', 't2', 't3', 't4', 't5']:
             print(table)
-            raise FileExistsError
+            raise MemoryError
 
     for table in db.tables:
         if table.name not in ['t1', 'groups', 'users', 'sqlite_sequence', 't2', 't3', 't4', 't5']:
             print(table)
-            raise FileExistsError
+            raise MemoryError
 
     for name in db.tables_names:
         if name not in ['t1', 'groups', 'users', 'sqlite_sequence', 't2', 't3', 't4', 't5']:
             print(name)
-            raise FileExistsError
+            raise MemoryError
 
 
 # Start time counting

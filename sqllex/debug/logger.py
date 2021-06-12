@@ -3,6 +3,10 @@ import sys
 
 
 class LogFilter:
+    """
+    Class to filter logging
+
+    """
     def __init__(self, level):
         self.level = level
 
@@ -11,9 +15,16 @@ class LogFilter:
         return record["level"].no >= levelno
 
 
-def debug_mode(switch: bool = False, log_file: str = "", mode: str = '', ):
+def debug_mode(switch: bool = False, log_file: str = "", mode: str = ''):
     """
     Set logger on/off
+
+    switch : bool
+        Turn on debug mode
+    log_file : str
+        Path to log file
+    mode : str
+        Advanced mode options
     """
 
     if not mode:
@@ -30,6 +41,7 @@ def debug_mode(switch: bool = False, log_file: str = "", mode: str = '', ):
 
 logger.remove(0)
 debug_mode(False)
+
 
 __all__ = [
     'logger',

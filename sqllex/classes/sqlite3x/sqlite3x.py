@@ -1,4 +1,4 @@
-from sqllex.exceptions import TableInfoError, ArgumentError, ExecuteError
+from sqllex.exceptions import TableInfoError
 from typing import Literal, Mapping, Union, List, AnyStr, Any, Tuple, Generator
 from sqllex.debug import logger
 from sqllex.constants.sql import *
@@ -8,10 +8,19 @@ import sqlite3
 
 def col_types_sort(val: Union[DataType, AnyStr]) -> int:
     """
-    Func for lambda func sorting DataTypes of columns
+    Sorting function for DataType objects
+    It's getting objects and returns index of priority (0,1,2,3)
 
-    :param val: DataType or AnyStr : param of column type
-    :return: index of priority, if unknown returns 1
+    Parameters
+    ----------
+    val : Union[DataType, AnyStr]
+        param of column type
+
+    Returns
+    -------
+    int
+        index of priority, if unknown returns 1
+
     """
 
     prior = CONST_PRIORITY.get(val)     # How about set dict.setdefault(1) ?
@@ -26,8 +35,16 @@ def __from_as__(func: callable):
     """
     Decorator for catching AS argument from TABLE arg
 
-    :param func: SQLite3x method where args might contain AS
-    :return: Decorated method with TABLE arg as string (instead list with AS)
+    Parameters
+    ----------
+    func : callable
+        SQLite3x method where args might contain AS
+
+    Returns
+    -------
+    callable
+        Decorated method with TABLE arg as string (instead list with AS)
+
     """
 
     def as_wrapper(*args, **kwargs):
@@ -49,8 +66,20 @@ def __with__(func: callable) -> callable:
     If it has, adding into beginning of :SQLStatement.script: with_statement.
     And adding values into :values: if it has.
 
-    :param func: SQLite3x method contains arg WITH
-    :return: Decorated method with script contains with_statement and values contains values of with_statement
+    Parameters
+    ----------
+    func : callable
+        SQLite3x method contains arg WITH
+
+    Returns
+    -------
+    callable
+        Decorated method with script contains with_statement and values contains values of with_statement
+
+    Raise
+    -------
+    TypeError
+        If value of WHERE dict is not SQLStatement or str
     """
 
     def with_wrapper(*args, **kwargs):
@@ -76,7 +105,8 @@ def __with__(func: callable) -> callable:
                     script += f"{var} AS ({condition}), "
 
                 else:
-                    raise TypeError
+                    raise TypeError(f"Unexpected type of WITH value\n"
+                                    f"Got {type(statement)} instead of SQLStatement or str")
 
             if script[-2:] == ', ':
                 script = script[:-2]
@@ -105,8 +135,15 @@ def __where__(func: callable) -> callable:
     If it has, adding in the end of :SQLStatement.script: where_statement.
     And adding values into :SQLStatement.values: if it has.
 
-    :param func: SQLite3x method contains arg WHERE
-    :return: Decorated method with script contains where_statement and values contains values of where_statement
+    Parameters
+    ----------
+    func : callable
+        SQLite3x method contains arg WHERE
+
+    Returns
+    -------
+    callable
+        Decorated method with script contains where_statement and values contains values of where_statement
     """
 
     def where_wrapper(*args, **kwargs):
@@ -139,7 +176,7 @@ def __where__(func: callable) -> callable:
                     if isinstance(wh[0], str) and len(wh) > 1:
                         new_where.update({wh[0]: wh[1:]})
                     else:
-                        raise TypeError
+                        raise TypeError(f"Unexpected type of WHERE value")
 
                 where_ = new_where
 
@@ -150,16 +187,9 @@ def __where__(func: callable) -> callable:
                         values = [values]
 
                     if len(values) > 1 and values[0] in [
-                        "<",
-                        "<<",
-                        "<=",
-                        ">=",
-                        ">>",
-                        ">",
-                        "=",
-                        "==",
-                        "!=",
-                        "<>",
+                        "<", "<<", "<=", ">=",
+                        ">>", ">", "=", "==",
+                        "!=", "<>",
                     ]:
                         operator = values.pop(0)
 
@@ -199,8 +229,16 @@ def __join__(func: callable) -> callable:
     If it has, adding into beginning of :SQLStatement.script: where_statement.
     And adding values into :SQLStatement.values: if it has.
 
-    :param func: SQLite3x method contains arg JOIN
-    :return: Decorated method with script contains join_statement and values contains values of join_statement
+    Parameters
+    ----------
+    func : callable
+        SQLite3x method contains arg JOIN
+
+    Returns
+    ----------
+    callable
+        Decorated method with script contains join_statement and values contains values of join_statement
+
     """
 
     def join_wrapper(*args, **kwargs):
@@ -230,7 +268,7 @@ def __join__(func: callable) -> callable:
                         f"{join_method} {' '.join(j_arg for j_arg in join_)} "
                     )
             else:
-                raise TypeError
+                raise TypeError("Unexp")
 
         return stmt
 
@@ -244,8 +282,16 @@ def __or_param__(func: callable) -> callable:
     If it has, adding into beginning of :SQLStatement.script: or_statement.
     And adding values into :SQLStatement.values: if it has.
 
-    :param func: SQLite3x method contains arg JOIN
-    :return: Decorated method with script contains or_statement and values contains values of or_statement
+    Parameters
+    ----------
+    func : callable
+        SQLite3x method contains arg JOIN
+
+    Returns
+    ----------
+    callable
+        Decorated method with script contains or_statement and values contains values of or_statement
+
     """
 
     def or_wrapper(*args, **kwargs):
@@ -268,8 +314,15 @@ def __order_by__(func: callable) -> callable:
 
     If it has, adding in the end of :SQLStatement.script: order_by_statement.
 
-    :param func: SQLite3x method contains arg ORDER BY
-    :return: Decorated method with script contains order_by_statement and values contains values of order_by_statement
+    Parameters
+    ----------
+    func : callable
+        SQLite3x method contains arg ORDER BY
+
+    Returns
+    ----------
+    callable
+        Decorated method with script contains order_by_statement and values contains values of order_by_statement
     """
 
     def order_by_wrapper(*args, **kwargs):
@@ -309,8 +362,16 @@ def __limit__(func: callable) -> callable:
 
     If it has, adding in the end of :SQLStatement.script: limit_statement.
 
-    :param func: SQLite3x method contains arg LIMIT
-    :return: Decorated method with script contains limit_statement and values contains values of limit_statement
+    Parameters
+    ----------
+    func : callable
+        SQLite3x method contains arg LIMIT
+
+    Returns
+    ----------
+    callable
+        Decorated method with script contains limit_statement and values contains values of limit_statement
+
     """
 
     def limit_wrapper(*args, **kwargs):
@@ -337,8 +398,16 @@ def __offset__(func: callable) -> callable:
 
     If it has, adding in the end of :SQLStatement.script: offset_statement.
 
-    :param func: SQLite3x method contains arg OFFSET
-    :return: Decorated method with script contains offset_statement and values contains values of offset_statement
+    Parameters
+    ----------
+    func : callable
+        SQLite3x method contains arg OFFSET
+
+    Returns
+    ----------
+    callable
+        Decorated method with script contains offset_statement and values contains values of offset_statement
+
     """
 
     def offset_wrapper(*args, **kwargs):
@@ -366,8 +435,16 @@ def __execute__(func: callable):
 
     If it has, executing script otherwise returning SQLStatement
 
-    :param func: SQLite3x method
-    :return: Database answer (if execute True) or SQLStatement (if execute False) or None
+    Parameters
+    ----------
+    func : callable
+        SQLite3x method
+
+    Returns
+    ----------
+    callable
+        Database answer (if execute True) or SQLStatement (if execute False) or None
+
     """
 
     def execute_wrapper(*args: Tuple, **kwargs: Mapping):
@@ -422,8 +499,16 @@ def __executemany__(func: callable):
 
     If it has, executing script otherwise returning SQLStatement
 
-    :param func: SQLite3x method
-    :return: Database answer (if execute True) or SQLStatement (if execute False) or None
+    Parameters
+    ----------
+    func : callable
+        SQLite3x method
+
+    Returns
+    ----------
+    callable
+        Database answer (if execute True) or SQLStatement (if execute False) or None
+
     """
 
     def wrapper(*args: Tuple, **kwargs: Mapping):
@@ -473,8 +558,16 @@ def __executescript__(func: callable):
 
     If it has, executing script otherwise returning SQLStatement
 
-    :param func: SQLite3x method
-    :return: Database answer (if execute True) or SQLStatement (if execute False) or None
+    Parameters
+    ----------
+    func : callable
+        SQLite3x method
+
+    Returns
+    ----------
+    callable
+        Database answer (if execute True) or SQLStatement (if execute False) or None
+
     """
 
     def wrapper(*args: Tuple, **kwargs: Mapping):
@@ -519,58 +612,83 @@ def __executescript__(func: callable):
 
 def __update_constants__(func: callable) -> callable:
     """
-    Decorator running method for update constants of class (self._update_constants_())
+    Decorator running method for update constants of class (self._update_instance_variables_())
 
     Used for updating columns list in SQLite3xTable class
 
-    :param func: Class method after witch needed to update constants
-    :return: Decorated method with update after it was run
+    Parameters
+    ----------
+    func : callable
+        Class method after witch needed to update constants
+
+    Returns
+    ----------
+    callable
+        Decorated method with update after it was run
+
     """
 
     def wrap(self, *args, **kwargs):
         res = func(self, *args, **kwargs)
-        self._update_constants_()
+        self._update_instance_variables_()
         return res
 
     return wrap
 
 
-def lister(value: Any, remove_one_len: bool = False):
+def lister(data: Any, remove_one_len: bool = False) -> List:
     """
-    Function converting input value from
-    Tuple[Any] or List[Tuple] with any deepness to List[List]
+    Function converting input value from Tuple[Any] or List[Tuple]
+    (with any deepness) to List[List]
 
-    :param value: Any value contains tuples
-    :param remove_one_len: Convert
-    :return: Decorated method with update after it was run
+    Parameters
+    ----------
+    data : Any
+        Any value contains tuples
+    remove_one_len : bool
+        Convert or not [['x'], 1] to ['x', 1] (breaking return rule)
+
+    Returns
+    ----------
+    callable
+        Decorated method with update after it was run
+
     """
 
-    if isinstance(value, tuple):
-        value = list(value)
+    if isinstance(data, tuple):
+        data = list(data)
 
-    if isinstance(value, list):
-        if remove_one_len and (len(value) == 1):
+    if isinstance(data, list):
+        if remove_one_len and (len(data) == 1):
             return lister(
-                value[0],
+                data[0],
                 remove_one_len
             )
 
-        for r in range(len(value)):
-            if isinstance(value[r], (list, tuple)):
-                value[r] = lister(
-                    value[r],
+        for r in range(len(data)):
+            if isinstance(data[r], (list, tuple)):
+                data[r] = lister(
+                    data[r],
                     remove_one_len
                 )
 
-    return value
+    return data
 
 
 def tuples_to_lists(func: callable) -> callable:
     """
     Decorator converting returning data to List[List]
 
-    :param func: Function or method returns of with one need to convert
-    :return: Decorated method or func returning List[List]
+    Parameters
+    ----------
+    func : callable
+        Function or method returns of with one need to convert from Tuple[Tuple[Any]] to List[List[Any]]
+
+    Returns
+    ----------
+    callable
+        Decorated method or func returning List[List]
+
     """
 
     def t2l_wrapper(*args, **kwargs):
@@ -601,8 +719,15 @@ def args_parser(func: callable):
     if args is tuple :
         return args = list(args[0]), kwargs = kwargs
 
-    :param func: SQLite3x method contains args
-    :return: Decorated method with parsed args
+    Parameters
+    ----------
+    func : callable
+        SQLite3x method contains args
+
+    Returns
+    ----------
+    callable
+        Decorated method with parsed args
     """
 
     def wrapper(*args: Any, **kwargs: Any):
@@ -634,9 +759,17 @@ def crop(columns: Union[Tuple, List], values: Union[Tuple, List]) -> Tuple:
     """
     Converts input lists (columns and values) to the same length for safe insert
 
-    :param columns: List of columns in some table
-    :param values: Values for insert to some table
-    :return: Equalized by length lists
+    Parameters
+    ----------
+    columns : Union[Tuple, List]
+        List of columns in some table
+    values : Union[Tuple, List]
+        Values for insert to some table
+
+    Returns
+    ----------
+        Equalized by length lists
+
     """
 
     if values and columns:
@@ -658,12 +791,30 @@ class SQLite3xTable:
     Sub-class of SQLite3x contains one table of Database
     Have same methods but without table name argument
 
+    Attributes
+    ----------
+    db : SQLite3x
+        SQLite3x database object
+    name : str
+        Name of table
+    columns : list
+        List of columns in table (auto-updating)
+
     """
 
     def __init__(self, db, name: AnyStr):
+        """
+        Parameters
+        ----------
+        db : SQLite3x
+            SQLite3x database object
+        name : str
+            Name of table
+
+        """
         self.db: SQLite3x = db
-        self.name = name
-        self.columns = self.get_columns()
+        self.name: AnyStr = name
+        self.columns: List = self.get_columns()
 
     def __str__(self):
         return f"{{SQLite3x Table: name: '{self.name}', db: '{self.db}'}}"
@@ -678,22 +829,34 @@ class SQLite3xTable:
         return self.select(key)
 
     def _update_constants_(self):
+        """
+        Update classes vars (columns)
+
+        """
         self.columns = self.get_columns()
 
     def info(self):
         """
         Send PRAGMA request table_info(table_name)
 
-        :return: table info
+        Returns
+        ----------
+        list
+            All information about table
+
         """
 
         return self.db.pragma(f"table_info({self.name})")
 
-    def get_columns(self) -> Union[Tuple, List]:
+    def get_columns(self) -> List:
         """
         Get list of table columns
 
-        :return: List[List] of columns
+        Returns
+        ----------
+        List[List]
+            All table's columns
+
         """
         return self.db.get_columns(table=self.name)
 
@@ -708,9 +871,19 @@ class SQLite3xTable:
         """
         INSERT data into table
 
-        :param OR: Optional parameter. If INSERT failed, type OrOptionsType
-        :param WITH: Optional parameter.
-        :param execute: execute script and return db's answer (True) or return script (False)
+        Parameters
+        ----------
+        OR : OrOptionsType
+            Optional parameter. If INSERT failed, type OrOptionsType
+        WITH : WithType
+            Optional parameter.
+        execute : bool
+            if True: execute script and return db's answer
+            if False: return SQL-script in SQLStatement object
+
+        Returns
+        ----------
+            None or SQL-script in SQLStatement
         """
 
         return self.db.insert(
@@ -718,20 +891,34 @@ class SQLite3xTable:
         )
 
     def replace(
-            self, *args: Any, WITH: WithType = None, execute: bool = True, **kwargs: Any
+            self,
+            *args: Any,
+            WITH: WithType = None,
+            execute: bool = True,
+            **kwargs: Any
     ) -> Union[None, SQLStatement]:
         """
         REPLACE data into table
 
-        :param WITH: Optional parameter.
-        :param execute: execute script and return db's answer (True) or return script (False)
+        Parameters
+        ----------
+        WITH : WithType
+            Optional parameter.
+        execute : bool
+            if True: execute script and return db's answer
+            if False: return SQL-script in SQLStatement object
+
+        Returns
+        ----------
+            None or SQL-script in SQLStatement
+
         """
 
         return self.db.replace(self.name, *args, execute=execute, **kwargs, WITH=WITH)
 
     def insertmany(
             self,
-            *args: Union[List[List], List[Tuple], Tuple[List], Tuple[Tuple], List, Tuple],
+            *args: Union[List[InsertData], Tuple[InsertData]],
             OR: OrOptionsType = None,
             execute: bool = True,
             **kwargs: Any,
@@ -740,10 +927,22 @@ class SQLite3xTable:
         INSERT many data into table.
         The same as regular insert but for lists of inserting values
 
-        :param OR: Optional parameter. If INSERT failed, type OrOptionsType
-        :param execute: execute script and return db's answer (True) or return script (False)
-        :param args: 1'st way set values for insert
-        :param kwargs: 2'st way set values for insert
+        Parameters
+        ----------
+        args : Union[List, Tuple]
+            1'st way set values for insert
+        OR : OrOptionsType
+            Optional parameter. If INSERT failed, type OrOptionsType
+        execute : bool
+            if True: execute script and return db's answer
+            if False: return SQL-script in SQLStatement object
+        kwargs : Any
+            An 2'st way set values for insert
+
+        Returns
+        ----------
+            None or SQL-script in SQLStatement
+
         """
 
         return self.db.insertmany(self.name, *args, OR=OR, execute=execute, **kwargs)
@@ -757,23 +956,40 @@ class SQLite3xTable:
             ORDER_BY: OrderByType = None,
             LIMIT: LimitOffsetType = None,
             OFFSET: LimitOffsetType = None,
-            execute: bool = True,
             JOIN: Union[str, List[str], List[List[str]]] = None,
+            execute: bool = True,
             **kwargs,
-    ) -> Union[SQLStatement, List[Any]]:
+    ) -> Union[SQLStatement, List[List[Any]]]:
         """
         SELECT data from table
 
-        :param SELECT: columns to select. Value '*' by default
-        :param WHERE: optional parameter for conditions, example: {'name': 'Alex', 'group': 2}
-        :param WITH: with_statement
-        :param JOIN: optional parameter for joining data from other tables ['groups'],
-        :param ORDER_BY: optional parameter for conditions, example: {'name': ['NULLS', 'LAST']}
-        :param LIMIT: optional parameter for conditions, example: 10
-        :param OFFSET: optional parameter for conditions, example: 5
-        :param execute: execute script and return db's answer (True) or return script (False)
+        Parameters
+        ----------
+        *args: Union[str, List[str]]
+            selecting column or list of columns
+        SELECT : Union[str, List[str]]
+            columns to select. Value '*' by default
+        WHERE : WhereType
+            optional parameter for conditions, example: {'name': 'Alex', 'group': 2}
+        WITH : WithType
+            with_statement (don't really work well)
+        ORDER_BY : OrderByType
+            optional parameter for conditions, example: {'name': ['NULLS', 'LAST']}
+        LIMIT: LimitOffsetType
+            optional parameter for conditions, example: 10
+        OFFSET : LimitOffsetType
+            optional parameter for conditions, example: 5
+        JOIN: Union[str, List[str], List[List[str]]]
+            optional parameter for joining data from other tables ['groups'],
+        execute : bool
+            if True: execute script and return db's answer
+            if False: return SQL-script in SQLStatement object
 
-        :return: List[List] of selects
+        Returns
+        ----------
+        List[List]
+            selected data
+
         """
 
         return self.db.select(
@@ -821,9 +1037,34 @@ class SQLite3xTable:
             LIMIT: LimitOffsetType = None,
             OFFSET: LimitOffsetType = None,
             execute: bool = True,
-            FROM: str = None,
             **kwargs,
     ) -> Union[SQLRequest, List]:
+        """
+        SELECT data from table
+
+        Parameters
+        ----------
+        WHERE : WhereType
+            optional parameter for conditions, example: {'name': 'Alex', 'group': 2}
+        WITH : WithType
+            with_statement (don't really work well)
+        ORDER_BY : OrderByType
+            optional parameter for conditions, example: {'name': ['NULLS', 'LAST']}
+        LIMIT: LimitOffsetType
+            optional parameter for conditions, example: 10
+        OFFSET : LimitOffsetType
+            optional parameter for conditions, example: 5
+        execute : bool
+            if True: execute script and return db's answer
+            if False: return SQL-script in SQLStatement object
+
+        Returns
+        ----------
+        List[List]
+            selected data
+
+        """
+
         return self.db.select_all(
             self.name,
             execute=execute,
@@ -845,9 +1086,16 @@ class SQLite3xTable:
         """
         DELETE FROM table WHERE {something}
 
-        :param WHERE: where_statement
-        :param WITH: with_statement
-        :param execute: execute script and return db's answer (True) or return script (False)
+        Parameters
+        ----------
+        WHERE : WhereType
+            optional parameter for conditions, example: {'name': 'Alex', 'group': 2}
+        WITH : WithType
+            with_statement (don't really work well)
+        execute : bool
+            if True: execute script and return db's answer
+            if False: return SQL-script in SQLStatement object
+
         """
 
         return self.db.delete(
@@ -866,11 +1114,19 @@ class SQLite3xTable:
         """
         UPDATE, SET column_name=something WHERE x=y and more complex requests
 
-        :param SET: Column and value to set
-        :param WHERE: where_statement
-        :param OR: Optional parameter. If INSERT failed, type OrOptionsType
-        :param execute: execute script and return db's answer (True) or return script (False)
-        :param WITH: with_statement
+        Parameters
+        ----------
+        SET : Union[List, Tuple, Mapping]
+            Column and value to set
+        WHERE : WhereType
+            optional parameter for conditions, example: {'name': 'Alex', 'group': 2}
+        OR : OrOptionsType
+            Optional parameter. If INSERT failed, type OrOptionsType
+        execute : bool
+            if True: execute script and return db's answer
+            if False: return SQL-script in SQLStatement object
+        WITH : WithType
+            with_statement (don't really work well)
         """
 
         return self.db.update(
@@ -881,8 +1137,13 @@ class SQLite3xTable:
         """
         DROP TABLE (IF EXIST)
 
-        :param IF_EXIST: Check is table exist (boolean)
-        :param execute: execute script and return db's answer (True) or return script (False)
+        Parameters
+        ----------
+        IF_EXIST : bool
+            Check is table exist (boolean)
+        execute : bool
+            if True: execute script and return db's answer
+            if False: return SQL-script in SQLStatement object
         """
 
         self.db.drop(self.name, IF_EXIST=IF_EXIST, execute=execute, **kwargs)
@@ -894,6 +1155,24 @@ class SQLite3xTable:
             LIMIT: LimitOffsetType = None,
             **kwargs,
     ) -> Union[SQLRequest, List]:
+        """
+        Find all records in table where
+
+        Parameters
+        ----------
+        WHERE : WhereType
+            optional parameter for conditions, example: {'name': 'Alex', 'group': 2}
+        ORDER_BY : OrderByType
+            optional parameter for conditions, example: {'name': ['NULLS', 'LAST']}
+        LIMIT : LimitOffsetType
+            optional parameter for conditions, example: 10
+        **kwargs :
+
+        Returns
+        ----------
+        List[List]
+            selected data
+        """
         if not WHERE:
             WHERE = kwargs
 
@@ -904,13 +1183,29 @@ class SQLite3x:
     """
     Main SQLite3x Database Class
 
-    :param path: Local path to database (PathType)
-    :param template: template of database structure (DBTemplateType)
+    Attributes
+    ----------
+    connection : Union[sqlite3.Connection, None]
+        SQLite connection
+    path : PathType
+        Local path to database (PathType)
+    template : DBTemplateType
+        template of database structure (DBTemplateType)
+
+
     """
 
     def __init__(self, path: PathType = "sql3x.db", template: DBTemplateType = None):
         """
         Initialization
+
+        Parameters
+        ----------
+        path : PathType
+            Local path to database (PathType)
+        template : DBTemplateType
+            template of database structure (DBTemplateType)
+
         """
         self.connection: Union[sqlite3.Connection, None] = None
         self.path = path
@@ -927,15 +1222,14 @@ class SQLite3x:
     def __bool__(self):
         try:
             return bool(self.pragma("database_list"))
-        except ExecuteError:
-            return False
         except Exception as error:
             logger.error(error)
             return False
 
     def __getitem__(self, key) -> SQLite3xTable:
-        # Call method down below is necessary, otherwise it might fall in case of multiple DB objects
-        self._update_constants_()
+        # To call method down below is necessary,
+        # otherwise it might fall in case of multiple DB objects
+        self._update_instance_variables_()
 
         if key not in self.tables_names:
             raise KeyError(key, "No such table in database",
@@ -949,18 +1243,23 @@ class SQLite3x:
 
     # ============================== PRIVATE METHODS ==============================
 
-    def _update_constants_(self):
+    def _update_instance_variables_(self):
         """
-        Method to update constant vars
+        Method to update (changed) instance variables
+
         """
         self.tables_names = self._get_tables_names_()
         self.tables = self._get_tables_()
 
     def _get_tables_(self) -> Generator[SQLite3xTable, None, None]:
         """
-        Generator of table objects
+        Generator of tables list
 
-        :yield: SQLite3xTable
+        Yield
+        ----------
+        SQLite3xTable
+            Tables list
+
         """
 
         # Code down below commented because I guess it's better to see all tables
@@ -979,9 +1278,13 @@ class SQLite3x:
 
     def _get_tables_names_(self) -> List[str]:
         """
-        Get list of tables names
+        Get list of tables names from database
 
-        :return: None
+        Returns
+        ----------
+        List[str]
+            list of tables names
+
         """
 
         return lister(
@@ -1043,7 +1346,7 @@ class SQLite3x:
         elif kwargs:
             script = f"PRAGMA {list(kwargs.keys())[0]}={list(kwargs.values())[0]}"
         else:
-            raise ArgumentError(args_kwargs="Unset", error="No data to execute")
+            raise ValueError(f"No data to execute, args: {args}, kwargs: {kwargs}")
 
         return SQLStatement(SQLRequest(script), self.path, self.connection)
 
@@ -1058,7 +1361,7 @@ class SQLite3x:
             without_rowid: bool = None,
     ):
         """
-        Parent method for all CREATE-methods
+        Parent method for all CREATE-like methods
         """
 
         content = ""
@@ -1112,7 +1415,10 @@ class SQLite3x:
             self, *args: Any, TABLE: AnyStr, script="", values=(), **kwargs: Any
     ):
         """
+        Parent method for INSERT-like methods
+
         INSERT INTO request (aka insert-stmt) and REPLACE INTO request
+
         """
 
         # parsing args or kwargs for _columns and insert_values
@@ -1126,7 +1432,7 @@ class SQLite3x:
             insert_values = list(kwargs.values())
 
         else:
-            raise ArgumentError(args_kwargs="Unset", error="No data to insert")
+            raise ValueError(f"No data to insert, args: {args}, kwargs: {kwargs}")
 
         script += (
             f"{' ' if script else ''}"
@@ -1153,6 +1459,8 @@ class SQLite3x:
             self, *args, TABLE: AnyStr, script="", values=(), **kwargs: Any
     ):
         """
+        Parent method for fast INSERT-like methods
+
         'INSERT INTO' request and 'REPLACE INTO' request without columns names
         (without get_columns req because it's f-g slow)
         """
@@ -1184,7 +1492,8 @@ class SQLite3x:
             **kwargs: Any,
     ):
         """
-        Parent method for insertmany
+        Parent method for insertmany method
+
         """
 
         if args:
@@ -1233,7 +1542,7 @@ class SQLite3x:
                 values.append(temp_)
 
         else:
-            raise ArgumentError(args_kwargs="Unset", error="No data to insert")
+            raise ValueError(f"No data to insert, args: {args}, kwargs: {kwargs}")
 
         values = tuple(
             map(lambda arg: tuple(arg), values)
@@ -1262,15 +1571,14 @@ class SQLite3x:
     ):
         """
         Parent method for all SELECT-like methods
+
         """
         if not TABLE:
-            raise ArgumentError(TABLE="Argument unset and have not default value")
+            raise ValueError("Argument TABLE unset and have not default value")
 
         if SELECT is None:
             if method != "SELECT ALL ":
-                logger.warning(
-                    ArgumentError(SELECT="Argument not specified, default value is '*'")
-                )
+                logger.warning("Argument SELECT not specified, default value is '*'")
             SELECT = ["*"]
 
         elif isinstance(SELECT, str):
@@ -1285,7 +1593,8 @@ class SQLite3x:
     @__with__
     def _delete_stmt_(self, TABLE: str, script="", values=()):
         """
-        Parent method for DELETE method
+        Parent method for delete method
+
         """
 
         script += f"DELETE FROM {TABLE} "
@@ -1304,7 +1613,8 @@ class SQLite3x:
             **kwargs,
     ):
         """
-        Parent method for UPDATE
+        Parent method for update method
+
         """
 
         set_ = SET if SET else None
@@ -1347,7 +1657,8 @@ class SQLite3x:
             **kwargs
     ):
         """
-        Parent method for drop
+        Parent method for drop method
+
         """
 
         script += f"DROP TABLE {'IF EXISTS' if IF_EXIST else ''} {TABLE} "
@@ -1359,19 +1670,22 @@ class SQLite3x:
         """
         Create connection to database
 
-        :return: None
+        Creating sqlite3.connect(path) connection to interact with database
+
         """
 
         if not self.connection:
             self.connection = sqlite3.connect(self.path)
 
-        # return self.connection # Not sure is this reasonable
+        # Not sure is this reasonable
+        # return self.connection
 
     def disconnect(self):
         """
         Drop connection to database
 
-        :return: None
+        Commit changes and close connection
+
         """
 
         self.connection.commit()
@@ -1380,7 +1694,20 @@ class SQLite3x:
 
     def get_table(self, name: AnyStr) -> SQLite3xTable:
         """
-        Shadow method for __getitem__
+        Shadow method for __getitem__, that used as like: database['table_name']
+
+        Get table object (SQLite3xTable instance)
+
+        Parameters
+        ----------
+        name : AnyStr
+            Name of table
+
+        Returns
+        ----------
+        SQLite3xTable
+            Instance of SQLite3xTable, table of database
+
         """
 
         return self.__getitem__(key=name)
@@ -1392,13 +1719,22 @@ class SQLite3x:
             request: SQLRequest = None
     ) -> Union[List, None]:
         """
-        Child method of _execute_stmt_ method
+        Execute any SQL-script whit (or without) values, or execute SQLRequest
 
-        :param script: single SQLite script, might contains placeholders
-        :param values: Values for placeholders if script contains it
-        :param request: Instead of script and values might execute full statement
+        Parameters
+        ----------
+        script : AnyStr
+            single SQLite script, might contains placeholders
+        values : Tuple
+            Values for placeholders if script contains it
+        request : SQLRequest
+            Instead of script and values might execute full statement
 
-        :return: Database answer if it has
+        Returns
+        ----------
+        Union[List, None]
+            Database answer if it has
+
         """
 
         return self._execute_stmt_(script=script, values=values, request=request)
@@ -1406,18 +1742,26 @@ class SQLite3x:
     def executemany(
             self,
             script: AnyStr = None,
-            values: Tuple = None,
+            values: Tuple[Tuple] = None,
             request: SQLRequest = None
     ) -> Union[List, None]:
         """
-        Method to execute : param script: with :param values: if it has
-        or executing :param request:
+        Execute any SQL-script for many values sets, or execute SQLRequest
 
-        :param script: single or multiple SQLite script(s), might contains placeholders
-        :param values: Values for placeholders if script contains it
-        :param request: Instead of script and values might execute full request
+        Parameters
+        ----------
+        script : AnyStr
+            single or multiple SQLite script(s), might contains placeholders
+        values : Tuple[Tuple]
+            Values for placeholders if script contains it
+        request : SQLRequest
+            Instead of script and values might execute full request
 
-        :return: Database answer if it has
+        Returns
+        ----------
+        Union[List, None]
+            Database answer if it has
+
         """
 
         return self._executemany_stmt(script=script, values=values, request=request)
@@ -1428,13 +1772,20 @@ class SQLite3x:
             request: SQLRequest = None
     ) -> Union[List, None]:
         """
-        Method to execute :param script:
-        or executing :param request:
+        Execute many SQL-scripts whit (or without) values
 
-        :param script: single or multiple SQLite script(s), might contains placeholders
-        :param request: Instead of script and values might execute full request
+        Parameters
+        ----------
+        script : AnyStr
+            single SQLite script, might contains placeholders
+        request : SQLRequest
+            Instead of script and values might execute full statement
 
-        :return: Database answer if it has
+        Returns
+        ----------
+        Union[List, None]
+            Database answer if it has
+
         """
 
         return self._executescript_stmt(script=script, request=request)
@@ -1442,16 +1793,25 @@ class SQLite3x:
     def pragma(
             self,
             *args: str,
-            **kwargs
+            **kwargs: NumStr
     ) -> Union[List, None]:
         """
         Set PRAGMA parameter or send PRAGMA-request
 
-        :param args: Might be used like this:
-            > db.pragma("database_list")
+        Parameters
+        ----------
+        args : str
+            Might be used like this:
+            Example: db.pragma("database_list")
+        kwargs : NumStr
+            Might be used like this:
+            Example: db.pragma(foreign_keys="ON")
 
-        :param kwargs: Might be used like this:
-            > db.pragma(foreign_keys="ON")
+        Returns
+        ----------
+        Union[List, None]
+            Database answer if it has
+
         """
 
         return self._pragma_stmt_(*args, **kwargs)
@@ -1463,7 +1823,11 @@ class SQLite3x:
         """
         Turn on/off PRAGMA parameter FOREIGN KEYS
 
-        :param mode: "ON" or "OFF"
+        Parameters
+        ----------
+        mode : Literal["ON", "OFF"]
+            "ON" or "OFF" FOREIGN KEYS support
+
         """
 
         return self.pragma(foreign_keys=mode)
@@ -1475,7 +1839,11 @@ class SQLite3x:
         """
         Set PRAGMA param journal_mode
 
-        :param mode: "DELETE", "TRUNCATE", "PERSIST", "MEMORY", "WAL", "OFF"
+        Parameters
+        ----------
+        mode : Literal["DELETE", "TRUNCATE", "PERSIST", "MEMORY", "WAL", "OFF"]
+            Journal mode
+
         """
 
         return self.pragma(journal_mode=mode)
@@ -1485,9 +1853,11 @@ class SQLite3x:
             table_name: str
     ):
         """
-        Send PRAGMA request table_info(table_name)
+        Send table_info PRAGMA request
 
-        :param table_name: Name of table
+        table_name : str
+            Name of table
+
         """
 
         return self.pragma(f"table_info({table_name})")
@@ -1500,16 +1870,19 @@ class SQLite3x:
             without_rowid: bool = None,
     ):
         """
-        CREATE TABLE table-name
+        Method to create new table
 
-        Optional:
-            CREATE TABLE (IF NOT EXISTS) schema-name.table-name
-            (AS select-stmt) / (column-def table-constraint) (WITHOUT ROWID)
+        Parameters
+        ----------
+        name : AnyStr
+            Name of creating table
+        columns : ColumnsType
+            Columns of table (ColumnsType-like)
+        IF_NOT_EXIST :
+            Turn on/off "IF NOT EXISTS" prefix
+        without_rowid :
+            Turn on/off "WITHOUT ROWID" postfix
 
-        :param name: Table name
-        :param columns: Columns of table (ColumnsType)
-        :param IF_NOT_EXIST: Turn on/off "IF NOT EXISTS" prefix
-        :param without_rowid:
         """
 
         self._create_stmt_(
@@ -1531,8 +1904,15 @@ class SQLite3x:
         CREATE TEMP TABLE (IF NOT EXISTS) schema-name.table-name ...
         (AS select-stmt)/(column-def table-constraint) (WITHOUT ROWID)
 
-        :param name: Table name
-        :param columns: Columns of table (ColumnsType)
+        Parameters
+        ----------
+        name : AnyStr
+            Name of creating table
+        columns : ColumnsType
+            Columns of table (ColumnsType-like)
+        kwargs : Any
+            Other optional kwargs
+
         """
 
         self._create_stmt_(
@@ -1553,8 +1933,15 @@ class SQLite3x:
         CREATE TEMPORARY TABLE (IF NOT EXISTS) schema-name.table-name ...
         (AS select-stmt)/(column-def table-constraint) (WITHOUT ROWID)
 
-        :param name: Table name
-        :param columns: Columns of table (ColumnsType)
+        Parameters
+        ----------
+        name : AnyStr
+            Name of creating table
+        columns : ColumnsType
+            Columns of table (ColumnsType-like)
+        kwargs : Any
+            Other optional kwargs
+
         """
 
         self._create_stmt_(
@@ -1570,9 +1957,13 @@ class SQLite3x:
             template: DBTemplateType
     ):
         """
-        Mark up table by template
+        Mark up table structure from template
 
-        :param template: Structure of database (DBTemplateType)
+        Parameters
+        ----------
+        template : DBTemplateType
+            Template of database structure (DBTemplateType-like)
+
         """
 
         for (table_name, columns) in template.items():
@@ -1589,8 +1980,16 @@ class SQLite3x:
         """
         Get list of table columns
 
-        :param table: schema-name.table-name or just table-name
-        :return: List[List] of columns
+        Parameters
+        ----------
+        table : AnyStr
+            Name of table
+
+        Returns
+        ----------
+        List[List]
+            Columns of table
+
         """
 
         try:
@@ -1617,12 +2016,23 @@ class SQLite3x:
             **kwargs: Any,
     ) -> Union[None, SQLStatement]:
         """
-        INSERT data into db's table
+        INSERT data into table
 
-        :param TABLE: Table name for inserting
-        :param OR: Optional parameter. If INSERT failed, type OrOptionsType
-        :param WITH: Optional parameter.
-        :param execute: execute script and return db's answer (True) or return script (False)
+        Parameters
+        ----------
+        TABLE : AnyStr
+            Name of table
+        OR : OrOptionsType
+            Optional parameter. If INSERT failed, type OrOptionsType
+        WITH : WithType
+            Optional parameter.
+        execute : bool
+            if True: execute script and return db's answer
+            if False: return SQL-script in SQLStatement object
+
+        Returns
+        ----------
+            None or SQL-script in SQLStatement
         """
 
         if args:
@@ -1658,11 +2068,22 @@ class SQLite3x:
             **kwargs: Any,
     ) -> Union[None, SQLStatement]:
         """
-        REPLACE data into db's table
+        REPLACE data into table
 
-        :param TABLE: Table name for inserting
-        :param WITH: Optional parameter.
-        :param execute: execute script and return db's answer (True) or return script (False)
+        Parameters
+        ----------
+        TABLE : AnyStr
+            Name of table
+        WITH : WithType
+            Optional parameter.
+        execute : bool
+            if True: execute script and return db's answer
+            if False: return SQL-script in SQLStatement object
+
+        Returns
+        ----------
+            None or SQL-script in SQLStatement
+
         """
 
         if args:
@@ -1696,14 +2117,27 @@ class SQLite3x:
             **kwargs: Any,
     ) -> Union[None, SQLStatement]:
         """
-        INSERT many data into db's table.
+        INSERT many data into table.
         The same as regular insert but for lists of inserting values
 
-        :param TABLE: table name for inserting
-        :param OR: Optional parameter. If INSERT failed, type OrOptionsType
-        :param execute: execute script and return db's answer (True) or return script (False)
-        :param args: 1'st way set values for insert
-        :param kwargs: 2'st way set values for insert
+        Parameters
+        ----------
+        TABLE : AnyStr
+            Name of table
+        args : Union[List, Tuple]
+            1'st way set values for insert
+        OR : OrOptionsType
+            Optional parameter. If INSERT failed, type OrOptionsType
+        execute : bool
+            if True: execute script and return db's answer
+            if False: return SQL-script in SQLStatement object
+        kwargs : Any
+            An 2'st way set values for insert
+
+        Returns
+        ----------
+            None or SQL-script in SQLStatement
+
         """
 
         return self._insertmany_stmt_(
@@ -1732,18 +2166,37 @@ class SQLite3x:
         """
         SELECT data from table
 
-        :param SELECT: columns to select. Value '*' by default
-        :param TABLE: table for selection
-        :param FROM: table for selection
-        :param WHERE: optional parameter for conditions, example: {'name': 'Alex', 'group': 2}
-        :param WITH: with_statement
-        :param JOIN: optional parameter for joining data from other tables ['groups'],
-        :param ORDER_BY: optional parameter for conditions, example: {'name': ['NULLS', 'LAST']}
-        :param LIMIT: optional parameter for conditions, example: 10
-        :param OFFSET: optional parameter for conditions, example: 5
-        :param execute: execute script and return db's answer (True) or return script (False)
+        Parameters
+        ----------
+        TABLE : AnyStr
+            Name of table
+        *args: Union[str, List[str]]
+            selecting column or list of columns
+        SELECT : Union[str, List[str]]
+            columns to select. Value '*' by default
+        WHERE : WhereType
+            optional parameter for conditions, example: {'name': 'Alex', 'group': 2}
+        WITH : WithType
+            with_statement (don't really work well)
+        ORDER_BY : OrderByType
+            optional parameter for conditions, example: {'name': ['NULLS', 'LAST']}
+        LIMIT: LimitOffsetType
+            optional parameter for conditions, example: 10
+        OFFSET : LimitOffsetType
+            optional parameter for conditions, example: 5
+        execute : bool
+            if True: execute script and return db's answer
+            if False: return SQL-script in SQLStatement object
+        FROM : str
+            Name of table, same at TABLE
+        JOIN: Union[str, List[str], List[List[str]]]
+            optional parameter for joining data from other tables ['groups'],
 
-        :return: List[List] of selects
+        Returns
+        ----------
+        List[List]
+            selected data
+
         """
 
         if not TABLE and FROM:
@@ -1761,8 +2214,6 @@ class SQLite3x:
         if not WHERE:
             WHERE = kwargs
             kwargs = {}
-
-
 
         return self._select_stmt_(
             SELECT=SELECT,
@@ -1837,16 +2288,31 @@ class SQLite3x:
         """
         SELECT ALL records from table
 
-        :param TABLE: table for selection
-        :param FROM: table for selection
-        :param WHERE: optional parameter for conditions, example: {'name': 'Alex', 'group': 2}
-        :param WITH: with_statement
-        :param ORDER_BY: optional parameter for conditions, example: {'name': ['NULLS', 'LAST']}
-        :param LIMIT: optional parameter for conditions, example: 10
-        :param OFFSET: optional parameter for conditions, example: 5
-        :param execute: execute script and return db's answer (True) or return script (False)
+        Parameters
+        ----------
+        TABLE : AnyStr
+            Name of table
+        WHERE : WhereType
+            optional parameter for conditions, example: {'name': 'Alex', 'group': 2}
+        WITH : WithType
+            with_statement (don't really work well)
+        ORDER_BY : OrderByType
+            optional parameter for conditions, example: {'name': ['NULLS', 'LAST']}
+        LIMIT: LimitOffsetType
+            optional parameter for conditions, example: 10
+        OFFSET : LimitOffsetType
+            optional parameter for conditions, example: 5
+        execute : bool
+            if True: execute script and return db's answer
+            if False: return SQL-script in SQLStatement object
+        FROM : str
+            Name of table, same at TABLE
 
-        :return: List[List] of selects
+        Returns
+        ----------
+        List[List]
+            selected data
+
         """
 
         if not TABLE and FROM:
@@ -1879,10 +2345,18 @@ class SQLite3x:
         """
         DELETE FROM table WHERE {something}
 
-        :param TABLE: Table name as string
-        :param WHERE: where_statement
-        :param WITH: with_statement
-        :param execute: execute script and return db's answer (True) or return script (False)
+        Parameters
+        ----------
+        TABLE : AnyStr
+            Name of table
+        WHERE : WhereType
+            optional parameter for conditions, example: {'name': 'Alex', 'group': 2}
+        WITH : WithType
+            with_statement (don't really work well)
+        execute : bool
+            if True: execute script and return db's answer
+            if False: return SQL-script in SQLStatement object
+
         """
 
         if not WHERE:
@@ -1906,14 +2380,23 @@ class SQLite3x:
             **kwargs,
     ):
         """
-        UPDATE table_name SET column_name=something WHERE x=y and more complex requests
+        UPDATE, SET column_name=something WHERE x=y and more complex requests
 
-        :param TABLE: Table name
-        :param SET: Column and value to set
-        :param WHERE: where_statement
-        :param OR: Optional parameter. If INSERT failed, type OrOptionsType
-        :param execute: execute script and return db's answer (True) or return script (False)
-        :param WITH: with_statement
+        Parameters
+        ----------
+        TABLE : AnyStr
+            Name of table
+        SET : Union[List, Tuple, Mapping]
+            Column and value to set
+        WHERE : WhereType
+            optional parameter for conditions, example: {'name': 'Alex', 'group': 2}
+        OR : OrOptionsType
+            Optional parameter. If INSERT failed, type OrOptionsType
+        execute : bool
+            if True: execute script and return db's answer
+            if False: return SQL-script in SQLStatement object
+        WITH : WithType
+            with_statement (don't really work well)
         """
 
         if not WHERE:
@@ -1937,11 +2420,17 @@ class SQLite3x:
             **kwargs
     ):
         """
-        DROP TABLE (IF EXIST) table_name
+        DROP TABLE (IF EXIST)
 
-        :param TABLE: Table name
-        :param IF_EXIST: Check is table exist (boolean)
-        :param execute: execute script and return db's answer (True) or return script (False)
+        Parameters
+        ----------
+        TABLE : AnyStr
+            Name of table
+        IF_EXIST : bool
+            Check is table exist (boolean)
+        execute : bool
+            if True: execute script and return db's answer
+            if False: return SQL-script in SQLStatement object
         """
 
         return self._drop_stmt_(
@@ -1952,4 +2441,4 @@ class SQLite3x:
         )
 
 
-__all__ = ["SQLite3x"]
+__all__ = ["SQLite3x", "SQLite3xTable"]

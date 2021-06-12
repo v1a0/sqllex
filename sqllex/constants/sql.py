@@ -51,7 +51,7 @@ CONST_PRIORITY = {
     CHECK: None,
     DEFAULT: 1,
     FOREIGN_KEY: None,
-    NOT_NULL: 2,
+    NOT_NULL: 3,
     NULL: 1,
     PRIMARY_KEY: 1,
     REFERENCES: None,

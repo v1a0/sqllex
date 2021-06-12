@@ -1,13 +1,13 @@
-from sqllex.classes.sqlite3x import *
-from sqllex.constants.sql import *
+from sqllex.classes import *
+from sqllex.constants import *
 from sqllex.debug import logger
 
 
 __all__ = [
-    # classes.sqlite3x
+    # classes
     "SQLite3x",         # lgtm [py/undefined-export]
 
-    # constants.sql
+    # constants
     "TEXT",             # lgtm [py/undefined-export]
     "NUMERIC",          # lgtm [py/undefined-export]
     "INTEGER",          # lgtm [py/undefined-export]
@@ -34,7 +34,6 @@ __all__ = [
     "INNER_JOIN",       # lgtm [py/undefined-export]
     "LEFT_JOIN",        # lgtm [py/undefined-export]
     "CROSS_JOIN",       # lgtm [py/undefined-export]
-
 
     # debug tools
     "logger",           # lgtm [py/undefined-export]
