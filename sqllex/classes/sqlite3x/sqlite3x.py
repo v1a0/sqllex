@@ -2150,7 +2150,7 @@ class SQLite3x:
 
     def select(
             self,
-            TABLE: Union[str, List[str]],
+            TABLE: Union[str, List[str]] = None,
             *args: Union[str, List[str]],
             SELECT: Union[str, List[str]] = None,
             WHERE: WhereType = None,
@@ -2199,8 +2199,11 @@ class SQLite3x:
 
         """
 
-        if not TABLE and FROM:
-            TABLE = FROM
+        if not TABLE:
+            if FROM:
+                TABLE = FROM
+            else:
+                raise ValueError("No TABLE or FROM argument set")
 
         if not SELECT:
             if args:
@@ -2231,21 +2234,24 @@ class SQLite3x:
 
     def select_distinct(
             self,
-            TABLE: str,
-            *args: str,
-            SELECT: Union[List[str], str] = ALL,
+            TABLE: Union[str, List[str]] = None,
+            *args: Union[str, List[str]],
+            SELECT: Union[str, List[str]] = None,
             WHERE: WhereType = None,
             WITH: WithType = None,
             ORDER_BY: OrderByType = None,
             LIMIT: LimitOffsetType = None,
             OFFSET: LimitOffsetType = None,
             execute: bool = True,
-            FROM: str = None,
+            FROM: Union[str, List[str]] = None,
             **kwargs,
     ) -> Union[SQLRequest, List]:
 
-        if not TABLE and FROM:
-            TABLE = FROM
+        if not TABLE:
+            if FROM:
+                TABLE = FROM
+            else:
+                raise ValueError("No TABLE or FROM argument set")
 
         if not SELECT:
             if args:
@@ -2275,14 +2281,14 @@ class SQLite3x:
 
     def select_all(
             self,
-            TABLE: str,
+            TABLE: Union[str, List[str]] = None,
             WHERE: WhereType = None,
             WITH: WithType = None,
             ORDER_BY: OrderByType = None,
             LIMIT: LimitOffsetType = None,
             OFFSET: LimitOffsetType = None,
             execute: bool = True,
-            FROM: str = None,
+            FROM: Union[str, List[str]] = None,
             **kwargs,
     ) -> Union[SQLRequest, List]:
         """
@@ -2315,8 +2321,11 @@ class SQLite3x:
 
         """
 
-        if not TABLE and FROM:
-            TABLE = FROM
+        if not TABLE:
+            if FROM:
+                TABLE = FROM
+            else:
+                raise ValueError("No TABLE or FROM argument set")
 
         if not WHERE:
             WHERE = kwargs

@@ -30,3 +30,4 @@ users_table.insert(1, "New_user")   # insert new record in table
 print(users_table.select())
 print(ut2.select())
 
+print(db.select(SELECT=ALL, FROM="users", LIMIT= 10))
