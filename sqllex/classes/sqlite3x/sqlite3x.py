@@ -23,7 +23,7 @@ def col_types_sort(val: Union[DataType, AnyStr]) -> int:
 
     """
 
-    prior = CONST_PRIORITY.get(val)     # How about set dict.setdefault(1) ?
+    prior = CONST_PRIORITY.get(val)  # How about set dict.setdefault(1) ?
 
     if prior is None:
         return 1
@@ -865,9 +865,8 @@ class SQLite3xTable:
             *args: InsertData,
             OR: OrOptionsType = None,
             WITH: WithType = None,
-            execute: bool = True,
             **kwargs: Any,
-    ) -> Union[None, SQLStatement]:
+    ) -> None:
         """
         INSERT data into table
 
@@ -877,26 +876,22 @@ class SQLite3xTable:
             Optional parameter. If INSERT failed, type OrOptionsType
         WITH : WithType
             Optional parameter.
-        execute : bool
-            if True: execute script and return db's answer
-            if False: return SQL-script in SQLStatement object
 
         Returns
         ----------
             None or SQL-script in SQLStatement
         """
 
-        return self.db.insert(
-            self.name, *args, OR=OR, execute=execute, WITH=WITH, **kwargs
+        self.db.insert(
+            self.name, *args, OR=OR, WITH=WITH, **kwargs
         )
 
     def replace(
             self,
             *args: Any,
             WITH: WithType = None,
-            execute: bool = True,
             **kwargs: Any
-    ) -> Union[None, SQLStatement]:
+    ) -> None:
         """
         REPLACE data into table
 
@@ -904,9 +899,6 @@ class SQLite3xTable:
         ----------
         WITH : WithType
             Optional parameter.
-        execute : bool
-            if True: execute script and return db's answer
-            if False: return SQL-script in SQLStatement object
 
         Returns
         ----------
@@ -914,15 +906,14 @@ class SQLite3xTable:
 
         """
 
-        return self.db.replace(self.name, *args, execute=execute, **kwargs, WITH=WITH)
+        self.db.replace(self.name, *args, **kwargs, WITH=WITH)
 
     def insertmany(
             self,
             *args: Union[List[InsertData], Tuple[InsertData]],
             OR: OrOptionsType = None,
-            execute: bool = True,
             **kwargs: Any,
-    ) -> Union[None, SQLStatement]:
+    ) -> None:
         """
         INSERT many data into table.
         The same as regular insert but for lists of inserting values
@@ -933,9 +924,6 @@ class SQLite3xTable:
             1'st way set values for insert
         OR : OrOptionsType
             Optional parameter. If INSERT failed, type OrOptionsType
-        execute : bool
-            if True: execute script and return db's answer
-            if False: return SQL-script in SQLStatement object
         kwargs : Any
             An 2'st way set values for insert
 
@@ -945,7 +933,7 @@ class SQLite3xTable:
 
         """
 
-        return self.db.insertmany(self.name, *args, OR=OR, execute=execute, **kwargs)
+        self.db.insertmany(self.name, *args, OR=OR, **kwargs)
 
     def select(
             self,
@@ -957,7 +945,6 @@ class SQLite3xTable:
             LIMIT: LimitOffsetType = None,
             OFFSET: LimitOffsetType = None,
             JOIN: Union[str, List[str], List[List[str]]] = None,
-            execute: bool = True,
             **kwargs,
     ) -> Union[SQLStatement, List[List[Any]]]:
         """
@@ -981,9 +968,6 @@ class SQLite3xTable:
             optional parameter for conditions, example: 5
         JOIN: Union[str, List[str], List[List[str]]]
             optional parameter for joining data from other tables ['groups'],
-        execute : bool
-            if True: execute script and return db's answer
-            if False: return SQL-script in SQLStatement object
 
         Returns
         ----------
@@ -997,7 +981,6 @@ class SQLite3xTable:
             *args,
             SELECT=SELECT,
             WHERE=WHERE,
-            execute=execute,
             WITH=WITH,
             ORDER_BY=ORDER_BY,
             LIMIT=LIMIT,
@@ -1014,14 +997,12 @@ class SQLite3xTable:
             ORDER_BY: OrderByType = None,
             LIMIT: LimitOffsetType = None,
             OFFSET: LimitOffsetType = None,
-            execute: bool = True,
             **kwargs,
     ) -> Union[SQLRequest, List]:
         return self.db.select_distinct(
             self.name,
             SELECT=SELECT,
             WHERE=WHERE,
-            execute=execute,
             WITH=WITH,
             ORDER_BY=ORDER_BY,
             LIMIT=LIMIT,
@@ -1036,7 +1017,6 @@ class SQLite3xTable:
             ORDER_BY: OrderByType = None,
             LIMIT: LimitOffsetType = None,
             OFFSET: LimitOffsetType = None,
-            execute: bool = True,
             **kwargs,
     ) -> Union[SQLRequest, List]:
         """
@@ -1054,9 +1034,6 @@ class SQLite3xTable:
             optional parameter for conditions, example: 10
         OFFSET : LimitOffsetType
             optional parameter for conditions, example: 5
-        execute : bool
-            if True: execute script and return db's answer
-            if False: return SQL-script in SQLStatement object
 
         Returns
         ----------
@@ -1067,7 +1044,6 @@ class SQLite3xTable:
 
         return self.db.select_all(
             self.name,
-            execute=execute,
             WHERE=WHERE,
             WITH=WITH,
             ORDER_BY=ORDER_BY,
@@ -1080,9 +1056,8 @@ class SQLite3xTable:
             self,
             WHERE: WhereType = None,
             WITH: WithType = None,
-            execute: bool = True,
             **kwargs,
-    ) -> Union[None, SQLStatement]:
+    ) -> None:
         """
         DELETE FROM table WHERE {something}
 
@@ -1092,14 +1067,11 @@ class SQLite3xTable:
             optional parameter for conditions, example: {'name': 'Alex', 'group': 2}
         WITH : WithType
             with_statement (don't really work well)
-        execute : bool
-            if True: execute script and return db's answer
-            if False: return SQL-script in SQLStatement object
 
         """
 
-        return self.db.delete(
-            self.name, WHERE=WHERE, WITH=WITH, execute=execute, **kwargs
+        self.db.delete(
+            self.name, WHERE=WHERE, WITH=WITH, **kwargs
         )
 
     def update(
@@ -1107,10 +1079,9 @@ class SQLite3xTable:
             SET: Union[List, Tuple, Mapping],
             WHERE: WhereType = None,
             OR: OrOptionsType = None,
-            execute: bool = True,
             WITH: WithType = None,
             **kwargs,
-    ):
+    ) -> None:
         """
         UPDATE, SET column_name=something WHERE x=y and more complex requests
 
@@ -1122,18 +1093,15 @@ class SQLite3xTable:
             optional parameter for conditions, example: {'name': 'Alex', 'group': 2}
         OR : OrOptionsType
             Optional parameter. If INSERT failed, type OrOptionsType
-        execute : bool
-            if True: execute script and return db's answer
-            if False: return SQL-script in SQLStatement object
         WITH : WithType
             with_statement (don't really work well)
         """
 
-        return self.db.update(
-            self.name, SET=SET, OR=OR, WHERE=WHERE, execute=execute, WITH=WITH, **kwargs
+        self.db.update(
+            self.name, SET=SET, OR=OR, WHERE=WHERE, WITH=WITH, **kwargs
         )
 
-    def drop(self, IF_EXIST: bool = True, execute: bool = True, **kwargs):
+    def drop(self, IF_EXIST: bool = True, **kwargs):
         """
         DROP TABLE (IF EXIST)
 
@@ -1141,12 +1109,9 @@ class SQLite3xTable:
         ----------
         IF_EXIST : bool
             Check is table exist (boolean)
-        execute : bool
-            if True: execute script and return db's answer
-            if False: return SQL-script in SQLStatement object
         """
 
-        self.db.drop(self.name, IF_EXIST=IF_EXIST, execute=execute, **kwargs)
+        self.db.drop(self.name, IF_EXIST=IF_EXIST, **kwargs)
 
     def find(
             self,
@@ -2012,9 +1977,8 @@ class SQLite3x:
             *args: InsertData,
             OR: OrOptionsType = None,
             WITH: WithType = None,
-            execute: bool = True,
             **kwargs: Any,
-    ) -> Union[None, SQLStatement]:
+    ) -> None:
         """
         INSERT data into table
 
@@ -2026,47 +1990,43 @@ class SQLite3x:
             Optional parameter. If INSERT failed, type OrOptionsType
         WITH : WithType
             Optional parameter.
-        execute : bool
-            if True: execute script and return db's answer
-            if False: return SQL-script in SQLStatement object
 
         Returns
         ----------
             None or SQL-script in SQLStatement
         """
 
-        if args:
-            try:
-                return self._fast_insert_stmt_(
+        try:
+            if args:
+                self._fast_insert_stmt_(
                     *args,
                     script="INSERT",
                     OR=OR,
                     TABLE=TABLE,
-                    execute=execute,
                     **kwargs,
                     WITH=WITH,
                 )
-            except sqlite3.OperationalError:
-                pass
 
-        return self._insert_stmt_(
-            *args,
-            script="INSERT",
-            OR=OR,
-            TABLE=TABLE,
-            execute=execute,
-            **kwargs,
-            WITH=WITH,
-        )
+            else:
+                raise ValueError
+
+        except (sqlite3.OperationalError, ValueError):
+            self._insert_stmt_(
+                *args,
+                script="INSERT",
+                OR=OR,
+                TABLE=TABLE,
+                **kwargs,
+                WITH=WITH,
+            )
 
     def replace(
             self,
             TABLE: AnyStr,
             *args: Any,
             WITH: WithType = None,
-            execute: bool = True,
             **kwargs: Any,
-    ) -> Union[None, SQLStatement]:
+    ) -> None:
         """
         REPLACE data into table
 
@@ -2076,9 +2036,6 @@ class SQLite3x:
             Name of table
         WITH : WithType
             Optional parameter.
-        execute : bool
-            if True: execute script and return db's answer
-            if False: return SQL-script in SQLStatement object
 
         Returns
         ----------
@@ -2086,36 +2043,34 @@ class SQLite3x:
 
         """
 
-        if args:
-            try:
-                return self._fast_insert_stmt_(
+        try:
+            if args:
+                self._fast_insert_stmt_(
                     *args,
                     script="REPLACE",
                     TABLE=TABLE,
-                    execute=execute,
                     **kwargs,
                     WITH=WITH,
                 )
-            except sqlite3.OperationalError:
-                pass
+            else:
+                raise ValueError
 
-        return self._insert_stmt_(
-            *args,
-            script="REPLACE",
-            TABLE=TABLE,
-            execute=execute,
-            **kwargs,
-            WITH=WITH
-        )
+        except (sqlite3.OperationalError, ValueError):
+            self._insert_stmt_(
+                *args,
+                script="REPLACE",
+                TABLE=TABLE,
+                **kwargs,
+                WITH=WITH
+            )
 
     def insertmany(
             self,
             TABLE: AnyStr,
             *args: Union[List[List], List[Tuple], Tuple[List], Tuple[Tuple], List, Tuple],
             OR: OrOptionsType = None,
-            execute: bool = True,
             **kwargs: Any,
-    ) -> Union[None, SQLStatement]:
+    ) -> None:
         """
         INSERT many data into table.
         The same as regular insert but for lists of inserting values
@@ -2128,9 +2083,6 @@ class SQLite3x:
             1'st way set values for insert
         OR : OrOptionsType
             Optional parameter. If INSERT failed, type OrOptionsType
-        execute : bool
-            if True: execute script and return db's answer
-            if False: return SQL-script in SQLStatement object
         kwargs : Any
             An 2'st way set values for insert
 
@@ -2140,11 +2092,10 @@ class SQLite3x:
 
         """
 
-        return self._insertmany_stmt_(
+        self._insertmany_stmt_(
             TABLE,
             *args,
             OR=OR,
-            execute=execute,
             **kwargs
         )
 
@@ -2158,7 +2109,6 @@ class SQLite3x:
             ORDER_BY: OrderByType = None,
             LIMIT: LimitOffsetType = None,
             OFFSET: LimitOffsetType = None,
-            execute: bool = True,
             FROM: Union[str, List[str]] = None,
             JOIN: Union[str, List[str], List[List[str]]] = None,
             **kwargs,
@@ -2184,9 +2134,6 @@ class SQLite3x:
             optional parameter for conditions, example: 10
         OFFSET : LimitOffsetType
             optional parameter for conditions, example: 5
-        execute : bool
-            if True: execute script and return db's answer
-            if False: return SQL-script in SQLStatement object
         FROM : str
             Name of table, same at TABLE
         JOIN: Union[str, List[str], List[List[str]]]
@@ -2223,7 +2170,6 @@ class SQLite3x:
             TABLE=TABLE,
             method="SELECT",
             WHERE=WHERE,
-            execute=execute,
             WITH=WITH,
             ORDER_BY=ORDER_BY,
             LIMIT=LIMIT,
@@ -2242,7 +2188,6 @@ class SQLite3x:
             ORDER_BY: OrderByType = None,
             LIMIT: LimitOffsetType = None,
             OFFSET: LimitOffsetType = None,
-            execute: bool = True,
             FROM: Union[str, List[str]] = None,
             **kwargs,
     ) -> Union[SQLRequest, List]:
@@ -2271,7 +2216,6 @@ class SQLite3x:
             TABLE=TABLE,
             method="SELECT DISTINCT",
             WHERE=WHERE,
-            execute=execute,
             WITH=WITH,
             ORDER_BY=ORDER_BY,
             LIMIT=LIMIT,
@@ -2287,7 +2231,6 @@ class SQLite3x:
             ORDER_BY: OrderByType = None,
             LIMIT: LimitOffsetType = None,
             OFFSET: LimitOffsetType = None,
-            execute: bool = True,
             FROM: Union[str, List[str]] = None,
             **kwargs,
     ) -> Union[SQLRequest, List]:
@@ -2308,9 +2251,6 @@ class SQLite3x:
             optional parameter for conditions, example: 10
         OFFSET : LimitOffsetType
             optional parameter for conditions, example: 5
-        execute : bool
-            if True: execute script and return db's answer
-            if False: return SQL-script in SQLStatement object
         FROM : str
             Name of table, same at TABLE
 
@@ -2333,7 +2273,6 @@ class SQLite3x:
 
         return self._select_stmt_(
             method="SELECT ALL ",
-            execute=execute,
             TABLE=TABLE,
             WHERE=WHERE,
             WITH=WITH,
@@ -2348,9 +2287,8 @@ class SQLite3x:
             TABLE: str,
             WHERE: WhereType = None,
             WITH: WithType = None,
-            execute: bool = True,
             **kwargs,
-    ) -> Union[None, SQLStatement]:
+    ) -> None:
         """
         DELETE FROM table WHERE {something}
 
@@ -2362,20 +2300,16 @@ class SQLite3x:
             optional parameter for conditions, example: {'name': 'Alex', 'group': 2}
         WITH : WithType
             with_statement (don't really work well)
-        execute : bool
-            if True: execute script and return db's answer
-            if False: return SQL-script in SQLStatement object
 
         """
 
         if not WHERE:
             WHERE = kwargs
 
-        return self._delete_stmt_(
+        self._delete_stmt_(
             TABLE=TABLE,
             WHERE=WHERE,
             WITH=WITH,
-            execute=execute
         )
 
     def update(
@@ -2384,10 +2318,9 @@ class SQLite3x:
             SET: Union[List, Tuple, Mapping],
             WHERE: WhereType = None,
             OR: OrOptionsType = None,
-            execute: bool = True,
             WITH: WithType = None,
             **kwargs,
-    ):
+    ) -> None:
         """
         UPDATE, SET column_name=something WHERE x=y and more complex requests
 
@@ -2401,9 +2334,6 @@ class SQLite3x:
             optional parameter for conditions, example: {'name': 'Alex', 'group': 2}
         OR : OrOptionsType
             Optional parameter. If INSERT failed, type OrOptionsType
-        execute : bool
-            if True: execute script and return db's answer
-            if False: return SQL-script in SQLStatement object
         WITH : WithType
             with_statement (don't really work well)
         """
@@ -2411,12 +2341,11 @@ class SQLite3x:
         if not WHERE:
             WHERE = kwargs
 
-        return self._update_stmt_(
+        self._update_stmt_(
             TABLE=TABLE,
             SET=SET,
             OR=OR,
             WHERE=WHERE,
-            execute=execute,
             WITH=WITH,
             **kwargs,
         )
@@ -2425,9 +2354,8 @@ class SQLite3x:
             self,
             TABLE: AnyStr,
             IF_EXIST: bool = True,
-            execute: bool = True,
             **kwargs
-    ):
+    ) -> None:
         """
         DROP TABLE (IF EXIST)
 
@@ -2437,15 +2365,11 @@ class SQLite3x:
             Name of table
         IF_EXIST : bool
             Check is table exist (boolean)
-        execute : bool
-            if True: execute script and return db's answer
-            if False: return SQL-script in SQLStatement object
         """
 
-        return self._drop_stmt_(
+        self._drop_stmt_(
             TABLE=TABLE,
             IF_EXIST=IF_EXIST,
-            execute=execute,
             **kwargs
         )
 

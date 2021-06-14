@@ -23,8 +23,14 @@ debug_mode(True, log_file='sqllex-test.log')
 
 
 def remove_db():
-    print("Table removed")
+    logger.stop()
+    print("Logger stopped")
+
     remove(f"{DB_NAME}")
+    print("Table removed")
+
+    remove("sqllex-test.log")
+    print("Log removed")
 
 
 def tables_test():
@@ -169,21 +175,6 @@ def select_test():
     # ORDER_BY DESC
     if not db.select('t2', 'id', ORDER_BY='id DESC') == [[4], [3], [2], [1]]:
         print(db.select('t2', 'id', ORDER_BY='id DESC'))
-        raise MemoryError
-
-    # WITH & WHERE
-    if not db.select(
-            'xxx',
-            WITH={
-                'xxx': db.select('t2', 'MAX(id)', execute=False)
-            }
-    ) == [[4]]:
-        print(db.select(
-            'xxx',
-            WITH={
-                'xxx': db.select('t2', 'MAX(id)', execute=False)
-            }
-        ))
         raise MemoryError
 
     if not db.select(

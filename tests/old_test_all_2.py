@@ -141,7 +141,7 @@ selects.append(
 )
 
 selects.append(
-    users_table.select(WHERE={'group_id': 4}, execute=False)
+    users_table.select(WHERE={'group_id': 4})
 )
 
 logger.info(f"\nAll from users: {selects[0]}")
@@ -151,7 +151,7 @@ logger.info(f"\nAll from users where group_id=1: {selects[3]}")
 logger.info(f"\nAll from users where group_id=1 and username=user_1, order_by username: {selects[4]}")
 logger.info(f"\nAll from users where group_id=1, order_by username by DESC: {selects[5]}")
 logger.info(f"\nAll from users where group_id=1, order_by [2,1]: {selects[6]}")
-logger.info(f"\nScript SELECT where group_id=4: {selects[7].request.script}")
+# logger.info(f"\nScript SELECT where group_id=4: {selects[7].request.script}")
 
 ####################################################
 # SELECT data from DB
@@ -166,12 +166,12 @@ groups_table.replace(group_id=2, group_name="IDK")
 users_table.insert(
     username="user_411", group_id=1,
     OR=REPLACE,
-    WITH={
-        'a': db.select(
-            TABLE='users',
-            WHERE={'group_id': 1},
-            execute=False
-        )}
+    # WITH={
+    #     'a': db.select(
+    #         TABLE='users',
+    #         WHERE={'group_id': 1},
+    #         execute=False
+    #     )}
 )
 
 users_table.insert(

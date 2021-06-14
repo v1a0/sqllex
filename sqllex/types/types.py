@@ -19,6 +19,9 @@ class SQLRequest:
     def __eq__(self, other):
         return self.script == other.script and self.values == other.values
 
+    def __bool__(self):
+        return bool(self.script)
+
 
 class SQLStatement:
     """
@@ -29,6 +32,9 @@ class SQLStatement:
         self.request = request
         self.path = path
         self.connection = conn
+
+    def __bool__(self):
+        return bool(self.request)
 
 
 # FOREIGN_KEY const type
