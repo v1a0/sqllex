@@ -157,6 +157,11 @@ def select_test():
         print(db.select('t1', text_t='asdf', LIMIT=5, OFFSET=6))
         raise MemoryError
 
+    if not db.select('t1', ['text_t', 'num_t'], WHERE={'num_t': ['>=', 11.1, 10], 'text_t': 'qwerty1'}) == \
+           [['qwerty1', 11.1]]:
+        print(db.select('t1', ['text_t', 'num_t'], WHERE={'num_t': ['>=', 11.1, 10], 'text_t': 'qwerty1'}))
+        raise MemoryError
+
     db.create_table(
         "t2",
         {
@@ -242,13 +247,6 @@ def update_test():
     if not db.select('t4', 'id', WHERE={"val": 'NEW_VAL'}) == [[x] for x in range(50)]:
         print(db.select('t4', 'id', WHERE={"val": 'NEW_VAL'}))
         raise MemoryError
-
-    db.updatemany(
-        't4',
-        [[x, 3301] for x in range(50)]
-    )
-
-    print(db.select('t4', 'id', WHERE={"val": 3301}))
 
 
 def delete_test():

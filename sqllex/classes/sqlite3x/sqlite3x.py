@@ -203,7 +203,8 @@ def __where__(func: callable) -> callable:
                     else:
                         operator = "="
 
-                    stmt.request.script += f"{f'{operator}? AND '.join(key for _ in values)}{operator}? AND "
+                    stmt.request.script += f"({f'{operator}? OR '.join(key for _ in values)}{operator}? OR "
+                    stmt.request.script = f"{stmt.request.script[:-3].strip()}) " + "AND "
 
                     if stmt.request.values:
                         if isinstance(stmt.request.values[0], tuple):
@@ -1634,43 +1635,6 @@ class SQLite3x:
             SQLRequest(script=script, values=values), self.path, self.connection
         )
 
-    @__execute__
-    @__where__
-    @__or_param__
-    @__with__
-    def _update_many_stmt_(
-            self,
-            TABLE: AnyStr,
-            SET: Union[
-                List[Union[List, Tuple]],
-                Tuple[Union[List, Tuple]]],
-            script="",
-            values=(),
-            **kwargs,
-    ):
-        """
-        Parent method for update method
-
-        update([[1,2,3], [2,3,4], [3,4,5]])
-
-        """
-
-        first_set = SET[0]
-        update_stmt = self._update_stmt_(TABLE=TABLE, SET=first_set, execute=False)
-
-        values = []
-
-        if isinstance(first_set, list):
-            for sub_set in SET:
-                values.append(tuple(sub_set))
-
-        else:
-            values = SET
-
-        return SQLStatement(
-            SQLRequest(script=update_stmt.request.script, values=tuple(values)), self.path, self.connection
-        )
-
     @__update_constants__
     @__execute__
     def _drop_stmt_(
@@ -2405,41 +2369,6 @@ class SQLite3x:
             SET=SET,
             OR=OR,
             WHERE=WHERE,
-            WITH=WITH,
-            **kwargs,
-        )
-
-    def updatemany(
-            self,
-            TABLE: AnyStr,
-            SET: Union[
-                List[Union[List, Tuple]],
-                Tuple[Union[List, Tuple]]],
-            OR: OrOptionsType = None,
-            WITH: WithType = None,
-            **kwargs,
-    ) -> None:
-        """
-        UPDATE many, Update values for many records
-
-        Parameters
-        ----------
-        TABLE : AnyStr
-            Name of table
-        SET : Union[List, Tuple]
-            List of Lists of values to update
-        WHERE : WhereType
-            optional parameter for conditions, example: {'name': 'Alex', 'group': 2}
-        OR : OrOptionsType
-            Optional parameter. If INSERT failed, type OrOptionsType
-        WITH : WithType
-            with_statement (don't really work well)
-        """
-
-        self._update_many_stmt_(
-            TABLE=TABLE,
-            SET=SET,
-            OR=OR,
             WITH=WITH,
             **kwargs,
         )
