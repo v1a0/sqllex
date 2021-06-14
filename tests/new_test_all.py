@@ -224,7 +224,7 @@ def update_test():
     db.create_table(
         't4',
         {
-            'id': [INTEGER, NOT_NULL],
+            'id': [INTEGER, NOT_NULL, UNIQUE],
             'val': [TEXT, DEFAULT, 'NO']
         }
     )
@@ -242,6 +242,13 @@ def update_test():
     if not db.select('t4', 'id', WHERE={"val": 'NEW_VAL'}) == [[x] for x in range(50)]:
         print(db.select('t4', 'id', WHERE={"val": 'NEW_VAL'}))
         raise MemoryError
+
+    db.updatemany(
+        't4',
+        [[x, 3301] for x in range(50)]
+    )
+
+    print(db.select('t4', 'id', WHERE={"val": 3301}))
 
 
 def delete_test():

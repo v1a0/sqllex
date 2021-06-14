@@ -23,7 +23,7 @@ If you need most stable version install **sqllex==0.1.9.4**
 
 | Version |  Status | Tests, and actions |
 | :--------: | :----------------------------: | :---: |
-| `0.1.9.5`     | ⚠️ unstable <br> ✔️ supported      | [![CodeQL](https://github.com/v1a0/sqllex/actions/workflows/codeql-analysis.yml/badge.svg?branch=main)](https://github.com/v1a0/sqllex/actions/workflows/codeql-analysis.yml) </br> [![Test Sqlite3x](https://github.com/v1a0/sqllex/actions/workflows/test_sqlite3x.yml/badge.svg?branch=main)](https://github.com/v1a0/sqllex/actions/workflows/test_sqlite3x.yml) </br> [![Upload Python Package](https://github.com/v1a0/sqllex/actions/workflows/python-publish.yml/badge.svg)](https://github.com/v1a0/sqllex/actions/workflows/python-publish.yml) |
+| `0.1.9.6`     | ⚠️ unstable <br> ✔️ supported      | [![CodeQL](https://github.com/v1a0/sqllex/actions/workflows/codeql-analysis.yml/badge.svg?branch=main)](https://github.com/v1a0/sqllex/actions/workflows/codeql-analysis.yml) </br> [![Test Sqlite3x](https://github.com/v1a0/sqllex/actions/workflows/test_sqlite3x.yml/badge.svg?branch=main)](https://github.com/v1a0/sqllex/actions/workflows/test_sqlite3x.yml) </br> [![Upload Python Package](https://github.com/v1a0/sqllex/actions/workflows/python-publish.yml/badge.svg)](https://github.com/v1a0/sqllex/actions/workflows/python-publish.yml) |
 | `0.1.9.4`     | ✔️ stable   <br> ✔️ supported      |  ✔️All passed |
 | `<= 0.1.8.12` | ✔️ stable   <br> ❌️ outdated       |  ~ |
 

@@ -46,3 +46,16 @@ def ss():
 
 
 print(ss())
+
+i = {
+    'MAIN': {
+        'METHOD': "select",
+        'SELECT': [[]],
+        'WHERE': []
+    },
+    'WITH': None,
+    'ORDER_BY': None,
+    'LIMIT': 10,
+    'OFFSET': None,
+    'JOIN': None,
+}

@@ -88,40 +88,40 @@ def __with__(func: callable) -> callable:
         else:
             with_dict: None = None
 
-        if with_dict:
-            script = f"WITH RECURSIVE "
-            values = []
-
-            for (var, statement) in with_dict.items():
-
-                # Checking is value of dict SQLStatement or str
-                if issubclass(type(statement), SQLStatement):
-                    condition = statement.request
-                    script += f"{var} AS ({condition.script.strip()}), "  # .strip() removing spaces around
-                    values += list(condition.values)
-
-                elif isinstance(statement, str):
-                    condition = statement
-                    script += f"{var} AS ({condition}), "
-
-                else:
-                    raise TypeError(f"Unexpected type of WITH value\n"
-                                    f"Got {type(statement)} instead of SQLStatement or str")
-
-            if script[-2:] == ', ':
-                script = script[:-2]
-
-            kwargs.update(
-                {
-                    "values": tuple(values)
-                    if not kwargs.get("values")
-                    else tuple(list(kwargs.get("values")) + list(values)),
-
-                    "script": f"{script} "
-                    if not kwargs.get("script")
-                    else f"{script} " + kwargs.get("script"),
-                }
-            )
+        # if with_dict:
+        #     script = f"WITH RECURSIVE "
+        #     values = []
+        #
+        #     for (var, statement) in with_dict.items():
+        #
+        #         # Checking is value of dict SQLStatement or str
+        #         if issubclass(type(statement), SQLStatement):
+        #             condition = statement.request
+        #             script += f"{var} AS ({condition.script.strip()}), "  # .strip() removing spaces around
+        #             values += list(condition.values)
+        #
+        #         elif isinstance(statement, str):
+        #             condition = statement
+        #             script += f"{var} AS ({condition}), "
+        #
+        #         else:
+        #             raise TypeError(f"Unexpected type of WITH value\n"
+        #                             f"Got {type(statement)} instead of SQLStatement or str")
+        #
+        #     if script[-2:] == ', ':
+        #         script = script[:-2]
+        #
+        #     kwargs.update(
+        #         {
+        #             "values": tuple(values)
+        #             if not kwargs.get("values")
+        #             else tuple(list(kwargs.get("values")) + list(values)),
+        #
+        #             "script": f"{script} "
+        #             if not kwargs.get("script")
+        #             else f"{script} " + kwargs.get("script"),
+        #         }
+        #     )
 
         return func(*args, **kwargs)
 
@@ -182,14 +182,17 @@ def __where__(func: callable) -> callable:
 
             if isinstance(where_, dict):
                 for (key, values) in where_.items():
+                    # parsing WHERE values
 
                     if not isinstance(values, list):
                         values = [values]
 
+                    # Looking for equality or inequality
                     if len(values) > 1 and values[0] in [
-                        "<", "<<", "<=", ">=",
-                        ">>", ">", "=", "==",
-                        "!=", "<>",
+                        "<", "<<", "<=",
+                        ">=", ">>", ">",
+                        "=", "==", "!=",
+                        "<>",
                     ]:
                         operator = values.pop(0)
 
@@ -201,9 +204,28 @@ def __where__(func: callable) -> callable:
                         operator = "="
 
                     stmt.request.script += f"{f'{operator}? AND '.join(key for _ in values)}{operator}? AND "
-                    stmt.request.values = tuple(
-                        list(stmt.request.values) + list(values)
-                    )
+
+                    if stmt.request.values:
+                        if isinstance(stmt.request.values[0], tuple):
+                            # if .values contains many values for insertmany stmt
+                            # add where values for each value
+                            new_values = list(stmt.request.values)
+
+                            for i in range(len(new_values)):
+                                new_values[i] = tuple(
+                                    list(new_values[i]) + list(values)
+                                )
+
+                            stmt.request.values = tuple(new_values)
+
+                        else:
+                            # if .values contains only one set of values
+                            # add where values
+                            stmt.request.values = tuple(
+                                list(stmt.request.values) + list(values)
+                            )
+                    else:
+                        stmt.request.values = values
 
                 stmt.request.script = stmt.request.script.strip()[:-3]
 
@@ -1612,6 +1634,43 @@ class SQLite3x:
             SQLRequest(script=script, values=values), self.path, self.connection
         )
 
+    @__execute__
+    @__where__
+    @__or_param__
+    @__with__
+    def _update_many_stmt_(
+            self,
+            TABLE: AnyStr,
+            SET: Union[
+                List[Union[List, Tuple]],
+                Tuple[Union[List, Tuple]]],
+            script="",
+            values=(),
+            **kwargs,
+    ):
+        """
+        Parent method for update method
+
+        update([[1,2,3], [2,3,4], [3,4,5]])
+
+        """
+
+        first_set = SET[0]
+        update_stmt = self._update_stmt_(TABLE=TABLE, SET=first_set, execute=False)
+
+        values = []
+
+        if isinstance(first_set, list):
+            for sub_set in SET:
+                values.append(tuple(sub_set))
+
+        else:
+            values = SET
+
+        return SQLStatement(
+            SQLRequest(script=update_stmt.request.script, values=tuple(values)), self.path, self.connection
+        )
+
     @__update_constants__
     @__execute__
     def _drop_stmt_(
@@ -2346,6 +2405,41 @@ class SQLite3x:
             SET=SET,
             OR=OR,
             WHERE=WHERE,
+            WITH=WITH,
+            **kwargs,
+        )
+
+    def updatemany(
+            self,
+            TABLE: AnyStr,
+            SET: Union[
+                List[Union[List, Tuple]],
+                Tuple[Union[List, Tuple]]],
+            OR: OrOptionsType = None,
+            WITH: WithType = None,
+            **kwargs,
+    ) -> None:
+        """
+        UPDATE many, Update values for many records
+
+        Parameters
+        ----------
+        TABLE : AnyStr
+            Name of table
+        SET : Union[List, Tuple]
+            List of Lists of values to update
+        WHERE : WhereType
+            optional parameter for conditions, example: {'name': 'Alex', 'group': 2}
+        OR : OrOptionsType
+            Optional parameter. If INSERT failed, type OrOptionsType
+        WITH : WithType
+            with_statement (don't really work well)
+        """
+
+        self._update_many_stmt_(
+            TABLE=TABLE,
+            SET=SET,
+            OR=OR,
             WITH=WITH,
             **kwargs,
         )
