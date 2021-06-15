@@ -250,10 +250,10 @@ def insertmany_test():
     if not db.select_all('t6') == [[x, 'hi'] for x in range(100)]:
         raise MemoryError
 
-    # db.insertmany('t6', [[x, 'bye'] for x in range(100)], OR=REPLACE)
-    #
-    # if not db.select_all('t6') == [[x, 'bye'] for x in range(100)]:
-    #     raise MemoryError
+    db.insertmany('t6', [[x, 'bye'] for x in range(100)], OR=REPLACE)
+
+    if not db.select_all('t6') == [[x, 'bye'] for x in range(100)]:
+        raise MemoryError
 
     db.updatemany('t6', [[], [], []])
 
