@@ -217,7 +217,5 @@ db.disconnect()
 sleep(0.5)
 rem = ''
 
-while rem.lower() not in ['y', 'n']:
-    rem = input(f"\n\nAll tests passed! \nRemove {DB_NAME}?: ")
-    if rem == 'y':
-        remove(f"{getcwd()}/{DB_NAME}")
+print("database removed")
+remove(f"{getcwd()}/{DB_NAME}")

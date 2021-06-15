@@ -491,26 +491,28 @@ def __execute__(func: callable):
             execute = True
 
         stmt: SQLStatement = func(*args, **kwargs)
-        stmt.request.script = stmt.request.script.strip()
 
-        if not execute:
-            return stmt
+        if stmt:    # it's necessary
+            stmt.request.script = stmt.request.script.strip()
 
-        logger.debug(
-            f"\n"
-            f"{stmt.request.script.strip()}\n"
-            f"{stmt.request.values if stmt.request.values else ''}"
-            f"\n"
-        )
+            if not execute:
+                return stmt
 
-        # If connection does not exist
-        if not stmt.connection:
-            with sqlite3.connect(stmt.path) as conn:
-                ret_ = executor(conn, stmt)
-                conn.commit()
-                return ret_
-        else:
-            return executor(stmt.connection, stmt)
+            logger.debug(
+                f"\n"
+                f"{stmt.request.script.strip()}\n"
+                f"{stmt.request.values if stmt.request.values else ''}"
+                f"\n"
+            )
+
+            # If connection does not exist
+            if not stmt.connection:
+                with sqlite3.connect(stmt.path) as conn:
+                    ret_ = executor(conn, stmt)
+                    conn.commit()
+                    return ret_
+            else:
+                return executor(stmt.connection, stmt)
 
     return execute_wrapper
 
@@ -551,25 +553,27 @@ def __executemany__(func: callable):
             execute = True
 
         stmt: SQLStatement = func(*args, **kwargs)
-        stmt.request.script = stmt.request.script.strip()
 
-        if not execute:
-            return stmt
+        if stmt:    # it's necessary
+            stmt.request.script = stmt.request.script.strip()
 
-        logger.debug(
-            f"\n"
-            f"{stmt.request.script.strip()}\n"
-            f"{stmt.request.values if stmt.request.values else ''}"
-            f"\n"
-        )
+            if not execute:
+                return stmt
 
-        if not stmt.connection:
-            with sqlite3.connect(stmt.path) as conn:
-                ret_ = executor(conn, stmt)
-                conn.commit()
-                return ret_
-        else:
-            return executor(stmt.connection, stmt)
+            logger.debug(
+                f"\n"
+                f"{stmt.request.script.strip()}\n"
+                f"{stmt.request.values if stmt.request.values else ''}"
+                f"\n"
+            )
+
+            if not stmt.connection:
+                with sqlite3.connect(stmt.path) as conn:
+                    ret_ = executor(conn, stmt)
+                    conn.commit()
+                    return ret_
+            else:
+                return executor(stmt.connection, stmt)
 
     return wrapper
 
@@ -610,25 +614,27 @@ def __executescript__(func: callable):
             execute = True
 
         stmt: SQLStatement = func(*args, **kwargs)
-        stmt.request.script = stmt.request.script.strip()
 
-        if not execute:
-            return stmt
+        if stmt:    # it's necessary
+            stmt.request.script = stmt.request.script.strip()
 
-        logger.debug(
-            f"\n"
-            f"{stmt.request.script.strip()}\n"
-            f"{stmt.request.values if stmt.request.values else ''}"
-            f"\n"
-        )
+            if not execute:
+                return stmt
 
-        if not stmt.connection:
-            with sqlite3.connect(stmt.path) as conn:
-                ret_ = executor(conn, stmt)
-                conn.commit()
-                return ret_
-        else:
-            return executor(stmt.connection, stmt)
+            logger.debug(
+                f"\n"
+                f"{stmt.request.script.strip()}\n"
+                f"{stmt.request.values if stmt.request.values else ''}"
+                f"\n"
+            )
+
+            if not stmt.connection:
+                with sqlite3.connect(stmt.path) as conn:
+                    ret_ = executor(conn, stmt)
+                    conn.commit()
+                    return ret_
+            else:
+                return executor(stmt.connection, stmt)
 
     return wrapper
 
@@ -1124,6 +1130,24 @@ class SQLite3xTable:
             self.name, SET=SET, OR=OR, WHERE=WHERE, WITH=WITH, **kwargs
         )
 
+    def updatemany(
+            self,
+            SET: Union[List[List], List[Tuple], Tuple[List], Tuple[Tuple]] = None,
+            **kwargs,
+    ) -> None:
+        """
+        ACTUALLY IT'S JUST "INSERT OR REPLACE" BUT SOUNDS EASIER TO UNDERSTAND
+
+        Update many values (or insert)
+
+        Parameters
+        ----------
+        SET : Union[List, Tuple, Mapping]
+            Values to insert or update
+        """
+
+        self.db.updatemany(TABLE=self.name, SET=SET, **kwargs)
+
     def drop(self, IF_EXIST: bool = True, **kwargs):
         """
         DROP TABLE (IF EXIST)
@@ -1485,24 +1509,34 @@ class SQLite3x:
         """
 
         if args:
+            args = list(filter(bool, args[0]))  # removing [] (empty lists from inserting values)
+
+            if not args:    # if args empty after filtering, break the function, yes it'll break
+                logger.warning("Inserting or updating braked because no values to insert")
+                return
+
             values = list(
                 map(lambda arg: list(arg), args)
             )
 
-            if len(values) == 1 and isinstance(values[0], list):
-                values = values[0]
+            # if len(values) == 1:    # if values == [[1]]
+            #     if not isinstance(values[0], list):
+            #         values = list(values[0])
+            #     else:
+            #         values = values[0]
 
             max_l = max(map(lambda arg: len(arg), values))  # max len of arg in values
             temp_ = [0 for _ in range(max_l)]  # example values [] for script
-            stmt = self._insert_stmt_(temp_, script="INSERT", TABLE=TABLE,
+            stmt = self._insert_stmt_(temp_, script=script, TABLE=TABLE,
                                       execute=False)  # getting stmt for maxsize value
-            _len = len(stmt.request.values)  # len of max supported val list
+            max_len = len(stmt.request.values)  # len of max supported val list
 
             for i in range(len(values)):  # cropping or appending values, making it's needed size
-                while len(values[i]) < _len:
-                    values[i] += [None]
-                if len(values[i]) > _len:
-                    values[i] = values[i][:_len]
+                len_val_i = len(values[i])
+                if len_val_i < max_len:
+                    values[i] += [None] * (max_len - len_val_i)
+                elif len_val_i > max_len:
+                    values[i] = values[i][:max_len]
 
         elif kwargs:
             temp_ = {}
@@ -1516,7 +1550,7 @@ class SQLite3x:
                 except IndexError:
                     temp_[columns[i]] = None
 
-            stmt = self._insert_stmt_(temp_, script="INSERT", TABLE=TABLE,
+            stmt = self._insert_stmt_(temp_, script=script, TABLE=TABLE,
                                       execute=False)  # getting stmt for maxsize value
             max_l = max(map(lambda val: len(val), args))  # max len of arg in values
 
@@ -2114,11 +2148,15 @@ class SQLite3x:
             None or SQL-script in SQLStatement
 
         """
+        if len(args) > 1:
+            args = [args]
 
         self._insertmany_stmt_(
             TABLE,
             *args,
             OR=OR,
+            script="INSERT",
+            values=(),
             **kwargs
         )
 
@@ -2372,6 +2410,42 @@ class SQLite3x:
             WITH=WITH,
             **kwargs,
         )
+
+    def updatemany(
+            self,
+            TABLE: AnyStr,
+            SET: Union[List[List], List[Tuple], Tuple[List], Tuple[Tuple]] = None,
+            **kwargs,
+    ) -> None:
+        """
+        ACTUALLY IT'S JUST "INSERT OR REPLACE" BUT SOUNDS EASIER TO UNDERSTAND
+
+        Update (or insert) many values
+
+        Parameters
+        ----------
+        TABLE : AnyStr
+            Name of table
+        SET : Union[List, Tuple, Mapping]
+            Values to insert or update
+        """
+
+        if SET:
+            self._insertmany_stmt_(
+                TABLE,
+                SET,
+                script="INSERT",
+                OR=REPLACE,
+                **kwargs,
+            )
+
+        else:
+            # In case if SET == []
+            logger.warning(
+                f"SQLite3x.updatemany "
+                f"got empty list of data to update or got nothing at all, "
+                f"SET={SET}"
+            )
 
     def drop(
             self,
