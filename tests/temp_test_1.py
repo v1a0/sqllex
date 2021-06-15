@@ -1,26 +1,26 @@
 from sqllex import *
+from time import time
 
 
 def test1():
+    db_ = SQLite3x(path='database.db')
 
-    db = SQLite3x(path='database.db')
-
-    db.markup({
+    db_.markup({
         'users':
-        {
-            'id': [INTEGER, UNIQUE],
-            'username': TEXT
-        },
+            {
+                'id': [INTEGER, UNIQUE],
+                'username': TEXT
+            },
         'users2':
-        {
-            'id': [INTEGER, UNIQUE],
-            'username': TEXT
-        }
+            {
+                'id': [INTEGER, UNIQUE],
+                'username': TEXT
+            }
     }
     )
 
-    users_table = db['users']   # get table as object
-    ut2 = db['users2']   # get table as object
+    users_table = db_['users']  # get table as object
+    ut2 = db_['users2']  # get table as object
 
     ut2.insert(1, 'A')
     ut2.insert(2, 'B')
@@ -28,24 +28,13 @@ def test1():
 
     print(users_table.columns)  # ['id', 'username']
 
-    users_table.insert(1, "New_user")   # insert new record in table
+    users_table.insert(1, "New_user")  # insert new record in table
 
     print(users_table.select())
     print(ut2.select())
 
-    print(db.select(SELECT=ALL, FROM="users", LIMIT= 10))
+    print(db_.select(SELECT=ALL, FROM="users", LIMIT=10))
 
-
-def pp():
-    print(2)
-
-
-def ss():
-    print(1)
-    return pp()
-
-
-print(ss())
 
 i = {
     'MAIN': {
@@ -59,3 +48,37 @@ i = {
     'OFFSET': None,
     'JOIN': None,
 }
+
+db = SQLite3x(path='test.db')
+
+db.connect()
+
+db.create_table(
+    't6',
+    {
+        'id': [INTEGER, UNIQUE, NOT_NULL],
+        'val': [TEXT, DEFAULT, 'def_val']
+    },
+    IF_NOT_EXIST=True
+)
+
+data1 = [[x, 'hi'] for x in range(100_000)]
+data2 = [[x, 'bye'] for x in range(100_000)]
+
+t = time()
+
+db.insertmany('t6', data1)
+
+print(time() - t)  # 0.273134708404541 sec - insert 100,000 values
+
+t = time()
+
+db.insertmany('t6', data2, OR=REPLACE)
+
+print(time() - t)  # 0.31252258110046387 sec - update 100,000 values
+
+t = time()
+
+db.updatemany('t6', data2)
+
+print(time() - t)  # 0.31252258110046387 sec - update 100,000 values

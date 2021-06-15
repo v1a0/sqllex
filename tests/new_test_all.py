@@ -217,12 +217,48 @@ def insertmany_test():
         }
     )
 
-    db.insertmany('t3', [[1, 'hi']] * 100)
-    db.insertmany('t3', [[1]] * 100)
-    db.insertmany('t3', ((1, 'hi'),) * 100)
-    db.insertmany('t3', ((1,),) * 100)
+    db.insertmany('t3', [[1, 'hi']] * 10)
+    db.insertmany('t3', [[1]] * 10)
+    db.insertmany('t3', ((1, 'hi'),) * 10)
+    db.insertmany('t3', ((1,),) * 10)
     db.insertmany('t3', id=[2] * 10)
     db.insertmany('t3', id=(2,) * 10)
+
+    if not db.select_all('t3') == [
+        [1, 'hi'], [1, 'hi'], [1, 'hi'], [1, 'hi'], [1, 'hi'], [1, 'hi'], [1, 'hi'],
+        [1, 'hi'], [1, 'hi'], [1, 'hi'], [1, 'NO'], [1, 'NO'], [1, 'NO'], [1, 'NO'],
+        [1, 'NO'], [1, 'NO'], [1, 'NO'], [1, 'NO'], [1, 'NO'], [1, 'NO'], [1, 'hi'],
+        [1, 'hi'], [1, 'hi'], [1, 'hi'], [1, 'hi'], [1, 'hi'], [1, 'hi'], [1, 'hi'],
+        [1, 'hi'], [1, 'hi'], [1, 'NO'], [1, 'NO'], [1, 'NO'], [1, 'NO'], [1, 'NO'],
+        [1, 'NO'], [1, 'NO'], [1, 'NO'], [1, 'NO'], [1, 'NO'], [2, 'NO'], [2, 'NO'],
+        [2, 'NO'], [2, 'NO'], [2, 'NO'], [2, 'NO'], [2, 'NO'], [2, 'NO'], [2, 'NO'],
+        [2, 'NO'], [2, 'NO'], [2, 'NO'], [2, 'NO'], [2, 'NO'], [2, 'NO'], [2, 'NO'],
+        [2, 'NO'], [2, 'NO'], [2, 'NO'], [2, 'NO']
+    ]:
+        raise MemoryError
+
+    db.create_table(
+        't6',
+        {
+            'id': [INTEGER, UNIQUE, NOT_NULL],
+            'val': [TEXT, DEFAULT, 'def_val']
+        }
+    )
+
+    db.insertmany('t6', [[x, 'hi'] for x in range(100)])
+
+    if not db.select_all('t6') == [[x, 'hi'] for x in range(100)]:
+        raise MemoryError
+
+    db.insertmany('t6', [[x, 'bye'] for x in range(100)], OR=REPLACE)
+
+    if not db.select_all('t6') == [[x, 'bye'] for x in range(100)]:
+        raise MemoryError
+
+    db.updatemany('t6', [[], [], []])
+
+    if not db.select_all('t6') == [[x, 'bye'] for x in range(100)]:
+        raise MemoryError
 
 
 def update_test():
@@ -281,17 +317,17 @@ def get_tables_test():
         raise MemoryError
 
     for table in db.tables:
-        if table.name not in ['t1', 'groups', 'users', 'sqlite_sequence', 't2', 't3', 't4', 't5']:
+        if table.name not in ['t1', 'groups', 'users', 'sqlite_sequence', 't2', 't3', 't4', 't5', 't6']:
             print(table)
             raise MemoryError
 
     for table in db.tables:
-        if table.name not in ['t1', 'groups', 'users', 'sqlite_sequence', 't2', 't3', 't4', 't5']:
+        if table.name not in ['t1', 'groups', 'users', 'sqlite_sequence', 't2', 't3', 't4', 't5', 't6']:
             print(table)
             raise MemoryError
 
     for name in db.tables_names:
-        if name not in ['t1', 'groups', 'users', 'sqlite_sequence', 't2', 't3', 't4', 't5']:
+        if name not in ['t1', 'groups', 'users', 'sqlite_sequence', 't2', 't3', 't4', 't5', 't6']:
             print(name)
             raise MemoryError
 
