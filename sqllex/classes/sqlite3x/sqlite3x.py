@@ -324,7 +324,7 @@ def __or_param__(func: callable) -> callable:
             or_arg: None = None
 
         if or_arg:
-            print(kwargs)
+            logger.warning(f"{kwargs} :::: {or_arg} :::here")
             kwargs.update({"script": kwargs.get("script") + f" OR {or_arg}"})
 
         return func(*args, **kwargs)
