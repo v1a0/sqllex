@@ -6,32 +6,7 @@ from sqllex.types.types import *
 import sqlite3
 
 
-def col_types_sort(val: Union[DataType, AnyStr]) -> int:
-    """
-    Sorting function for DataType objects
-    It's getting objects and returns index of priority (0,1,2,3)
-
-    Parameters
-    ----------
-    val : Union[DataType, AnyStr]
-        param of column type
-
-    Returns
-    -------
-    int
-        index of priority, if unknown returns 1
-
-    """
-
-    prior = CONST_PRIORITY.get(val)  # How about set dict.setdefault(1) ?
-
-    if prior is None:
-        return 1
-    else:
-        return prior
-
-
-def __from_as__(func: callable):
+def _from_as(func: callable):
     """
     Decorator for catching AS argument from TABLE arg
 
@@ -59,7 +34,7 @@ def __from_as__(func: callable):
     return as_wrapper
 
 
-def __with__(func: callable) -> callable:
+def _with(func: callable) -> callable:
     """
     Decorator for catching WITH argument in kwargs of method
 
@@ -128,7 +103,7 @@ def __with__(func: callable) -> callable:
     return with_wrapper
 
 
-def __where__(func: callable) -> callable:
+def _where(func: callable) -> callable:
     """
     Decorator for catching WHERE argument in kwargs of method
 
@@ -245,7 +220,7 @@ def __where__(func: callable) -> callable:
     return where_wrapper
 
 
-def __join__(func: callable) -> callable:
+def _join(func: callable) -> callable:
     """
     Decorator for catching JOIN argument in kwargs of method
 
@@ -298,7 +273,7 @@ def __join__(func: callable) -> callable:
     return join_wrapper
 
 
-def __or_param__(func: callable) -> callable:
+def _or_param(func: callable) -> callable:
     """
     Decorator for catching OR argument in kwargs of method
 
@@ -331,7 +306,7 @@ def __or_param__(func: callable) -> callable:
     return or_wrapper
 
 
-def __order_by__(func: callable) -> callable:
+def _order_by(func: callable) -> callable:
     """
     Decorator for catching ORDER_BY argument in kwargs of method
 
@@ -379,7 +354,7 @@ def __order_by__(func: callable) -> callable:
     return order_by_wrapper
 
 
-def __limit__(func: callable) -> callable:
+def _limit(func: callable) -> callable:
     """
     Decorator for catching LIMIT argument in kwargs of method
 
@@ -415,7 +390,7 @@ def __limit__(func: callable) -> callable:
     return limit_wrapper
 
 
-def __offset__(func: callable) -> callable:
+def _offset(func: callable) -> callable:
     """
     Decorator for catching OFFSET argument in kwargs of method
 
@@ -451,7 +426,7 @@ def __offset__(func: callable) -> callable:
     return offset_wrapper
 
 
-def __execute__(func: callable):
+def _execute(func: callable):
     """
     Decorator for execute SQLStatement
     catching :param execute: boolean argument in kwargs of method, True by default
@@ -517,7 +492,7 @@ def __execute__(func: callable):
     return execute_wrapper
 
 
-def __executemany__(func: callable):
+def _executemany(func: callable):
     """
     Decorator for execute SQLStatement with multiple values
     catching :param execute: boolean argument in kwargs of method, True by default
@@ -578,7 +553,7 @@ def __executemany__(func: callable):
     return wrapper
 
 
-def __executescript__(func: callable):
+def _executescript(func: callable):
     """
     Decorator for execute SQLStatement with script only (without values)
     catching :param execute: boolean argument in kwargs of method, True by default
@@ -639,9 +614,9 @@ def __executescript__(func: callable):
     return wrapper
 
 
-def __update_constants__(func: callable) -> callable:
+def _update_instance(func: callable) -> callable:
     """
-    Decorator running method for update constants of class (self._update_instance_variables_())
+    Decorator running method for update constants of class (self.__update_instance_variables())
 
     Used for updating columns list in SQLite3xTable class
 
@@ -659,79 +634,10 @@ def __update_constants__(func: callable) -> callable:
 
     def wrap(self, *args, **kwargs):
         res = func(self, *args, **kwargs)
-        self._update_instance_variables_()
+        self._update_instance_variables()
         return res
 
     return wrap
-
-
-def lister(data: Any, remove_one_len: bool = False) -> List:
-    """
-    Function converting input value from Tuple[Any] or List[Tuple]
-    (with any deepness) to List[List]
-
-    Parameters
-    ----------
-    data : Any
-        Any value contains tuples
-    remove_one_len : bool
-        Convert or not [['x'], 1] to ['x', 1] (breaking return rule)
-
-    Returns
-    ----------
-    callable
-        Decorated method with update after it was run
-
-    """
-
-    if isinstance(data, tuple):
-        data = list(data)
-
-    if isinstance(data, list):
-        if remove_one_len and (len(data) == 1):
-            return lister(
-                data[0],
-                remove_one_len
-            )
-
-        for r in range(len(data)):
-            if isinstance(data[r], (list, tuple)):
-                data[r] = lister(
-                    data[r],
-                    remove_one_len
-                )
-
-    return data
-
-
-def tuples_to_lists(func: callable) -> callable:
-    """
-    Decorator converting returning data to List[List]
-
-    Parameters
-    ----------
-    func : callable
-        Function or method returns of with one need to convert from Tuple[Tuple[Any]] to List[List[Any]]
-
-    Returns
-    ----------
-    callable
-        Decorated method or func returning List[List]
-
-    """
-
-    def t2l_wrapper(*args, **kwargs):
-        ret = func(*args, **kwargs)
-
-        if not issubclass(ret.__class__, SQLStatement):
-            ret = lister(ret)
-
-            if not isinstance(ret, list):
-                ret = [ret]
-
-        return ret
-
-    return t2l_wrapper
 
 
 def args_parser(func: callable):
@@ -813,6 +719,104 @@ def crop(columns: Union[Tuple, List], values: Union[Tuple, List]) -> Tuple:
             return columns[:_len_], values[:_len_]
 
     return columns, values
+
+
+def col_types_sort(val: Union[DataType, AnyStr]) -> int:
+    """
+    Sorting function for DataType objects
+    It's getting objects and returns index of priority (0,1,2,3)
+
+    Parameters
+    ----------
+    val : Union[DataType, AnyStr]
+        param of column type
+
+    Returns
+    -------
+    int
+        index of priority, if unknown returns 1
+
+    """
+
+    prior = CONST_PRIORITY.get(val)  # How about set dict.setdefault(1) ?
+
+    if prior is None:
+        return 1
+    else:
+        return prior
+
+
+def lister(data: Any, remove_one_len: bool = False) -> List:
+    """
+    Function converting input value from Tuple[Any] or List[Tuple]
+    (with any deepness) to List[List]
+
+    Parameters
+    ----------
+    data : Any
+        Any value contains tuples
+    remove_one_len : bool
+        Convert or not [['x'], 1] to ['x', 1] (breaking return rule)
+
+    Returns
+    ----------
+    callable
+        Decorated method with update after it was run
+
+    """
+
+    if isinstance(data, tuple):
+        data = list(data)
+
+    if isinstance(data, list):
+        if remove_one_len and (len(data) == 1):
+            return lister(
+                data[0],
+                remove_one_len
+            )
+
+        for r in range(len(data)):
+            if isinstance(data[r], (list, tuple)):
+                data[r] = lister(
+                    data[r],
+                    remove_one_len
+                )
+
+    return data
+
+
+def tuples_to_lists(func: callable) -> callable:
+    """
+    Decorator converting returning data to List[List]
+
+    Parameters
+    ----------
+    func : callable
+        Function or method returns of with one need to convert from Tuple[Tuple[Any]] to List[List[Any]]
+
+    Returns
+    ----------
+    callable
+        Decorated method or func returning List[List]
+
+    """
+
+    def t2l_wrapper(*args, **kwargs):
+        ret = func(*args, **kwargs)
+
+        if not issubclass(ret.__class__, SQLStatement):
+            ret = lister(ret)
+
+            if not isinstance(ret, list):
+                ret = [ret]
+
+        return ret
+
+    return t2l_wrapper
+
+# =======================================================================================
+#                                     CLASSES
+# =======================================================================================
 
 
 class SQLite3xTable:
@@ -1197,13 +1201,14 @@ class SQLite3x:
 
     Attributes
     ----------
-    connection : Union[sqlite3.Connection, None]
+    __connection : Union[sqlite3.Connection, None]
         SQLite connection
-    path : PathType
+    __path : PathType
         Local path to database (PathType)
-    template : DBTemplateType
-        template of database structure (DBTemplateType)
-
+    __tables : Generator[SQLite3xTable, None, None]
+        Generating list of tables as SQLite3xTable objects
+    __tables_names : List[str]
+        List of tables as string objects
 
     """
 
@@ -1219,14 +1224,30 @@ class SQLite3x:
             template of database structure (DBTemplateType)
 
         """
-        self.connection: Union[sqlite3.Connection, None] = None
-        self.path = path
-        self.tables = self._get_tables_()
-        self.tables_names = self._get_tables_names_()
+        self.__connection: Union[sqlite3.Connection, None] = None
+        self.__path = path
+        self.__tables = self._get_tables()
+        self.__tables_names = self._get_tables_names()
         self.journal_mode(mode="WAL")  # make db little bit faster
         self.foreign_keys(mode="ON")
         if template:
             self.markup(template=template)
+
+    @property
+    def connection(self):
+        return self.__connection
+
+    @property
+    def path(self):
+        return self.__path
+
+    @property
+    def tables(self):
+        return self.__tables
+
+    @property
+    def tables_names(self):
+        return self.__tables_names
 
     def __str__(self):
         return f"{{SQLite3x: path='{self.path}'}}"
@@ -1241,7 +1262,7 @@ class SQLite3x:
     def __getitem__(self, key) -> SQLite3xTable:
         # To call method down below is necessary,
         # otherwise it might fall in case of multiple DB objects
-        self._update_instance_variables_()
+        self._update_instance_variables()
 
         if key not in self.tables_names:
             raise KeyError(key, "No such table in database",
@@ -1255,15 +1276,15 @@ class SQLite3x:
 
     # ============================== PRIVATE METHODS ==============================
 
-    def _update_instance_variables_(self):
+    def _update_instance_variables(self):
         """
         Method to update (changed) instance variables
 
         """
-        self.tables_names = self._get_tables_names_()
-        self.tables = self._get_tables_()
+        self.__tables_names = self._get_tables_names()
+        self.__tables = self._get_tables()
 
-    def _get_tables_(self) -> Generator[SQLite3xTable, None, None]:
+    def _get_tables(self) -> Generator[SQLite3xTable, None, None]:
         """
         Generator of tables list
 
@@ -1286,9 +1307,9 @@ class SQLite3x:
 
         # line down below it is necessary for possibility to call self.tables unlimited times
         # make it never end, because in the end of generation it'll be overridden
-        self.tables = self._get_tables_()
+        self.__tables = self._get_tables()
 
-    def _get_tables_names_(self) -> List[str]:
+    def _get_tables_names(self) -> List[str]:
         """
         Get list of tables names from database
 
@@ -1305,8 +1326,8 @@ class SQLite3x:
         )
 
     @tuples_to_lists
-    @__execute__
-    def _execute_stmt_(
+    @_execute
+    def _execute_stmt(
             self, script: AnyStr = None, values: Tuple = None, request: SQLRequest = None
     ):
         """
@@ -1319,7 +1340,7 @@ class SQLite3x:
             return SQLStatement(request, self.path, self.connection)
 
     @tuples_to_lists
-    @__executemany__
+    @_executemany
     def _executemany_stmt(
             self, script: AnyStr = None, values: Tuple = None, request: SQLRequest = None
     ):
@@ -1333,7 +1354,7 @@ class SQLite3x:
             return SQLStatement(request, self.path, self.connection)
 
     @tuples_to_lists
-    @__executescript__
+    @_executescript
     def _executescript_stmt(
             self, script: AnyStr = None, values: Tuple = None, request: SQLRequest = None
     ):
@@ -1347,8 +1368,8 @@ class SQLite3x:
             return SQLStatement(request, self.path, self.connection)
 
     @tuples_to_lists
-    @__execute__
-    def _pragma_stmt_(self, *args: str, **kwargs):
+    @_execute
+    def _pragma_stmt(self, *args: str, **kwargs):
         """
         Parent method for all pragma-like methods
         """
@@ -1362,9 +1383,9 @@ class SQLite3x:
 
         return SQLStatement(SQLRequest(script), self.path, self.connection)
 
-    @__update_constants__
-    @__execute__
-    def _create_stmt_(
+    @_update_instance
+    @_execute
+    def _create_stmt(
             self,
             temp: AnyStr,
             name: AnyStr,
@@ -1418,12 +1439,12 @@ class SQLite3x:
             SQLRequest(script=script, values=values), self.path, self.connection
         )
 
-    @__execute__
-    @__or_param__
-    @__with__
-    @__from_as__
+    @_execute
+    @_or_param
+    @_with
+    @_from_as
     @args_parser
-    def _insert_stmt_(
+    def _insert_stmt(
             self, *args: Any, TABLE: AnyStr, script="", values=(), **kwargs: Any
     ):
         """
@@ -1462,12 +1483,12 @@ class SQLite3x:
             self.connection,
         )
 
-    @__execute__
-    @__or_param__
-    @__with__
-    @__from_as__
+    @_execute
+    @_or_param
+    @_with
+    @_from_as
     @args_parser
-    def _fast_insert_stmt_(
+    def _fast_insert_stmt(
             self, *args, TABLE: AnyStr, script="", values=(), **kwargs: Any
     ):
         """
@@ -1491,11 +1512,11 @@ class SQLite3x:
 
         return SQLStatement(SQLRequest(script, values), self.path, self.connection)
 
-    @__executemany__
-    @__or_param__
-    @__from_as__
+    @_executemany
+    @_or_param
+    @_from_as
     @args_parser
-    def _insertmany_stmt_(
+    def _insertmany_stmt(
             self,
             TABLE: AnyStr,
             *args: Union[List[List], List[Tuple], Tuple[List], Tuple[Tuple], List, Tuple],
@@ -1530,8 +1551,8 @@ class SQLite3x:
 
             max_l = max(map(lambda arg: len(arg), values))  # max len of arg in values
             temp_ = [0 for _ in range(max_l)]  # example values [] for script
-            stmt = self._insert_stmt_(temp_, script=script, TABLE=TABLE,
-                                      execute=False)  # getting stmt for maxsize value
+            stmt = self._insert_stmt(temp_, script=script, TABLE=TABLE,
+                                     execute=False)  # getting stmt for maxsize value
             max_len = len(stmt.request.values)  # len of max supported val list
 
             for i in range(len(values)):  # cropping or appending values, making it's needed size
@@ -1553,8 +1574,8 @@ class SQLite3x:
                 except IndexError:
                     temp_[columns[i]] = None
 
-            stmt = self._insert_stmt_(temp_, script=script, TABLE=TABLE,
-                                      execute=False)  # getting stmt for maxsize value
+            stmt = self._insert_stmt(temp_, script=script, TABLE=TABLE,
+                                     execute=False)  # getting stmt for maxsize value
             max_l = max(map(lambda val: len(val), args))  # max len of arg in values
 
             for _ in range(max_l):
@@ -1578,15 +1599,15 @@ class SQLite3x:
         )
 
     @tuples_to_lists
-    @__execute__
-    @__offset__
-    @__limit__
-    @__order_by__
-    @__where__
-    @__join__
-    @__with__
-    @__from_as__
-    def _select_stmt_(
+    @_execute
+    @_offset
+    @_limit
+    @_order_by
+    @_where
+    @_join
+    @_with
+    @_from_as
+    def _select_stmt(
             self,
             TABLE: str,
             script="",
@@ -1613,10 +1634,10 @@ class SQLite3x:
 
         return SQLStatement(SQLRequest(script, values), self.path, self.connection)
 
-    @__execute__
-    @__where__
-    @__with__
-    def _delete_stmt_(self, TABLE: str, script="", values=()):
+    @_execute
+    @_where
+    @_with
+    def _delete_stmt(self, TABLE: str, script="", values=()):
         """
         Parent method for delete method
 
@@ -1625,11 +1646,11 @@ class SQLite3x:
         script += f"DELETE FROM {TABLE} "
         return SQLStatement(SQLRequest(script, values), self.path, self.connection)
 
-    @__execute__
-    @__where__
-    @__or_param__
-    @__with__
-    def _update_stmt_(
+    @_execute
+    @_where
+    @_or_param
+    @_with
+    def _update_stmt(
             self,
             TABLE: AnyStr,
             SET: Union[List, Tuple, Mapping] = None,
@@ -1672,9 +1693,9 @@ class SQLite3x:
             SQLRequest(script=script, values=values), self.path, self.connection
         )
 
-    @__update_constants__
-    @__execute__
-    def _drop_stmt_(
+    @_update_instance
+    @_execute
+    def _drop_stmt(
             self,
             TABLE: AnyStr,
             IF_EXIST: bool = True,
@@ -1700,7 +1721,7 @@ class SQLite3x:
         """
 
         if not self.connection:
-            self.connection = sqlite3.connect(self.path)
+            self.__connection = sqlite3.connect(self.path)
 
         # Not sure is this reasonable
         # return self.connection
@@ -1715,7 +1736,7 @@ class SQLite3x:
 
         self.connection.commit()
         self.connection.close()
-        self.connection = None
+        self.__connection = None
 
     def get_table(self, name: AnyStr) -> SQLite3xTable:
         """
@@ -1762,7 +1783,7 @@ class SQLite3x:
 
         """
 
-        return self._execute_stmt_(script=script, values=values, request=request)
+        return self._execute_stmt(script=script, values=values, request=request)
 
     def executemany(
             self,
@@ -1839,7 +1860,7 @@ class SQLite3x:
 
         """
 
-        return self._pragma_stmt_(*args, **kwargs)
+        return self._pragma_stmt(*args, **kwargs)
 
     def foreign_keys(
             self,
@@ -1910,7 +1931,7 @@ class SQLite3x:
 
         """
 
-        self._create_stmt_(
+        self._create_stmt(
             temp="",
             name=name,
             columns=columns,
@@ -1918,7 +1939,7 @@ class SQLite3x:
             without_rowid=without_rowid,
         )
 
-    @__update_constants__
+    @_update_instance
     def create_temp_table(
             self,
             name: AnyStr,
@@ -1940,14 +1961,14 @@ class SQLite3x:
 
         """
 
-        self._create_stmt_(
+        self._create_stmt(
             temp="TEMP",
             name=name,
             columns=columns,
             **kwargs
         )
 
-    @__update_constants__
+    @_update_instance
     def create_temporary_table(
             self,
             name: AnyStr,
@@ -1969,14 +1990,14 @@ class SQLite3x:
 
         """
 
-        self._create_stmt_(
+        self._create_stmt(
             temp="TEMPORARY",
             name=name,
             columns=columns,
             **kwargs
         )
 
-    @__update_constants__
+    @_update_instance
     def markup(
             self,
             template: DBTemplateType
@@ -2058,7 +2079,7 @@ class SQLite3x:
 
         try:
             if args:
-                self._fast_insert_stmt_(
+                self._fast_insert_stmt(
                     *args,
                     script="INSERT",
                     OR=OR,
@@ -2071,7 +2092,7 @@ class SQLite3x:
                 raise ValueError
 
         except (sqlite3.OperationalError, ValueError):
-            self._insert_stmt_(
+            self._insert_stmt(
                 *args,
                 script="INSERT",
                 OR=OR,
@@ -2105,7 +2126,7 @@ class SQLite3x:
 
         try:
             if args:
-                self._fast_insert_stmt_(
+                self._fast_insert_stmt(
                     *args,
                     script="REPLACE",
                     TABLE=TABLE,
@@ -2116,7 +2137,7 @@ class SQLite3x:
                 raise ValueError
 
         except (sqlite3.OperationalError, ValueError):
-            self._insert_stmt_(
+            self._insert_stmt(
                 *args,
                 script="REPLACE",
                 TABLE=TABLE,
@@ -2155,7 +2176,7 @@ class SQLite3x:
         if len(args) > 1:
             args = [args]
 
-        self._insertmany_stmt_(
+        self._insertmany_stmt(
             TABLE,
             *args,
             OR=OR,
@@ -2230,7 +2251,7 @@ class SQLite3x:
             WHERE = kwargs
             kwargs = {}
 
-        return self._select_stmt_(
+        return self._select_stmt(
             SELECT=SELECT,
             TABLE=TABLE,
             method="SELECT",
@@ -2276,7 +2297,7 @@ class SQLite3x:
             WHERE = kwargs
             kwargs = {}
 
-        return self._select_stmt_(
+        return self._select_stmt(
             SELECT=SELECT,
             TABLE=TABLE,
             method="SELECT DISTINCT",
@@ -2336,7 +2357,7 @@ class SQLite3x:
             WHERE = kwargs
             kwargs = {}
 
-        return self._select_stmt_(
+        return self._select_stmt(
             method="SELECT ALL ",
             TABLE=TABLE,
             WHERE=WHERE,
@@ -2371,7 +2392,7 @@ class SQLite3x:
         if not WHERE:
             WHERE = kwargs
 
-        self._delete_stmt_(
+        self._delete_stmt(
             TABLE=TABLE,
             WHERE=WHERE,
             WITH=WITH,
@@ -2406,7 +2427,7 @@ class SQLite3x:
         if not WHERE:
             WHERE = kwargs
 
-        self._update_stmt_(
+        self._update_stmt(
             TABLE=TABLE,
             SET=SET,
             OR=OR,
@@ -2436,7 +2457,7 @@ class SQLite3x:
         """
 
         if SET is not None:
-            self._insertmany_stmt_(
+            self._insertmany_stmt(
                 TABLE,
                 SET,
                 script="INSERT",
@@ -2469,7 +2490,7 @@ class SQLite3x:
             Check is table exist (boolean)
         """
 
-        self._drop_stmt_(
+        self._drop_stmt(
             TABLE=TABLE,
             IF_EXIST=IF_EXIST,
             **kwargs

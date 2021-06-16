@@ -36,6 +36,42 @@ def test1():
     print(db_.select(SELECT=ALL, FROM="users", LIMIT=10))
 
 
+def temp2():
+    db = SQLite3x(path='test.db')
+
+    db.connect()
+
+    db.create_table(
+        't6',
+        {
+            'id': [INTEGER, UNIQUE, NOT_NULL],
+            'val': [TEXT, DEFAULT, 'def_val']
+        },
+        IF_NOT_EXIST=True
+    )
+
+    data1 = [[x, 'hi'] for x in range(100_000)]
+    data2 = [[x, 'bye'] for x in range(100_000)]
+
+    t = time()
+
+    db.insertmany('t6', data1)
+
+    print(time() - t)  # 0.273134708404541 sec - insert 100,000 values
+
+    t = time()
+
+    db.insertmany('t6', data2, OR=REPLACE)
+
+    print(time() - t)  # 0.31252258110046387 sec - update 100,000 values
+
+    t = time()
+
+    db.updatemany('t6', data2)
+
+    print(time() - t)  # 0.31252258110046387 sec - update 100,000 values
+
+
 i = {
     'MAIN': {
         'METHOD': "select",
@@ -53,32 +89,4 @@ db = SQLite3x(path='test.db')
 
 db.connect()
 
-db.create_table(
-    't6',
-    {
-        'id': [INTEGER, UNIQUE, NOT_NULL],
-        'val': [TEXT, DEFAULT, 'def_val']
-    },
-    IF_NOT_EXIST=True
-)
-
-data1 = [[x, 'hi'] for x in range(100_000)]
-data2 = [[x, 'bye'] for x in range(100_000)]
-
-t = time()
-
-db.insertmany('t6', data1)
-
-print(time() - t)  # 0.273134708404541 sec - insert 100,000 values
-
-t = time()
-
-db.insertmany('t6', data2, OR=REPLACE)
-
-print(time() - t)  # 0.31252258110046387 sec - update 100,000 values
-
-t = time()
-
-db.updatemany('t6', data2)
-
-print(time() - t)  # 0.31252258110046387 sec - update 100,000 values
+print(db.path)

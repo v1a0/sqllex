@@ -312,7 +312,7 @@ def replace_test():
 
 
 def get_tables_test():
-    if "<generator object SQLite3x._get_tables_" not in str(db.tables):
+    if "<generator object SQLite3x._get_tables" not in str(db.tables):
         print(db.tables)
         raise MemoryError
 
