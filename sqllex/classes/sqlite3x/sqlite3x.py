@@ -1506,13 +1506,16 @@ class SQLite3x:
         """
         Parent method for insertmany method
 
+        Comment:
+            args also support numpy.array value
+
         """
 
         if args:
-            args = list(filter(bool, args[0]))  # removing [] (empty lists from inserting values)
+            args = list(filter(lambda ar: len(ar) > 0, args[0]))  # removing [] (empty lists from inserting values)
 
-            if not args:    # if args empty after filtering, break the function, yes it'll break
-                logger.warning("Inserting or updating braked because no values to insert")
+            if len(args) == 0:    # if args empty after filtering, break the function, yes it'll break
+                logger.warning("insertmany/updatemany failed, due to no values to insert/update")
                 return
 
             values = list(
@@ -2138,6 +2141,7 @@ class SQLite3x:
             Name of table
         args : Union[List, Tuple]
             1'st way set values for insert
+            P.S: args also support numpy.array value
         OR : OrOptionsType
             Optional parameter. If INSERT failed, type OrOptionsType
         kwargs : Any
@@ -2428,9 +2432,10 @@ class SQLite3x:
             Name of table
         SET : Union[List, Tuple, Mapping]
             Values to insert or update
+            P.S: SET also support numpy.array value
         """
 
-        if SET:
+        if SET is not None:
             self._insertmany_stmt_(
                 TABLE,
                 SET,
