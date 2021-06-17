@@ -2,7 +2,7 @@ from sqllex.debug import logger
 from sqllex.exceptions import TableInfoError
 from sqllex.types.types import *
 from sqllex.constants.sql import *
-from sqllex.core.tools.covertors import tuple2list, return2list, crop
+from sqllex.core.tools.convertors import tuple2list, return2list, crop
 import sqllex.core.tools.sorters as sort
 import sqllex.core.tools.parsers.parsers as parse
 import sqllex.core.entities.sqlite3x.midleware as run

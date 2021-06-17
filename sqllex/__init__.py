@@ -3,6 +3,8 @@ from sqllex.constants import *
 from sqllex.debug import logger
 
 
+__version__ = '0.1.9.12'
+
 __all__ = [
     # classes
     "SQLite3x",         # lgtm [py/undefined-export]
