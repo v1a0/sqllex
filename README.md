@@ -116,10 +116,10 @@ db.connect()    # It'll lock yor database until you disconnect, but makes sqllex
 
 # Creating Groups table
 db.create_table(
-    'groups',                                            # here is name of table
-    {                                                    # here is table structure
-        'id': [INTEGER, PRIMARY_KEY, UNIQUE],            # group id
-        'name': [TEXT, NOT_NULL, DEFAULT, 'Unknown']     # group name
+    'groups',                                            			# here is name of table
+    {                                                    			# here is table structure
+        'id': [AUTOINCREMENT, INTEGER, PRIMARY_KEY, UNIQUE],        # group id
+        'name': [TEXT, NOT_NULL, DEFAULT, 'Unknown']     			# group name
     }
 )
 
@@ -131,11 +131,11 @@ db.create_table(
 db.create_table(
     name='users',  # here is name of table
     columns={
-        'id': [INTEGER, PRIMARY_KEY, UNIQUE],                # user id
-        'username': [TEXT, NOT_NULL, DEFAULT, 'Unknown'],    # user name
-        'user_group': INTEGER,                               # the group user belongs to
+        'id': [AUTOINCREMENT, INTEGER, PRIMARY_KEY, UNIQUE],    # user id, autoincrement implemented
+        'username': [TEXT, NOT_NULL, DEFAULT, 'Unknown'],    	# user name
+        'user_group': INTEGER,                               	# the group user belongs to
         FOREIGN_KEY: {
-            "user_group": ["groups", "id"]                   # link to table groups, column id
+            "user_group": ["groups", "id"]                   	# link to table groups, column id
         }
     })
 
@@ -152,17 +152,17 @@ db.create_table(
 
 groups = db['groups']
 
-groups.insert(id=1, name="Admin") # You can add data like this
+groups.insert(name="Admin") # You can add data like this
 
-groups.insert([2, "User"])        # Or like this
+groups.insert(["User"])        # Or like this
 
-groups.insert(3, 'Guest')         # Or like this
+groups.insert('Guest')         # Or like this
 
 
 # Same but without table object
-# db.insert('groups', id=1, name="Admin")
-# db.insert('groups', [2, "User"])
-# db.insert('groups', 3, 'Guest')
+# db.insert('groups', name="Admin")
+# db.insert('groups', ["User"])
+# db.insert('groups', 'Guest')
 
 """
     Now let's add many users
@@ -171,16 +171,16 @@ groups.insert(3, 'Guest')         # Or like this
 
 # Here we have a list of users in format: [id, name, group_id]
 users_list = [
-    [0, "User_0", 1],
-    [1, "User_1", 2],
-    [2, "User_2", 3],
-    [3, "User_3", 1],
-    [4, "User_4", 2],
-    [5, "User_5", 3],
-    [6, "User_6", 1],
-    [7, "User_7", 2],
-    [8, "User_8", 3],
-    [9, "User_9", 1],
+    ["User_0", 1],
+    ["User_1", 2],
+    ["User_2", 3],
+    ["User_3", 1],
+    ["User_4", 2],
+    ["User_5", 3],
+    ["User_6", 1],
+    ["User_7", 2],
+    ["User_8", 3],
+    ["User_9", 1],
 ]
 
 users = db['users']
@@ -266,7 +266,7 @@ db.connect()
 db.create_table(
     'groups',                                            
     {                  
-        'id': [INTEGER, PRIMARY_KEY, UNIQUE],
+        'id': [AUTOINCREMENT, INTEGER, PRIMARY_KEY, UNIQUE],
         'name': [TEXT, NOT_NULL, DEFAULT, 'Unknown']
     }
 )
@@ -274,7 +274,7 @@ db.create_table(
 db.create_table(
     name='users',
     columns={
-        'id': [INTEGER, PRIMARY_KEY, UNIQUE],
+        'id': [AUTOINCREMENT, INTEGER, PRIMARY_KEY, UNIQUE],
         'username': [TEXT, NOT_NULL, DEFAULT, 'Unknown'],
         'user_group': INTEGER,
         FOREIGN_KEY: {
@@ -284,23 +284,23 @@ db.create_table(
 
 groups = db['groups']
 
-groups.insert(id=1, name="Admin")
+groups.insert(name="Admin")
 
-groups.insert([2, "User"])
+groups.insert(["User"])
 
-groups.insert(3, 'Guest')
+groups.insert('Guest')
 
 users_list = [
-    [0, "User_0", 1],
-    [1, "User_1", 2],
-    [2, "User_2", 3],
-    [3, "User_3", 1],
-    [4, "User_4", 2],
-    [5, "User_5", 3],
-    [6, "User_6", 1],
-    [7, "User_7", 2],
-    [8, "User_8", 3],
-    [9, "User_9", 1],
+    ["User_0", 1],
+    ["User_1", 2],
+    ["User_2", 3],
+    ["User_3", 1],
+    ["User_4", 2],
+    ["User_5", 3],
+    ["User_6", 1],
+    ["User_7", 2],
+    ["User_8", 3],
+    ["User_9", 1],
 ]
 
 users = db['users']
