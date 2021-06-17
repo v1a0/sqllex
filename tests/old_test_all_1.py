@@ -149,11 +149,11 @@ selects.append(
 logger.info(f"\nAll from users: {selects[0]}")
 logger.info(f"\nUsernames and group_id from users: {selects[1]}")
 logger.info(f"\nUsernames from users: {selects[2]}")
-logger.info(f"\nAll from users where group_id=1: {selects[3]}")
-logger.info(f"\nAll from users where group_id=1 and username=user_1, order_by username: {selects[4]}")
-logger.info(f"\nAll from users where group_id=1, order_by username by DESC: {selects[5]}")
-logger.info(f"\nAll from users where group_id=1, order_by [2,1]: {selects[6]}")
-# logger.info(f"\nScript SELECT where group_id=4: {selects[7].request.script}")
+logger.info(f"\nAll from users where_ group_id=1: {selects[3]}")
+logger.info(f"\nAll from users where_ group_id=1 and username=user_1, order_by username: {selects[4]}")
+logger.info(f"\nAll from users where_ group_id=1, order_by username by DESC: {selects[5]}")
+logger.info(f"\nAll from users where_ group_id=1, order_by [2,1]: {selects[6]}")
+# logger.info(f"\nScript SELECT where_ group_id=4: {selects[7].request.script}")
 logger.info(f"\nOne record, one value: {selects[8]}")
 
 

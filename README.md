@@ -66,7 +66,7 @@ from sqllex import *
 
 # Create some database, with simple structure
 db = SQLite3x(                              # create database 
-    path='my_data.db',                      # path to your database, or where you would like it locate
+    path='my_data.db',                      # path to your database, or where_ you would like it locate
     template={                              # schema for tables inside your database                              
         "users": {                          # name for the 1'st table
             "username": [TEXT, NOT_NULL],   # 1'st column of table, named "username", contains text-data, can't be NULL
@@ -83,7 +83,7 @@ users = db["users"]
 # Dear table, please insert ['Sqllex', 33] values 
 users.insert('Sqllex', 33)
 
-# Dear table, please find records where column 'age' == 33
+# Dear table, please find records where_ column 'age' == 33
 user = users.find(age=33)
 
 # Print results
@@ -205,7 +205,7 @@ print(users_in_db)
 
 """
     Prefect, and now select some specific records
-    (only usernames where group_id parameter equalized 1)
+    (only usernames where_ group_id parameter equalized 1)
 """
 
 

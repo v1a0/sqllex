@@ -1,5 +1,4 @@
-from sqllex.types.types import PathType
-from typing import Literal, Mapping, Union, List, AnyStr, Any, Tuple, Generator
+from sqllex.types import *
 
 
 class Table:

@@ -1,617 +1,12 @@
-from sqllex.exceptions import TableInfoError
-from typing import Literal, Mapping, Union, List, AnyStr, Any, Tuple, Generator
 from sqllex.debug import logger
-from sqllex.constants.sql import *
+from sqllex.exceptions import TableInfoError
 from sqllex.types.types import *
+from sqllex.constants.sql import *
+from sqllex.core.tools.covertors import tuple2list, return2list, crop
+import sqllex.core.tools.sorters as sort
+import sqllex.core.tools.parsers.parsers as parse
+import sqllex.core.entities.sqlite3x.midleware as run
 import sqlite3
-
-
-def _from_as(func: callable):
-    """
-    Decorator for catching AS argument from TABLE arg
-
-    Parameters
-    ----------
-    func : callable
-        SQLite3x method where args might contain AS
-
-    Returns
-    -------
-    callable
-        Decorated method with TABLE arg as string (instead list with AS)
-
-    """
-
-    def as_wrapper(*args, **kwargs):
-        if "TABLE" in kwargs.keys():
-
-            if isinstance(kwargs.get("TABLE"), list) and AS in kwargs.values():
-                TABLE = " ".join(t_arg for t_arg in kwargs.pop("TABLE"))
-                kwargs.update({"TABLE": TABLE})
-
-        return func(*args, **kwargs)
-
-    return as_wrapper
-
-
-def _with(func: callable) -> callable:
-    """
-    Decorator for catching WITH argument in kwargs of method
-
-    If it has, adding into beginning of :SQLStatement.script: with_statement.
-    And adding values into :values: if it has.
-
-    Parameters
-    ----------
-    func : callable
-        SQLite3x method contains arg WITH
-
-    Returns
-    -------
-    callable
-        Decorated method with script contains with_statement and values contains values of with_statement
-
-    Raise
-    -------
-    TypeError
-        If value of WHERE dict is not SQLStatement or str
-    """
-
-    def with_wrapper(*args, **kwargs):
-        if "WITH" in kwargs.keys():
-            with_dict: WithType = kwargs.pop("WITH")
-        else:
-            with_dict: None = None
-
-        # if with_dict:
-        #     script = f"WITH RECURSIVE "
-        #     values = []
-        #
-        #     for (var, statement) in with_dict.items():
-        #
-        #         # Checking is value of dict SQLStatement or str
-        #         if issubclass(type(statement), SQLStatement):
-        #             condition = statement.request
-        #             script += f"{var} AS ({condition.script.strip()}), "  # .strip() removing spaces around
-        #             values += list(condition.values)
-        #
-        #         elif isinstance(statement, str):
-        #             condition = statement
-        #             script += f"{var} AS ({condition}), "
-        #
-        #         else:
-        #             raise TypeError(f"Unexpected type of WITH value\n"
-        #                             f"Got {type(statement)} instead of SQLStatement or str")
-        #
-        #     if script[-2:] == ', ':
-        #         script = script[:-2]
-        #
-        #     kwargs.update(
-        #         {
-        #             "values": tuple(values)
-        #             if not kwargs.get("values")
-        #             else tuple(list(kwargs.get("values")) + list(values)),
-        #
-        #             "script": f"{script} "
-        #             if not kwargs.get("script")
-        #             else f"{script} " + kwargs.get("script"),
-        #         }
-        #     )
-
-        return func(*args, **kwargs)
-
-    return with_wrapper
-
-
-def _where(func: callable) -> callable:
-    """
-    Decorator for catching WHERE argument in kwargs of method
-
-    If it has, adding in the end of :SQLStatement.script: where_statement.
-    And adding values into :SQLStatement.values: if it has.
-
-    Parameters
-    ----------
-    func : callable
-        SQLite3x method contains arg WHERE
-
-    Returns
-    -------
-    callable
-        Decorated method with script contains where_statement and values contains values of where_statement
-    """
-
-    def where_wrapper(*args, **kwargs):
-        if "WHERE" in kwargs.keys():
-            where_: WhereType = kwargs.pop("WHERE")
-
-        else:
-            where_: None = None
-
-        stmt: SQLStatement = func(*args, **kwargs)
-
-        if where_:
-            stmt.request.script += f"WHERE ("
-
-            if isinstance(where_, tuple):  #
-                where_ = list(where_)
-
-            if isinstance(where_, list):
-
-                # If WHERE is not List[List] (Just List[NotList])
-                if not isinstance(where_[0], list):
-                    where_ = [where_]
-
-                new_where = {}
-
-                for wh in where_:
-
-                    # List[List] -> Dict[val[0], val[1]]
-
-                    if isinstance(wh[0], str) and len(wh) > 1:
-                        new_where.update({wh[0]: wh[1:]})
-                    else:
-                        raise TypeError(f"Unexpected type of WHERE value")
-
-                where_ = new_where
-
-            if isinstance(where_, dict):
-                for (key, values) in where_.items():
-                    # parsing WHERE values
-
-                    if not isinstance(values, list):
-                        values = [values]
-
-                    # Looking for equality or inequality
-                    if len(values) > 1 and values[0] in [
-                        "<", "<<", "<=",
-                        ">=", ">>", ">",
-                        "=", "==", "!=",
-                        "<>",
-                    ]:
-                        operator = values.pop(0)
-
-                        if len(values) == 1 and isinstance(
-                                values[0], list
-                        ):
-                            values = values[0]
-                    else:
-                        operator = "="
-
-                    stmt.request.script += f"({f'{operator}? OR '.join(key for _ in values)}{operator}? OR "
-                    stmt.request.script = f"{stmt.request.script[:-3].strip()}) " + "AND "
-
-                    if stmt.request.values:
-                        if isinstance(stmt.request.values[0], tuple):
-                            # if .values contains many values for insertmany stmt
-                            # add where values for each value
-                            new_values = list(stmt.request.values)
-
-                            for i in range(len(new_values)):
-                                new_values[i] = tuple(
-                                    list(new_values[i]) + list(values)
-                                )
-
-                            stmt.request.values = tuple(new_values)
-
-                        else:
-                            # if .values contains only one set of values
-                            # add where values
-                            stmt.request.values = tuple(
-                                list(stmt.request.values) + list(values)
-                            )
-                    else:
-                        stmt.request.values = values
-
-                stmt.request.script = stmt.request.script.strip()[:-3]
-
-            elif isinstance(where_, str):
-                stmt.request.script += f"{where_}"
-
-            else:
-                raise TypeError
-
-            stmt.request.script = (
-                f"{stmt.request.script.strip()}) "  # .strip() removing spaces around
-            )
-
-        return stmt
-
-    return where_wrapper
-
-
-def _join(func: callable) -> callable:
-    """
-    Decorator for catching JOIN argument in kwargs of method
-
-    If it has, adding into beginning of :SQLStatement.script: where_statement.
-    And adding values into :SQLStatement.values: if it has.
-
-    Parameters
-    ----------
-    func : callable
-        SQLite3x method contains arg JOIN
-
-    Returns
-    ----------
-    callable
-        Decorated method with script contains join_statement and values contains values of join_statement
-
-    """
-
-    def join_wrapper(*args, **kwargs):
-        if "JOIN" in kwargs.keys():
-            JOIN: JoinArgType = kwargs.pop("JOIN")
-        else:
-            JOIN: None = None
-
-        stmt: SQLStatement = func(*args, **kwargs)
-
-        if JOIN:
-            if isinstance(JOIN, list):
-
-                # if JOIN is not List[List] make it so
-                if not isinstance(JOIN[0], list):
-                    JOIN = [JOIN]
-
-                for join_ in JOIN:
-                    # If first element is JOIN type
-                    if join_[0] in [INNER_JOIN, LEFT_JOIN, CROSS_JOIN]:
-                        join_method = join_.pop(0)
-                    else:
-                        join_method = INNER_JOIN
-
-                    # Adding JOIN to script
-                    stmt.request.script += (
-                        f"{join_method} {' '.join(j_arg for j_arg in join_)} "
-                    )
-            else:
-                raise TypeError("Unexp")
-
-        return stmt
-
-    return join_wrapper
-
-
-def _or_param(func: callable) -> callable:
-    """
-    Decorator for catching OR argument in kwargs of method
-
-    If it has, adding into beginning of :SQLStatement.script: or_statement.
-    And adding values into :SQLStatement.values: if it has.
-
-    Parameters
-    ----------
-    func : callable
-        SQLite3x method contains arg JOIN
-
-    Returns
-    ----------
-    callable
-        Decorated method with script contains or_statement and values contains values of or_statement
-
-    """
-
-    def or_wrapper(*args, **kwargs):
-        if "OR" in kwargs.keys():
-            or_arg: OrOptionsType = kwargs.pop("OR")
-        else:
-            or_arg: None = None
-
-        if or_arg:
-            kwargs.update({"script": kwargs.get("script") + f" OR {or_arg}"})
-
-        return func(*args, **kwargs)
-
-    return or_wrapper
-
-
-def _order_by(func: callable) -> callable:
-    """
-    Decorator for catching ORDER_BY argument in kwargs of method
-
-    If it has, adding in the end of :SQLStatement.script: order_by_statement.
-
-    Parameters
-    ----------
-    func : callable
-        SQLite3x method contains arg ORDER BY
-
-    Returns
-    ----------
-    callable
-        Decorated method with script contains order_by_statement and values contains values of order_by_statement
-    """
-
-    def order_by_wrapper(*args, **kwargs):
-        if "ORDER_BY" in kwargs.keys():
-            order_by: OrderByType = kwargs.pop("ORDER_BY")
-        else:
-            order_by: None = None
-
-        stmt: SQLStatement = func(*args, **kwargs)
-
-        if order_by:
-            if isinstance(order_by, (str, int)):
-                stmt.request.script += f"ORDER BY {order_by} "
-            elif isinstance(order_by, (list, tuple)):
-                stmt.request.script += (
-                    f"ORDER BY {', '.join(str(item_ob) for item_ob in order_by)} "
-                )
-            elif isinstance(order_by, dict):
-                for (key, val) in order_by.items():
-                    if isinstance(val, (str, int)):
-                        uni_val = f"{val} "
-                    elif isinstance(val, (list, tuple)):
-                        uni_val = " ".join(sub_val for sub_val in val)
-                    else:
-                        raise TypeError
-
-                    stmt.request.script += f"ORDER BY {key} {uni_val} "
-
-        return stmt
-
-    return order_by_wrapper
-
-
-def _limit(func: callable) -> callable:
-    """
-    Decorator for catching LIMIT argument in kwargs of method
-
-    If it has, adding in the end of :SQLStatement.script: limit_statement.
-
-    Parameters
-    ----------
-    func : callable
-        SQLite3x method contains arg LIMIT
-
-    Returns
-    ----------
-    callable
-        Decorated method with script contains limit_statement and values contains values of limit_statement
-
-    """
-
-    def limit_wrapper(*args, **kwargs):
-        if "LIMIT" in kwargs.keys():
-            limit: LimitOffsetType = kwargs.pop("LIMIT")
-        else:
-            limit: None = None
-
-        stmt: SQLStatement = func(*args, **kwargs)
-
-        if limit:
-            if isinstance(limit, (float, str)):
-                limit = int(limit)
-            stmt.request.script += f"LIMIT {limit} "
-
-        return stmt
-
-    return limit_wrapper
-
-
-def _offset(func: callable) -> callable:
-    """
-    Decorator for catching OFFSET argument in kwargs of method
-
-    If it has, adding in the end of :SQLStatement.script: offset_statement.
-
-    Parameters
-    ----------
-    func : callable
-        SQLite3x method contains arg OFFSET
-
-    Returns
-    ----------
-    callable
-        Decorated method with script contains offset_statement and values contains values of offset_statement
-
-    """
-
-    def offset_wrapper(*args, **kwargs):
-        if "OFFSET" in kwargs.keys():
-            offset: LimitOffsetType = kwargs.pop("OFFSET")
-        else:
-            offset: bool = False
-
-        stmt: SQLStatement = func(*args, **kwargs)
-
-        if offset:
-            if isinstance(offset, (float, str)):
-                offset = int(offset)
-            stmt.request.script += f"OFFSET {offset} "
-
-        return stmt
-
-    return offset_wrapper
-
-
-def _execute(func: callable):
-    """
-    Decorator for execute SQLStatement
-    catching :param execute: boolean argument in kwargs of method, True by default
-
-    If it has, executing script otherwise returning SQLStatement
-
-    Parameters
-    ----------
-    func : callable
-        SQLite3x method
-
-    Returns
-    ----------
-    callable
-        Database answer (if execute True) or SQLStatement (if execute False) or None
-
-    """
-
-    def execute_wrapper(*args: Tuple, **kwargs: Mapping):
-        def executor(conn: sqlite3.Connection, stmt: SQLStatement):
-            cur = conn.cursor()
-
-            try:
-                if stmt.request.values:
-                    cur.execute(stmt.request.script, stmt.request.values)
-                else:
-                    cur.execute(stmt.request.script)
-
-                return cur.fetchall()
-
-            except Exception as error:
-                raise error
-
-        if "execute" in kwargs.keys():
-            execute = bool(kwargs.pop("execute"))
-        else:
-            execute = True
-
-        stmt: SQLStatement = func(*args, **kwargs)
-
-        if stmt:    # it's necessary
-            stmt.request.script = stmt.request.script.strip()
-
-            if not execute:
-                return stmt
-
-            logger.debug(
-                f"\n"
-                f"{stmt.request.script.strip()}\n"
-                f"{stmt.request.values if stmt.request.values else ''}"
-                f"\n"
-            )
-
-            # If connection does not exist
-            if not stmt.connection:
-                with sqlite3.connect(stmt.path) as conn:
-                    ret_ = executor(conn, stmt)
-                    conn.commit()
-                    return ret_
-            else:
-                return executor(stmt.connection, stmt)
-
-    return execute_wrapper
-
-
-def _executemany(func: callable):
-    """
-    Decorator for execute SQLStatement with multiple values
-    catching :param execute: boolean argument in kwargs of method, True by default
-
-    If it has, executing script otherwise returning SQLStatement
-
-    Parameters
-    ----------
-    func : callable
-        SQLite3x method
-
-    Returns
-    ----------
-    callable
-        Database answer (if execute True) or SQLStatement (if execute False) or None
-
-    """
-
-    def wrapper(*args: Tuple, **kwargs: Mapping):
-        def executor(conn: sqlite3.Connection, stmt: SQLStatement):
-            cur = conn.cursor()
-
-            try:
-                cur.executemany(stmt.request.script, stmt.request.values)
-                return cur.fetchall()
-
-            except Exception as error:
-                raise error
-
-        if "execute" in kwargs.keys():
-            execute = bool(kwargs.pop("execute"))
-        else:
-            execute = True
-
-        stmt: SQLStatement = func(*args, **kwargs)
-
-        if stmt:    # it's necessary
-            stmt.request.script = stmt.request.script.strip()
-
-            if not execute:
-                return stmt
-
-            logger.debug(
-                f"\n"
-                f"{stmt.request.script.strip()}\n"
-                f"{stmt.request.values if stmt.request.values else ''}"
-                f"\n"
-            )
-
-            if not stmt.connection:
-                with sqlite3.connect(stmt.path) as conn:
-                    ret_ = executor(conn, stmt)
-                    conn.commit()
-                    return ret_
-            else:
-                return executor(stmt.connection, stmt)
-
-    return wrapper
-
-
-def _executescript(func: callable):
-    """
-    Decorator for execute SQLStatement with script only (without values)
-    catching :param execute: boolean argument in kwargs of method, True by default
-
-    If it has, executing script otherwise returning SQLStatement
-
-    Parameters
-    ----------
-    func : callable
-        SQLite3x method
-
-    Returns
-    ----------
-    callable
-        Database answer (if execute True) or SQLStatement (if execute False) or None
-
-    """
-
-    def wrapper(*args: Tuple, **kwargs: Mapping):
-        def executor(conn: sqlite3.Connection, stmt: SQLStatement):
-            cur = conn.cursor()
-
-            try:
-                cur.executescript(stmt.request.script)
-                return cur.fetchall()
-
-            except Exception as error:
-                raise error
-
-        if "execute" in kwargs.keys():
-            execute = bool(kwargs.pop("execute"))
-        else:
-            execute = True
-
-        stmt: SQLStatement = func(*args, **kwargs)
-
-        if stmt:    # it's necessary
-            stmt.request.script = stmt.request.script.strip()
-
-            if not execute:
-                return stmt
-
-            logger.debug(
-                f"\n"
-                f"{stmt.request.script.strip()}\n"
-                f"{stmt.request.values if stmt.request.values else ''}"
-                f"\n"
-            )
-
-            if not stmt.connection:
-                with sqlite3.connect(stmt.path) as conn:
-                    ret_ = executor(conn, stmt)
-                    conn.commit()
-                    return ret_
-            else:
-                return executor(stmt.connection, stmt)
-
-    return wrapper
 
 
 def _update_instance(func: callable) -> callable:
@@ -638,185 +33,6 @@ def _update_instance(func: callable) -> callable:
         return res
 
     return wrap
-
-
-def args_parser(func: callable):
-    """
-    Decorator for parsing argument method.
-    If func got only one argument which contains args for function it'll unwrap it
-
-    if args is dict :
-        return args = None, kwargs = args[0]
-
-    if args is list :
-        return args = args[0], kwargs = kwargs
-
-    if args is tuple :
-        return args = list(args[0]), kwargs = kwargs
-
-    Parameters
-    ----------
-    func : callable
-        SQLite3x method contains args
-
-    Returns
-    ----------
-    callable
-        Decorated method with parsed args
-    """
-
-    def wrapper(*args: Any, **kwargs: Any):
-        if not args:
-            return func(*args, **kwargs)
-
-        self = list(args)[0]
-        args = list(args)[1:]
-
-        if len(args) == 1:
-            if isinstance(args[0], list):
-                args = args[0]
-            elif isinstance(args[0], (str, int)):
-                args = [args[0]]
-            elif isinstance(args[0], tuple):
-                args = list(args[0])
-            elif isinstance(args[0], dict):
-                kwargs.update(args[0])
-                args = []
-
-        args = [self, *args]
-
-        return func(*args, **kwargs)
-
-    return wrapper
-
-
-def crop(columns: Union[Tuple, List], values: Union[Tuple, List]) -> Tuple:
-    """
-    Converts input lists (columns and values) to the same length for safe insert
-
-    Parameters
-    ----------
-    columns : Union[Tuple, List]
-        List of columns in some table
-    values : Union[Tuple, List]
-        Values for insert to some table
-
-    Returns
-    ----------
-        Equalized by length lists
-
-    """
-
-    if values and columns:
-        if len(values) != len(columns):
-            logger.debug(
-                f"\n"
-                f"SIZE CROP! Expecting {len(columns)} arguments but {len(values)} were given!\n"
-                f"Expecting: {columns}\n"
-                f"Given: {values}"
-            )
-            _len_ = min(len(values), len(columns))
-            return columns[:_len_], values[:_len_]
-
-    return columns, values
-
-
-def col_types_sort(val: Union[DataType, AnyStr]) -> int:
-    """
-    Sorting function for DataType objects
-    It's getting objects and returns index of priority (0,1,2,3)
-
-    Parameters
-    ----------
-    val : Union[DataType, AnyStr]
-        param of column type
-
-    Returns
-    -------
-    int
-        index of priority, if unknown returns 1
-
-    """
-
-    prior = CONST_PRIORITY.get(val)  # How about set dict.setdefault(1) ?
-
-    if prior is None:
-        return 1
-    else:
-        return prior
-
-
-def lister(data: Any, remove_one_len: bool = False) -> List:
-    """
-    Function converting input value from Tuple[Any] or List[Tuple]
-    (with any deepness) to List[List]
-
-    Parameters
-    ----------
-    data : Any
-        Any value contains tuples
-    remove_one_len : bool
-        Convert or not [['x'], 1] to ['x', 1] (breaking return rule)
-
-    Returns
-    ----------
-    callable
-        Decorated method with update after it was run
-
-    """
-
-    if isinstance(data, tuple):
-        data = list(data)
-
-    if isinstance(data, list):
-        if remove_one_len and (len(data) == 1):
-            return lister(
-                data[0],
-                remove_one_len
-            )
-
-        for r in range(len(data)):
-            if isinstance(data[r], (list, tuple)):
-                data[r] = lister(
-                    data[r],
-                    remove_one_len
-                )
-
-    return data
-
-
-def tuples_to_lists(func: callable) -> callable:
-    """
-    Decorator converting returning data to List[List]
-
-    Parameters
-    ----------
-    func : callable
-        Function or method returns of with one need to convert from Tuple[Tuple[Any]] to List[List[Any]]
-
-    Returns
-    ----------
-    callable
-        Decorated method or func returning List[List]
-
-    """
-
-    def t2l_wrapper(*args, **kwargs):
-        ret = func(*args, **kwargs)
-
-        if not issubclass(ret.__class__, SQLStatement):
-            ret = lister(ret)
-
-            if not isinstance(ret, list):
-                ret = [ret]
-
-        return ret
-
-    return t2l_wrapper
-
-# =======================================================================================
-#                                     CLASSES
-# =======================================================================================
 
 
 class SQLite3xTable:
@@ -1172,7 +388,7 @@ class SQLite3xTable:
             **kwargs,
     ) -> Union[SQLRequest, List]:
         """
-        Find all records in table where
+        Find all records in table where_
 
         Parameters
         ----------
@@ -1308,7 +524,7 @@ class SQLite3x:
         # line down below it is necessary for possibility to call self.tables unlimited times
         # make it never end, because in the end of generation it'll be overridden
         self.__tables = self._get_tables()
-
+    
     def _get_tables_names(self) -> List[str]:
         """
         Get list of tables names from database
@@ -1320,13 +536,13 @@ class SQLite3x:
 
         """
 
-        return lister(
+        return tuple2list(
             self.execute("SELECT name FROM sqlite_master WHERE type='table'"),
             remove_one_len=True
         )
 
-    @tuples_to_lists
-    @_execute
+    @return2list
+    @run.execute
     def _execute_stmt(
             self, script: AnyStr = None, values: Tuple = None, request: SQLRequest = None
     ):
@@ -1339,8 +555,8 @@ class SQLite3x:
         else:
             return SQLStatement(request, self.path, self.connection)
 
-    @tuples_to_lists
-    @_executemany
+    @return2list
+    @run.executemany
     def _executemany_stmt(
             self, script: AnyStr = None, values: Tuple = None, request: SQLRequest = None
     ):
@@ -1353,8 +569,8 @@ class SQLite3x:
         else:
             return SQLStatement(request, self.path, self.connection)
 
-    @tuples_to_lists
-    @_executescript
+    @return2list
+    @run.executescript
     def _executescript_stmt(
             self, script: AnyStr = None, values: Tuple = None, request: SQLRequest = None
     ):
@@ -1367,8 +583,8 @@ class SQLite3x:
         else:
             return SQLStatement(request, self.path, self.connection)
 
-    @tuples_to_lists
-    @_execute
+    @return2list
+    @run.execute
     def _pragma_stmt(self, *args: str, **kwargs):
         """
         Parent method for all pragma-like methods
@@ -1384,7 +600,7 @@ class SQLite3x:
         return SQLStatement(SQLRequest(script), self.path, self.connection)
 
     @_update_instance
-    @_execute
+    @run.execute
     def _create_stmt(
             self,
             temp: AnyStr,
@@ -1408,7 +624,7 @@ class SQLite3x:
 
             # For {'col': [param2, param1]} -> {'col': [param1, param2]}
             if isinstance(params, list):
-                params = sorted(params, key=lambda par: col_types_sort(par))
+                params = sorted(params, key=lambda par: sort.column_types(par))
                 content += f"{col} {' '.join(str(param) for param in params)},\n"
 
             # For {'col': {FK: {a: b}}}
@@ -1439,11 +655,11 @@ class SQLite3x:
             SQLRequest(script=script, values=values), self.path, self.connection
         )
 
-    @_execute
-    @_or_param
-    @_with
-    @_from_as
-    @args_parser
+    @run.execute
+    @parse.or_param_
+    @parse.with_
+    @parse.from_as_
+    @parse.args_parser
     def _insert_stmt(
             self, *args: Any, TABLE: AnyStr, script="", values=(), **kwargs: Any
     ):
@@ -1483,11 +699,11 @@ class SQLite3x:
             self.connection,
         )
 
-    @_execute
-    @_or_param
-    @_with
-    @_from_as
-    @args_parser
+    @run.execute
+    @parse.or_param_
+    @parse.with_
+    @parse.from_as_
+    @parse.args_parser
     def _fast_insert_stmt(
             self, *args, TABLE: AnyStr, script="", values=(), **kwargs: Any
     ):
@@ -1512,10 +728,10 @@ class SQLite3x:
 
         return SQLStatement(SQLRequest(script, values), self.path, self.connection)
 
-    @_executemany
-    @_or_param
-    @_from_as
-    @args_parser
+    @run.executemany
+    @parse.or_param_
+    @parse.from_as_
+    @parse.args_parser
     def _insertmany_stmt(
             self,
             TABLE: AnyStr,
@@ -1598,15 +814,15 @@ class SQLite3x:
             SQLRequest(stmt.request.script, values), self.path, self.connection
         )
 
-    @tuples_to_lists
-    @_execute
-    @_offset
-    @_limit
-    @_order_by
-    @_where
-    @_join
-    @_with
-    @_from_as
+    @return2list
+    @run.execute
+    @parse.offset_
+    @parse.limit_
+    @parse.order_by_
+    @parse.where_
+    @parse.join_
+    @parse.with_
+    @parse.from_as_
     def _select_stmt(
             self,
             TABLE: str,
@@ -1634,9 +850,9 @@ class SQLite3x:
 
         return SQLStatement(SQLRequest(script, values), self.path, self.connection)
 
-    @_execute
-    @_where
-    @_with
+    @run.execute
+    @parse.where_
+    @parse.with_
     def _delete_stmt(self, TABLE: str, script="", values=()):
         """
         Parent method for delete method
@@ -1646,10 +862,10 @@ class SQLite3x:
         script += f"DELETE FROM {TABLE} "
         return SQLStatement(SQLRequest(script, values), self.path, self.connection)
 
-    @_execute
-    @_where
-    @_or_param
-    @_with
+    @run.execute
+    @parse.where_
+    @parse.or_param_
+    @parse.with_
     def _update_stmt(
             self,
             TABLE: AnyStr,
@@ -1694,7 +910,7 @@ class SQLite3x:
         )
 
     @_update_instance
-    @_execute
+    @run.execute
     def _drop_stmt(
             self,
             TABLE: AnyStr,
@@ -2497,4 +1713,7 @@ class SQLite3x:
         )
 
 
-__all__ = ["SQLite3x", "SQLite3xTable"]
+__all__ = [
+    "SQLite3x",
+    "SQLite3xTable"
+]

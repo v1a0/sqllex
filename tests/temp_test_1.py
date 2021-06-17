@@ -90,3 +90,29 @@ db = SQLite3x(path='test.db')
 db.connect()
 
 print(db.path)
+
+
+db.create_table(
+    'users',
+    {
+        'id': [INTEGER, UNIQUE, NOT_NULL],
+        'first_name': [TEXT, NOT_NULL],
+        'second_name': [TEXT, NOT_NULL],
+        'age': INTEGER
+    }
+)
+
+from datetime import datetime
+
+uid = 1
+first_name = "Alex"
+second_name = "Flex"
+age = 33
+
+db.insert(
+    'users',
+    uid,
+    first_name=first_name,
+    second_name=second_name,
+
+)
