@@ -1,3 +1,9 @@
+"""
+Not finished yet
+
+Parent class for all 
+"""
+
 from sqllex.types import *
 
 

@@ -40,6 +40,8 @@ jobs:
     - name: Main test - tests/new_test_all.py
       run: |
         python new_test_all.py
+        python old_test_all_1.py
+        python old_test_all_2.py
     
     
   python-3-8:
@@ -63,3 +65,5 @@ jobs:
     - name: Main test - tests/new_test_all.py
       run: |
         python new_test_all.py
+        python old_test_all_1.py
+        python old_test_all_2.py

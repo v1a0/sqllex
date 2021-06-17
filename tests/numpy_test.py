@@ -1,5 +1,4 @@
 from numpy import array, nan
-from numpy.typing._array_like import ndarray
 from sqllex import SQLite3x, TEXT, UNIQUE, INTEGER, REAL
 
 
