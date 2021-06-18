@@ -2,43 +2,43 @@ from sqllex.constants.sql import *
 
 __all__ = [
     # sql
-    'ABORT',
-    'ALL',
-    'AS',
-    'AUTOINCREMENT',
+    'ABORT',  # lgtm [py/undefined-export]
+    'ALL',  # lgtm [py/undefined-export]
+    'AS',  # lgtm [py/undefined-export]
+    'AUTOINCREMENT',  # lgtm [py/undefined-export]
 
-    'BLOB',
+    'BLOB',  # lgtm [py/undefined-export]
 
-    'CHECK',
-    'CONST_PRIORITY',
-    'CROSS_JOIN',
+    'CHECK',  # lgtm [py/undefined-export]
+    'CONST_PRIORITY',  # lgtm [py/undefined-export]
+    'CROSS_JOIN',  # lgtm [py/undefined-export]
 
-    'DEFAULT',
+    'DEFAULT',  # lgtm [py/undefined-export]
 
-    'FAIL',
-    'FOREIGN_KEY',
+    'FAIL',  # lgtm [py/undefined-export]
+    'FOREIGN_KEY',  # lgtm [py/undefined-export]
 
-    'IGNORE',
-    'INNER_JOIN',
-    'INTEGER',
+    'IGNORE',  # lgtm [py/undefined-export]
+    'INNER_JOIN',  # lgtm [py/undefined-export]
+    'INTEGER',  # lgtm [py/undefined-export]
 
-    'LEFT_JOIN',
+    'LEFT_JOIN',  # lgtm [py/undefined-export]
 
-    'NONE',
-    'NOT_NULL',
-    'NULL',
-    'NUMERIC',
+    'NONE',  # lgtm [py/undefined-export]
+    'NOT_NULL',  # lgtm [py/undefined-export]
+    'NULL',  # lgtm [py/undefined-export]
+    'NUMERIC',  # lgtm [py/undefined-export]
 
-    'ON',
+    'ON',  # lgtm [py/undefined-export]
 
-    'PRIMARY_KEY',
+    'PRIMARY_KEY',  # lgtm [py/undefined-export]
 
-    'REAL',
-    'REFERENCES',
-    'REPLACE',
-    'ROLLBACK',
+    'REAL',  # lgtm [py/undefined-export]
+    'REFERENCES',  # lgtm [py/undefined-export]
+    'REPLACE',  # lgtm [py/undefined-export]
+    'ROLLBACK',  # lgtm [py/undefined-export]
 
-    'TEXT',
+    'TEXT',  # lgtm [py/undefined-export]
 
-    'UNIQUE'
+    'UNIQUE'  # lgtm [py/undefined-export]
 ]
