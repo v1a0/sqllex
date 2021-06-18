@@ -19,7 +19,7 @@ Better than <b>sqlite3</b>. Seriously, try it out<br>
 pip install sqllex
 ```
 
-If you need most stable version install **sqllex==0.1.10.0**
+If you need most stable version install **sqllex==0.1.10.2**
 
 
 | Version |  Status | Tests, and actions |
