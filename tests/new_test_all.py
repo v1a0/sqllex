@@ -374,7 +374,31 @@ def getitem_test():
         print(t7.select([t7_name, t7_id], WHERE=(t7_id == 2) | (t7_id == 1) & 1))
         raise MemoryError
 
+def has_add_remove_column_test():
+    db.create_table(
+        't8',
+        {
+            'id': INTEGER,
+            'test': TEXT
+        }
+    )
+    t8 = db["t8"]
+    t8.add_column({"col1":TEXT})
+    t8.add_column({"col2":TEXT})
 
+    if len(t8.columns_names)!=4:
+        raise MemoryError
+
+    t8.remove_column("col1")
+
+    # NameError: name 'SQLite3xColumn' is not defined  (???)
+    # col2 = SQLite3xColumn("t8","col2")
+    # t8.remove_column(col2)
+    if len(t8.columns_names)!=3:
+        raise MemoryError
+    
+    if not t8.has_column("id") and t8.has_column("col1") and not t8.has_column("col2"):
+        raise MemoryError
 
 
 # Start time counting
@@ -393,6 +417,7 @@ delete_test()
 replace_test()
 getitem_test()
 get_tables_test()
+has_add_remove_column_test()
 
 # Disconnect
 db.disconnect()
