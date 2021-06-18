@@ -1,3 +1,62 @@
+# 0.1.10
+
+### 0.1.10.0
+- Added 2 new classes SQLiteColumn and SQLite3 SearchCondition with many cool features
+- New way to set WHERE  Condition
+- New way to set SET Condition
+- All select-like methods got changes in args structure (critical!)
+- Support column names with spaces
+- Bugfix
+- Tests upd
+- Info files UPDATES and WARNINGS UPD
+- fixed issue #15 
+- fixed issue #23 
+- fixed issue #28 
+
+
+---
+# 0.1.9
+
+### 0.1.9.12
+- Fixing #26
+- Major restructuring
+- code refactoring
+- preparing for 0.2
+- minor fixes
+
+### 0.1.9.9
+- New method UPDATEMANY added for SQLite3x and SQLite3xTable (issue #26)
+- INSERTMNAY OR argument issue #26 fixed
+- INSERTMNAY empty array shock issue fixed, filter added
+- INSERTMNAY minor fixes
+- __execute__ decorators got checking stmt valid
+- Other minor fixes
+
+### 0.1.9.8
+- WITH temporary disabled
+- updatemany added
+- updatemany removed
+- Issue #1 fixed XD
+
+### 0.1.9.5
+- Fixed issue #25, now only select-like methods returns data, other methods don't
+- Tests update
+- SQLStatement and SQLRequest got __bool__ method
+- Redame update
+
+### 0.1.9.4
+- Bugfix issue #24 "BUG | It should be FROM not TABLE #24"
+- UPD Typing for select-like methods
+
+### 0.1.9.3
+- Docs remastering
+- Removed rudimental code parts
+- "wiki" dir removed
+- Minor refactoring
+
+### 0.1.9.2
+- Issue #18 fixed, exception for sqlite3.OperationalError: no such table: PRAGMA_TABLE_INFO
+
 ### 0.1.9.1
 - Issue #18 fixed, WHERE argument to update is not required anymore, without WHERE it change all rows in the table
 
@@ -8,6 +67,9 @@
 - Code refactoring
 - Readme upd
 
+---
+
+# \<=0.1.8
 
 ### 0.1.8.12
 - Сode refactoring (black code style)

@@ -9,30 +9,108 @@ import sqllex.core.entities.sqlite3x.midleware as run
 import sqlite3
 
 
-def _update_instance(func: callable) -> callable:
-    """
-    Decorator running method for update constants of class (self.__update_instance_variables())
+class SQLite3xSearchCondition(str):
+    def __init__(self, value: AnyStr):
+        super().__init__()
+        self.value = value
 
-    Used for updating columns list in SQLite3xTable class
+    def __str__(self):
+        return self.value
 
-    Parameters
-    ----------
-    func : callable
-        Class method after witch needed to update constants
+    def _str_gen(self, value, operator: str):
+        if type(value) == str:
+            return SQLite3xSearchCondition(
+                f"({self}{operator}'{value}')"  # unsafe!
+            )
+        else:
+            return SQLite3xSearchCondition(
+                f"({self}{operator}{value})"
+            )
 
-    Returns
-    ----------
-    callable
-        Decorated method with update after it was run
+    def __lt__(self, value):
+        return self._str_gen(value, '<')
 
-    """
+    def __le__(self, value):
+        return self._str_gen(value, '<=')
 
-    def wrap(self, *args, **kwargs):
-        res = func(self, *args, **kwargs)
-        self._update_instance_variables()
-        return res
+    def __eq__(self, value):
+        return self._str_gen(value, '=')
 
-    return wrap
+    def __ne__(self, value):
+        return self._str_gen(value, '<>')
+
+    def __gt__(self, value):
+        return self._str_gen(value, '>')
+
+    def __ge__(self, value):
+        return self._str_gen(value, '>=')
+
+    def __and__(self, other):
+        return self._str_gen(other, ' AND ')
+
+    def __or__(self, other):
+        return self._str_gen(other, ' OR ')
+
+    def __hash__(self):
+        return hash(f"{self.value}")
+
+
+class SQLite3xColumn:
+    def __init__(self, table, name: AnyStr):
+        self.table: SQLite3xTable = table
+        self.name = name
+
+    def __str__(self):
+        return f"'{self.table.name}'.'{self.name}'"
+
+    def _str_gen(self, value, operator: str):
+        if type(value) == str:
+            return SQLite3xSearchCondition(
+                f"({self}{operator}'{value}')"  # unsafe!
+            )
+        else:
+            return SQLite3xSearchCondition(
+                f"({self}{operator}{value})"
+            )
+
+    def __lt__(self, value):
+        return self._str_gen(value, '<')
+
+    def __le__(self, value):
+        return self._str_gen(value, '<=')
+
+    def __eq__(self, value):
+        return self._str_gen(value, '=')
+
+    def __ne__(self, value):
+        return self._str_gen(value, '<>')
+
+    def __gt__(self, value):
+        return self._str_gen(value, '>')
+
+    def __ge__(self, value):
+        return self._str_gen(value, '>=')
+
+    def __add__(self, value):
+        return self._str_gen(value, '+')
+
+    def __sub__(self, value):
+        return self._str_gen(value, '-')
+
+    def __mul__(self, value):
+        return self._str_gen(value, '*')
+
+    def __truediv__(self, value):
+        return self._str_gen(value, '/')
+
+    def __divmod__(self, value):
+        return self._str_gen(value, '%')
+
+    def __list__(self):
+        return self.table.select_all(self.name)
+
+    def __hash__(self):
+        return hash(f"'{self.name}'.'{self.table}'")
 
 
 class SQLite3xTable:
@@ -46,8 +124,12 @@ class SQLite3xTable:
         SQLite3x database object
     name : str
         Name of table
-    columns : list
-        List of columns in table (auto-updating)
+
+    columns = list
+        Generator of columns in table
+
+    columns_names = list
+        Generator of column's names in table
 
     """
 
@@ -63,26 +145,27 @@ class SQLite3xTable:
         """
         self.db: SQLite3x = db
         self.name: AnyStr = name
-        self.columns: List = self.get_columns()
 
     def __str__(self):
-        return f"{{SQLite3x Table: name: '{self.name}', db: '{self.db}'}}"
+        return self.name
 
     def __bool__(self):
-        return bool(self.get_columns())
+        return bool(self.get_columns_names())
 
-    def __getitem__(self, key) -> List:
-        if key not in self.get_columns():
+    def __getitem__(self, key) -> SQLite3xColumn:
+        if key not in self.columns_names:
             raise KeyError(key, "No such column in table")
 
-        return self.select(key)
+        return SQLite3xColumn(table=self, name=key)
 
-    def _update_constants_(self):
-        """
-        Update classes vars (columns)
+    @property
+    def columns(self) -> Generator[SQLite3xColumn, None, None]:
+        for column in self.columns_names:
+            yield SQLite3xColumn(table=self, name=column)
 
-        """
-        self.columns = self.get_columns()
+    @property
+    def columns_names(self) -> List:
+        return self.get_columns_names()
 
     def info(self):
         """
@@ -97,7 +180,7 @@ class SQLite3xTable:
 
         return self.db.pragma(f"table_info({self.name})")
 
-    def get_columns(self) -> List:
+    def get_columns_names(self) -> List:
         """
         Get list of table columns
 
@@ -107,7 +190,7 @@ class SQLite3xTable:
             All table's columns
 
         """
-        return self.db.get_columns(table=self.name)
+        return self.db.get_columns_names(table=self.name)
 
     def insert(
             self,
@@ -186,8 +269,7 @@ class SQLite3xTable:
 
     def select(
             self,
-            *args: Union[str, List[str]],
-            SELECT: Union[str, List[str]] = None,
+            SELECT: Union[str, SQLite3xColumn, List[Union[str, SQLite3xColumn]]] = None,
             WHERE: WhereType = None,
             WITH: WithType = None,
             ORDER_BY: OrderByType = None,
@@ -227,7 +309,6 @@ class SQLite3xTable:
 
         return self.db.select(
             self.name,
-            *args,
             SELECT=SELECT,
             WHERE=WHERE,
             WITH=WITH,
@@ -240,12 +321,13 @@ class SQLite3xTable:
 
     def select_distinct(
             self,
-            SELECT: Union[List[str], str] = ALL,
+            SELECT: Union[str, SQLite3xColumn, List[Union[str, SQLite3xColumn]]] = None,
             WHERE: WhereType = None,
             WITH: WithType = None,
             ORDER_BY: OrderByType = None,
             LIMIT: LimitOffsetType = None,
             OFFSET: LimitOffsetType = None,
+            JOIN: Union[str, List[str], List[List[str]]] = None,
             **kwargs,
     ) -> Union[SQLRequest, List]:
         return self.db.select_distinct(
@@ -256,6 +338,7 @@ class SQLite3xTable:
             ORDER_BY=ORDER_BY,
             LIMIT=LIMIT,
             OFFSET=OFFSET,
+            JOIN=JOIN,
             **kwargs,
         )
 
@@ -266,6 +349,7 @@ class SQLite3xTable:
             ORDER_BY: OrderByType = None,
             LIMIT: LimitOffsetType = None,
             OFFSET: LimitOffsetType = None,
+            JOIN: Union[str, List[str], List[List[str]]] = None,
             **kwargs,
     ) -> Union[SQLRequest, List]:
         """
@@ -298,6 +382,7 @@ class SQLite3xTable:
             ORDER_BY=ORDER_BY,
             LIMIT=LIMIT,
             OFFSET=OFFSET,
+            JOIN=JOIN,
             **kwargs,
         )
 
@@ -420,11 +505,7 @@ class SQLite3x:
     __connection : Union[sqlite3.Connection, None]
         SQLite connection
     __path : PathType
-        Local path to database (PathType)
-    __tables : Generator[SQLite3xTable, None, None]
-        Generating list of tables as SQLite3xTable objects
-    __tables_names : List[str]
-        List of tables as string objects
+        Local __str__ to database (PathType)
 
     """
 
@@ -435,15 +516,13 @@ class SQLite3x:
         Parameters
         ----------
         path : PathType
-            Local path to database (PathType)
+            Local __str__ to database (PathType)
         template : DBTemplateType
             template of database structure (DBTemplateType)
 
         """
         self.__connection: Union[sqlite3.Connection, None] = None
         self.__path = path
-        self.__tables = self._get_tables()
-        self.__tables_names = self._get_tables_names()
         self.journal_mode(mode="WAL")  # make db little bit faster
         self.foreign_keys(mode="ON")
         if template:
@@ -459,14 +538,14 @@ class SQLite3x:
 
     @property
     def tables(self):
-        return self.__tables
+        return self._get_tables()
 
     @property
     def tables_names(self):
-        return self.__tables_names
+        return self._get_tables_names()
 
     def __str__(self):
-        return f"{{SQLite3x: path='{self.path}'}}"
+        return f"{{SQLite3x: __str__='{self.path}'}}"
 
     def __bool__(self):
         try:
@@ -478,7 +557,6 @@ class SQLite3x:
     def __getitem__(self, key) -> SQLite3xTable:
         # To call method down below is necessary,
         # otherwise it might fall in case of multiple DB objects
-        self._update_instance_variables()
 
         if key not in self.tables_names:
             raise KeyError(key, "No such table in database",
@@ -491,14 +569,6 @@ class SQLite3x:
             self.disconnect()
 
     # ============================== PRIVATE METHODS ==============================
-
-    def _update_instance_variables(self):
-        """
-        Method to update (changed) instance variables
-
-        """
-        self.__tables_names = self._get_tables_names()
-        self.__tables = self._get_tables()
 
     def _get_tables(self) -> Generator[SQLite3xTable, None, None]:
         """
@@ -519,12 +589,7 @@ class SQLite3x:
 
         for tab_name in self.tables_names:
             yield self.__getitem__(tab_name)
-            # tables.append(self.__getitem__(tab_name))
 
-        # line down below it is necessary for possibility to call self.tables unlimited times
-        # make it never end, because in the end of generation it'll be overridden
-        self.__tables = self._get_tables()
-    
     def _get_tables_names(self) -> List[str]:
         """
         Get list of tables names from database
@@ -535,7 +600,6 @@ class SQLite3x:
             list of tables names
 
         """
-
         return tuple2list(
             self.execute("SELECT name FROM sqlite_master WHERE type='table'"),
             remove_one_len=True
@@ -599,7 +663,6 @@ class SQLite3x:
 
         return SQLStatement(SQLRequest(script), self.path, self.connection)
 
-    @_update_instance
     @run.execute
     def _create_stmt(
             self,
@@ -672,7 +735,7 @@ class SQLite3x:
 
         # parsing args or kwargs for _columns and insert_values
         if args:
-            _columns = self.get_columns(table=TABLE)
+            _columns = self.get_columns_names(table=TABLE)
             _columns, args = crop(_columns, args)
             insert_values = args
 
@@ -685,7 +748,7 @@ class SQLite3x:
 
         script += (
             f"{' ' if script else ''}"
-            f"INTO {TABLE} ("
+            f"INTO '{TABLE}' ("
             f"{', '.join(column for column in _columns)}) "
             f"VALUES ("
             f"{', '.join('?' * len(insert_values))}) "
@@ -711,7 +774,7 @@ class SQLite3x:
         Parent method for fast INSERT-like methods
 
         'INSERT INTO' request and 'REPLACE INTO' request without columns names
-        (without get_columns req because it's f-g slow)
+        (without get_columns_names req because it's f-g slow)
         """
 
         if not args:
@@ -719,7 +782,7 @@ class SQLite3x:
 
         script += (
             f"{' ' if script else ''}"
-            f"INTO {TABLE} "
+            f"INTO '{TABLE}' "
             f"VALUES ("
             f"{', '.join('?' * len(args))}) "
         )
@@ -728,6 +791,7 @@ class SQLite3x:
 
         return SQLStatement(SQLRequest(script, values), self.path, self.connection)
 
+    @logger.catch
     @run.executemany
     @parse.or_param_
     @parse.from_as_
@@ -751,19 +815,13 @@ class SQLite3x:
         if args:
             args = list(filter(lambda ar: len(ar) > 0, args[0]))  # removing [] (empty lists from inserting values)
 
-            if len(args) == 0:    # if args empty after filtering, break the function, yes it'll break
+            if len(args) == 0:  # if args empty after filtering, break the function, yes it'll break
                 logger.warning("insertmany/updatemany failed, due to no values to insert/update")
                 return
 
             values = list(
                 map(lambda arg: list(arg), args)
             )
-
-            # if len(values) == 1:    # if values == [[1]]
-            #     if not isinstance(values[0], list):
-            #         values = list(values[0])
-            #     else:
-            #         values = values[0]
 
             max_l = max(map(lambda arg: len(arg), values))  # max len of arg in values
             temp_ = [0 for _ in range(max_l)]  # example values [] for script
@@ -825,11 +883,11 @@ class SQLite3x:
     @parse.from_as_
     def _select_stmt(
             self,
-            TABLE: str,
+            TABLE: Union[str, SQLite3xTable],
             script="",
             values=(),
             method: AnyStr = "SELECT ",
-            SELECT: Union[List[str], str] = None,
+            SELECT: Union[str, SQLite3xColumn, List[Union[str, SQLite3xColumn]]] = None,
     ):
         """
         Parent method for all SELECT-like methods
@@ -846,7 +904,7 @@ class SQLite3x:
         elif isinstance(SELECT, str):
             SELECT = [SELECT]
 
-        script += f"{method} " f"{', '.join(sel for sel in SELECT)} " f"FROM {TABLE} "
+        script += f"{method} " f"{', '.join(str(sel) for sel in SELECT)} " f"FROM '{str(TABLE)}' "
 
         return SQLStatement(SQLRequest(script, values), self.path, self.connection)
 
@@ -859,7 +917,7 @@ class SQLite3x:
 
         """
 
-        script += f"DELETE FROM {TABLE} "
+        script += f"DELETE FROM '{TABLE}' "
         return SQLStatement(SQLRequest(script, values), self.path, self.connection)
 
     @run.execute
@@ -899,17 +957,27 @@ class SQLite3x:
 
             set_ = new_set
 
-        values = tuple(list(values) + list(set_.values()))
+        script += f"UPDATE '{TABLE}' SET "
 
-        script += (
-            f"UPDATE {TABLE} " f"SET {'=?, '.join(s for s in list(set_.keys()))}=? "
-        )
+        for (key, val) in set_.items():
+            if issubclass(type(key), SQLite3xColumn):
+                script += f"'{key.name}'="
+            else:
+                script += f"'{key}'="
+
+            if issubclass(type(val), SQLite3xSearchCondition):
+                script += f"{val}, "
+            else:
+                script += "?, "
+                values = tuple(list(values) + [val])
+
+
+        script = script[:-2]
 
         return SQLStatement(
             SQLRequest(script=script, values=values), self.path, self.connection
         )
 
-    @_update_instance
     @run.execute
     def _drop_stmt(
             self,
@@ -923,7 +991,7 @@ class SQLite3x:
 
         """
 
-        script += f"DROP TABLE {'IF EXISTS' if IF_EXIST else ''} {TABLE} "
+        script += f"DROP TABLE {'IF EXISTS' if IF_EXIST else ''} '{TABLE}' "
         return SQLStatement(SQLRequest(script=script), self.path, self.connection)
 
     # ============================== PUBLIC METHODS ==============================
@@ -932,7 +1000,7 @@ class SQLite3x:
         """
         Create connection to database
 
-        Creating sqlite3.connect(path) connection to interact with database
+        Creating sqlite3.connect(__str__) connection to interact with database
 
         """
 
@@ -1155,7 +1223,6 @@ class SQLite3x:
             without_rowid=without_rowid,
         )
 
-    @_update_instance
     def create_temp_table(
             self,
             name: AnyStr,
@@ -1184,7 +1251,6 @@ class SQLite3x:
             **kwargs
         )
 
-    @_update_instance
     def create_temporary_table(
             self,
             name: AnyStr,
@@ -1213,7 +1279,6 @@ class SQLite3x:
             **kwargs
         )
 
-    @_update_instance
     def markup(
             self,
             template: DBTemplateType
@@ -1241,6 +1306,40 @@ class SQLite3x:
     ) -> List[str]:
         """
         Get list of table columns
+
+        Parameters
+        ----------
+        table : AnyStr
+            Name of table
+
+        Returns
+        ----------
+        List[List]
+            Columns of table
+
+        """
+
+        try:
+            columns_: List[List[str]] = self.execute(f"SELECT name FROM PRAGMA_TABLE_INFO('{table}')")
+            columns: List[str] = list(map(lambda item: item[0], columns_))
+
+        except sqlite3.OperationalError:
+            # Fix for compatibility issues #19, by some reason it can't find PRAGMA_TABLE_INFO table
+            columns_: List[List[str]] = self.pragma(f"table_info('{table}')")
+            columns: List[str] = list(map(lambda item: item[1], columns_))
+
+        if not columns:
+            raise TableInfoError
+
+        for column in columns:
+            yield SQLite3xColumn(table=self, name=column)
+
+    def get_columns_names(
+            self,
+            table: AnyStr
+    ) -> List[str]:
+        """
+        Get list of names of table columns
 
         Parameters
         ----------
@@ -1403,16 +1502,16 @@ class SQLite3x:
 
     def select(
             self,
-            TABLE: Union[str, List[str]] = None,
-            *args: Union[str, List[str]],
-            SELECT: Union[str, List[str]] = None,
+            TABLE: Union[str, List[str], SQLite3xTable] = None,
+            SELECT: Union[str, SQLite3xColumn, List[Union[str, SQLite3xColumn]]] = None,
             WHERE: WhereType = None,
             WITH: WithType = None,
             ORDER_BY: OrderByType = None,
             LIMIT: LimitOffsetType = None,
             OFFSET: LimitOffsetType = None,
-            FROM: Union[str, List[str]] = None,
+            FROM: Union[str, List[str], SQLite3xTable] = None,
             JOIN: Union[str, List[str], List[List[str]]] = None,
+            _method="SELECT",
             **kwargs,
     ) -> Union[SQLStatement, List[Any]]:
         """
@@ -1422,8 +1521,78 @@ class SQLite3x:
         ----------
         TABLE : AnyStr
             Name of table
-        *args: Union[str, List[str]]
-            selecting column or list of columns
+        SELECT : Union[str, List[str]]
+            columns to select. Value '*' by default
+        WHERE : WhereType
+            optional parameter for conditions, example: {'name': 'Alex', 'group': 2}
+        WITH : WithType
+            with_statement (don't really work well)
+        ORDER_BY : OrderByType
+            optional parameter for conditions, example: {'name': ['NULLS', 'LAST']}
+        LIMIT: LimitOffsetType
+            optional parameter for conditions, example: 10
+        OFFSET : LimitOffsetType
+            optional parameter for conditions, example: 5
+        FROM : str
+            Name of table, same at TABLE
+        JOIN: Union[str, List[str], List[List[str]]]
+            optional parameter for joining data from other tables ['groups'],
+        _method: str
+            DON'T CHANGE IT! special argument for unite select_all, select_distinct into select()
+
+        Returns
+        ----------
+        List[List]
+            selected data
+
+        """
+
+        if not TABLE:
+            if FROM:
+                TABLE = FROM
+            else:
+                raise ValueError("No TABLE or FROM argument set")
+
+        if SELECT is None:
+            SELECT = ALL
+
+        if not WHERE:
+            WHERE = kwargs
+            kwargs = {}
+
+        return self._select_stmt(
+            SELECT=SELECT,
+            TABLE=TABLE,
+            method=_method,
+            WHERE=WHERE,
+            WITH=WITH,
+            ORDER_BY=ORDER_BY,
+            LIMIT=LIMIT,
+            OFFSET=OFFSET,
+            JOIN=JOIN,
+            **kwargs,
+        )
+
+    def select_distinct(
+            self,
+            TABLE: Union[str, List[str], SQLite3xTable] = None,
+            SELECT: Union[str, SQLite3xColumn, List[Union[str, SQLite3xColumn]]] = None,
+            WHERE: WhereType = None,
+            WITH: WithType = None,
+            ORDER_BY: OrderByType = None,
+            LIMIT: LimitOffsetType = None,
+            OFFSET: LimitOffsetType = None,
+            FROM: Union[str, List[str], SQLite3xTable] = None,
+            JOIN: Union[str, List[str], List[List[str]]] = None,
+            **kwargs,
+    ) -> Union[SQLStatement, List[Any]]:
+        """
+        SELECT distinct from table
+
+        Parameters
+        ----------
+        TABLE : AnyStr
+            Name of table
         SELECT : Union[str, List[str]]
             columns to select. Value '*' by default
         WHERE : WhereType
@@ -1448,101 +1617,42 @@ class SQLite3x:
 
         """
 
-        if not TABLE:
-            if FROM:
-                TABLE = FROM
-            else:
-                raise ValueError("No TABLE or FROM argument set")
-
-        if not SELECT:
-            if args:
-                if isinstance(list(args)[0], list):
-                    SELECT = list(args)[0]
-                else:
-                    SELECT = list(args)
-            else:
-                SELECT = ALL
-
-        if not WHERE:
-            WHERE = kwargs
-            kwargs = {}
-
-        return self._select_stmt(
-            SELECT=SELECT,
+        return self.select(
             TABLE=TABLE,
-            method="SELECT",
+            _method="SELECT DISTINCT ",
+            SELECT=SELECT,
             WHERE=WHERE,
             WITH=WITH,
             ORDER_BY=ORDER_BY,
             LIMIT=LIMIT,
             OFFSET=OFFSET,
+            FROM=FROM,
             JOIN=JOIN,
-            **kwargs,
-        )
-
-    def select_distinct(
-            self,
-            TABLE: Union[str, List[str]] = None,
-            *args: Union[str, List[str]],
-            SELECT: Union[str, List[str]] = None,
-            WHERE: WhereType = None,
-            WITH: WithType = None,
-            ORDER_BY: OrderByType = None,
-            LIMIT: LimitOffsetType = None,
-            OFFSET: LimitOffsetType = None,
-            FROM: Union[str, List[str]] = None,
-            **kwargs,
-    ) -> Union[SQLRequest, List]:
-
-        if not TABLE:
-            if FROM:
-                TABLE = FROM
-            else:
-                raise ValueError("No TABLE or FROM argument set")
-
-        if not SELECT:
-            if args:
-                if isinstance(list(args)[0], list):
-                    SELECT = list(args)[0]
-                else:
-                    SELECT = list(args)
-            else:
-                SELECT = ALL
-
-        if not WHERE:
-            WHERE = kwargs
-            kwargs = {}
-
-        return self._select_stmt(
-            SELECT=SELECT,
-            TABLE=TABLE,
-            method="SELECT DISTINCT",
-            WHERE=WHERE,
-            WITH=WITH,
-            ORDER_BY=ORDER_BY,
-            LIMIT=LIMIT,
-            OFFSET=OFFSET,
-            **kwargs,
+            **kwargs
         )
 
     def select_all(
             self,
-            TABLE: Union[str, List[str]] = None,
+            TABLE: Union[str, List[str], SQLite3xTable] = None,
+            SELECT: Union[str, SQLite3xColumn, List[Union[str, SQLite3xColumn]]] = None,
             WHERE: WhereType = None,
             WITH: WithType = None,
             ORDER_BY: OrderByType = None,
             LIMIT: LimitOffsetType = None,
             OFFSET: LimitOffsetType = None,
-            FROM: Union[str, List[str]] = None,
+            FROM: Union[str, List[str], SQLite3xTable] = None,
+            JOIN: Union[str, List[str], List[List[str]]] = None,
             **kwargs,
-    ) -> Union[SQLRequest, List]:
+    ) -> Union[SQLStatement, List[Any]]:
         """
-        SELECT ALL records from table
+        SELECT all data from table
 
         Parameters
         ----------
         TABLE : AnyStr
             Name of table
+        SELECT : Union[str, List[str]]
+            columns to select. Value '*' by default
         WHERE : WhereType
             optional parameter for conditions, example: {'name': 'Alex', 'group': 2}
         WITH : WithType
@@ -1555,6 +1665,8 @@ class SQLite3x:
             optional parameter for conditions, example: 5
         FROM : str
             Name of table, same at TABLE
+        JOIN: Union[str, List[str], List[List[str]]]
+            optional parameter for joining data from other tables ['groups'],
 
         Returns
         ----------
@@ -1563,25 +1675,18 @@ class SQLite3x:
 
         """
 
-        if not TABLE:
-            if FROM:
-                TABLE = FROM
-            else:
-                raise ValueError("No TABLE or FROM argument set")
-
-        if not WHERE:
-            WHERE = kwargs
-            kwargs = {}
-
-        return self._select_stmt(
-            method="SELECT ALL ",
+        return self.select(
             TABLE=TABLE,
+            _method="SELECT ALL ",
+            SELECT=SELECT,
             WHERE=WHERE,
             WITH=WITH,
             ORDER_BY=ORDER_BY,
             LIMIT=LIMIT,
             OFFSET=OFFSET,
-            **kwargs,
+            FROM=FROM,
+            JOIN=JOIN,
+            **kwargs
         )
 
     def delete(

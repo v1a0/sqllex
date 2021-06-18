@@ -120,7 +120,7 @@ def select_test():
         print(db.select('t1', 'text_t'))
         raise MemoryError
 
-    if not db.select('t1', 'text_t', 'num_t') == [['asdf', 10.0]] * 10:
+    if not db.select('t1', ['text_t', 'num_t']) == [['asdf', 10.0]] * 10:
         print(db.select('t1', ['text_t', 'num_t']))
         raise MemoryError
 
@@ -133,7 +133,8 @@ def select_test():
         raise MemoryError
 
     # WHERE as dict
-    if not db.select('t1', 'text_t', 'num_t', WHERE={'num_t': ['=', 11.1], 'blob_t': ['<=', 5]}) == [['qwerty1', 11.1]]:
+    if not db.select('t1', ['text_t', 'num_t'], WHERE={'num_t': ['=', 11.1], 'blob_t': ['<=', 5]}) == [
+        ['qwerty1', 11.1]]:
         print(db.select('t1', ['text_t', 'num_t'], WHERE={'num_t': 11.1, 'blob_t': 5}))
         raise MemoryError
 
@@ -143,8 +144,8 @@ def select_test():
         raise MemoryError
 
     # WHERE as kwargs
-    if not db.select('t1', 'text_t', 'num_t', num_t=11.1, blob_t=6) == [['qwerty2', 11.1]]:
-        print(db.select('t1', 'text_t', 'num_t', num_t=11.1, blob_t=6))
+    if not db.select('t1', ['text_t', 'num_t'], num_t=11.1, blob_t=6) == [['qwerty2', 11.1]]:
+        print(db.select('t1', ['text_t', 'num_t'], num_t=11.1, blob_t=6))
         raise MemoryError
 
     # LIMIT test
@@ -178,7 +179,7 @@ def select_test():
         raise MemoryError
 
     # ORDER_BY DESC
-    if not db.select('t2', 'id', ORDER_BY='id DESC') == [[4], [3], [2], [1]]:
+    if not db.select('t2', ['id'], ORDER_BY='id DESC') == [[4], [3], [2], [1]]:
         print(db.select('t2', 'id', ORDER_BY='id DESC'))
         raise MemoryError
 
@@ -317,19 +318,63 @@ def get_tables_test():
         raise MemoryError
 
     for table in db.tables:
-        if table.name not in ['t1', 'groups', 'users', 'sqlite_sequence', 't2', 't3', 't4', 't5', 't6']:
+        if table.name not in ['t1', 'groups', 'users', 'sqlite_sequence', 't2', 't3', 't4', 't5', 't6', 't7']:
             print(table)
             raise MemoryError
 
     for table in db.tables:
-        if table.name not in ['t1', 'groups', 'users', 'sqlite_sequence', 't2', 't3', 't4', 't5', 't6']:
+        if table.name not in ['t1', 'groups', 'users', 'sqlite_sequence', 't2', 't3', 't4', 't5', 't6', 't7']:
             print(table)
             raise MemoryError
 
     for name in db.tables_names:
-        if name not in ['t1', 'groups', 'users', 'sqlite_sequence', 't2', 't3', 't4', 't5', 't6']:
+        if name not in ['t1', 'groups', 'users', 'sqlite_sequence', 't2', 't3', 't4', 't5', 't6', 't7']:
             print(name)
             raise MemoryError
+
+
+def getitem_test():
+    db.create_table(
+        't7',
+        {
+            'id': INTEGER,
+            'name': TEXT
+        }
+    )
+
+    t7 = db['t7']
+    t7_id = t7['id']
+    t7_name = t7['name']
+
+    if t7.columns_names != ['id', 'name']:
+        raise MemoryError
+
+    t7.insert([1, 'Alex'])
+    t7.insert([2, 'Blex'])
+
+    if t7.select(ALL, (t7_id == 2) | (t7_id == 1) & 1) != [[1, 'Alex'], [2, 'Blex']]:
+        raise MemoryError
+
+    t7.update(
+        {'name': "XXXX"},
+        WHERE=t7_id == 1
+    )
+
+    if t7.select([t7_name, 'id'], WHERE=(t7_id == 2) | (t7_id == 1) & 1) != [['XXXX', 1], ['Blex', 2]]:
+        raise MemoryError
+
+    t7.update(
+        {
+            t7_id: t7_id + 2
+        },
+        WHERE=t7_name == 'XXXX'
+    )
+
+    if t7.select([t7_name, t7_id], WHERE=(t7_id == 3)) != [['XXXX', 3]]:
+        print(t7.select([t7_name, t7_id], WHERE=(t7_id == 2) | (t7_id == 1) & 1))
+        raise MemoryError
+
+
 
 
 # Start time counting
@@ -346,6 +391,7 @@ insertmany_test()
 update_test()
 delete_test()
 replace_test()
+getitem_test()
 get_tables_test()
 
 # Disconnect

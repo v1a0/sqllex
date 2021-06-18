@@ -72,7 +72,12 @@ def return2list(func: callable) -> callable:
 
 
 def tuple2list(*args, **kwargs):
-    return lister(*args, **kwargs)
+    data = lister(*args, **kwargs)
+
+    if not isinstance(data, list):
+        return [data]
+
+    return data
 
 
 __all__ = [
