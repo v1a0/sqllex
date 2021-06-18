@@ -19,7 +19,7 @@ db.select('users', 'id', 'name', ... )
 Error:
 ```shell
 Traceback (most recent call last):
-  File "C:\Users\User\GitHub\sqllex\tests\new_test_all.py", line 1, in select_test
+  File "...\new_test_all.py", line 1, in select_test
     db.select('users', 'id', 'name', ... )
 TypeError: select() got multiple values for argument 'WHERE'
 ```
