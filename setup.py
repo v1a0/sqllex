@@ -31,7 +31,7 @@ setup(
     license='gpl-3.0',
     description='Better than sqlite3',
     author='v1a0',
-    author_email='None',
+    author_email='contact@v1a0.dev',
     url="https://github.com/v1a0/sqllex",
     download_url=f"https://github.com/V1A0/sqllex/archive/refs/tags/v{sqllex.__version__}.tar.gz",
     keywords=['sql', 'sql3', 'sqlite', 'sqlite3', 'sqllex', 'db', 'database', 'easy'],
