@@ -392,7 +392,7 @@ def has_add_remove_column_test():
         raise MemoryError
 
     col2 = t8['col2']
-    t8.remove_column(col2)
+    t8.remove_column('col2')
     t8.remove_column("col1")
 
 
@@ -401,6 +401,7 @@ def has_add_remove_column_test():
     
     if not t8.has_column("id") and not t8.has_column("test") and t8.has_column("col1") and t8.has_column("col2"):
         raise MemoryError
+
 
 
 # Start time counting
