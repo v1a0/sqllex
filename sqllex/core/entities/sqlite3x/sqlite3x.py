@@ -180,6 +180,64 @@ class SQLite3xTable:
 
         return self.db.pragma(f"table_info({self.name})")
 
+    def add_column(self, column: dict) -> None:
+        """
+        Adds column to the table
+
+        Parameters
+        ----------
+        column : Dict
+            Column name and SQL type e.g. {'value': TEXT}
+
+        Returns
+        ----------
+        None
+
+        """
+
+        self.db.add_column(self.name, column)
+
+    def remove_column(self, column: Union[AnyStr, SQLite3xColumn]) -> None:
+        """
+        Removes column from the table
+
+        Parameters
+        ----------
+        column : Union[AnyStr, SQLite3xColumn]
+            Name of column or SQLite3xColumn object.
+
+        Returns
+        ----------
+        None
+
+        """
+
+        self.db.remove_column(self.name, column)
+
+    def has_column(self, column: Union[AnyStr, SQLite3xColumn]) -> bool:
+        """
+        Checks if column exists in the table
+
+        Parameters
+        ----------
+        column : Union[AnyStr, SQLite3xColumn]
+            Name of column or SQLite3xColumn object.
+
+        Returns
+        ----------
+        bool
+            logical value of column's existence.
+
+        """
+
+        if isinstance(column, SQLite3xColumn):
+            column = column.name
+
+        if column in self.columns_names:
+            return True
+
+        return False
+
     def get_columns_names(self) -> List:
         """
         Get list of table columns
@@ -1300,6 +1358,65 @@ class SQLite3x:
                 IF_NOT_EXIST=True
             )
 
+    def add_column(
+        self,
+        table: AnyStr,
+        column: ColumnDataType
+    ) -> None:
+        """
+        Adds column to the table
+
+        Parameters
+        ----------
+        table : AnyStr
+            Name of table
+        column : Dict
+            Column name and SQL type e.g. {'value': INTEGER}
+
+        Returns
+        ----------
+        None
+        """
+
+        for (column_name, column_type) in column.items():
+            if not isinstance(column_type, (list, tuple)):
+                column_type = [column_type]
+
+            self.execute(
+                f"ALTER TABLE "
+                f"'{table}' "
+                f"ADD "
+                f"'{column_name}' "
+                f"{' '.join(ct for ct in column_type)}")
+
+    def remove_column(
+        self,
+        table: AnyStr,
+        column: Union[AnyStr, SQLite3xColumn]
+    ):
+        """
+        Removes column from the table
+
+        Parameters
+        ----------
+        table : AnyStr
+            Name of table
+        column : Union[AnyStr, SQLite3xColumn]
+            Name of column or SQLite3xColumn object.
+
+        Returns
+        ----------
+        None
+        """
+
+        column_name = column
+
+        if isinstance(column, SQLite3xColumn):
+            column_name = column.name
+
+        self.execute(
+            f"ALTER TABLE '{table}' DROP COLUMN '{column_name}'")
+
     def get_columns(
             self,
             table: AnyStr
@@ -1819,6 +1936,8 @@ class SQLite3x:
 
 
 __all__ = [
-    "SQLite3x",
-    "SQLite3xTable"
+    "SQLite3x",  # lgtm [py/undefined-export]
+    "SQLite3xTable",  # lgtm [py/undefined-export]
+    "SQLite3xColumn",  # lgtm [py/undefined-export]
+    "SQLite3xSearchCondition"  # lgtm [py/undefined-export]
 ]

@@ -375,6 +375,32 @@ def getitem_test():
         raise MemoryError
 
 
+def has_add_remove_column_test():
+    db.create_table(
+        't8',
+        {
+            'id': INTEGER,
+            'test': TEXT
+        }
+    )
+    t8 = db["t8"]
+    t8.add_column({"col1": [TEXT, NOT_NULL]})
+    t8.add_column({"col2": TEXT})
+
+    if t8.columns_names != ['id', 'test', 'col1', 'col2']:
+        print(t8.columns_names)
+        raise MemoryError
+
+    col2 = t8['col2']
+    t8.remove_column(col2)
+    t8.remove_column("col1")
+
+
+    if t8.columns_names != ['id', 'test']:
+        raise MemoryError
+    
+    if not t8.has_column("id") and not t8.has_column("test") and t8.has_column("col1") and t8.has_column("col2"):
+        raise MemoryError
 
 
 # Start time counting
@@ -393,6 +419,7 @@ delete_test()
 replace_test()
 getitem_test()
 get_tables_test()
+has_add_remove_column_test()
 
 # Disconnect
 db.disconnect()
