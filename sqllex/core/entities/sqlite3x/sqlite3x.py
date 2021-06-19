@@ -57,6 +57,9 @@ class SQLite3xSearchCondition(str):
 
 class SQLite3xColumn:
     def __init__(self, table, name: AnyStr):
+        if not isinstance(table, SQLite3xTable):
+            raise TypeError(f"Argument table have oto be SQLite3xTable not {type(table)}")
+
         self.table: SQLite3xTable = table
         self.name = name
 
@@ -143,6 +146,8 @@ class SQLite3xTable:
             Name of table
 
         """
+        if not isinstance(db, SQLite3x):
+            raise TypeError(f"Argument db have oto be SQLite3x not {type(db)}")
         self.db: SQLite3x = db
         self.name: AnyStr = name
 

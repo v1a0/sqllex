@@ -403,7 +403,6 @@ def has_add_remove_column_test():
         raise MemoryError
 
 
-
 # Start time counting
 t = time()
 

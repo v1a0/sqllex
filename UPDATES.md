@@ -1,6 +1,12 @@
 # 0.1.10
 
-### 0.1.10.0
+### 0.1.10.3
+- added add_column, remove_column, has_column methods to SQLite3xTable (#22)
+- add_column, remove_column to SQLite3x class (#22)
+- tests
+- SQLite3xColumn and SQLite3xSearchCondition added to sqllex.classes
+
+### 0.1.10.2
 - Added 2 new classes SQLiteColumn and SQLite3 SearchCondition with many cool features
 - New way to set WHERE  Condition
 - New way to set SET Condition
