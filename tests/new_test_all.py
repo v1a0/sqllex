@@ -384,7 +384,7 @@ def has_add_remove_column_test():
         }
     )
     t8 = db["t8"]
-    t8.add_column({"col1": [TEXT, NOT_NULL]})
+    t8.add_column({"col1": [TEXT, DEFAULT, '123']})
     t8.add_column({"col2": TEXT})
 
     if t8.columns_names != ['id', 'test', 'col1', 'col2']:
