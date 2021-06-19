@@ -374,6 +374,7 @@ def getitem_test():
         print(t7.select([t7_name, t7_id], WHERE=(t7_id == 2) | (t7_id == 1) & 1))
         raise MemoryError
 
+
 def has_add_remove_column_test():
     db.create_table(
         't8',
@@ -383,21 +384,22 @@ def has_add_remove_column_test():
         }
     )
     t8 = db["t8"]
-    t8.add_column({"col1":TEXT})
-    t8.add_column({"col2":TEXT})
+    t8.add_column({"col1": [TEXT, NOT_NULL]})
+    t8.add_column({"col2": TEXT})
 
-    if len(t8.columns_names)!=4:
+    if t8.columns_names != ['id', 'test', 'col1', 'col2']:
+        print(t8.columns_names)
         raise MemoryError
 
+    col2 = t8['col2']
+    t8.remove_column(col2)
     t8.remove_column("col1")
 
-    # NameError: name 'SQLite3xColumn' is not defined  (???)
-    # col2 = SQLite3xColumn("t8","col2")
-    # t8.remove_column(col2)
-    if len(t8.columns_names)!=3:
+
+    if t8.columns_names != ['id', 'test']:
         raise MemoryError
     
-    if not t8.has_column("id") and t8.has_column("col1") and not t8.has_column("col2"):
+    if not t8.has_column("id") and not t8.has_column("test") and t8.has_column("col1") and t8.has_column("col2"):
         raise MemoryError
 
 
