@@ -56,6 +56,27 @@ class SQLite3xSearchCondition(str):
 
 
 class SQLite3xColumn:
+    """
+    Sub-class of SQLite3xTable, itself one column of table (SQLite3xTable)
+    Have same methods but without table name argument
+    Attributes
+    ----------
+    table : SQLite3xTable
+        SQLite3xTable parent table object
+    name : str
+        Name of column
+
+    Existing for generating SQLite3xSearchCondition for WHERE, SET
+    and other parameters of parents classes
+
+    db['table_name']['column_name'] = x
+    db['table_name']['column_name'] > x
+    db['table_name']['column_name'] >= x
+    db['table_name']['column_name'] != x
+    ...
+    db['table_name']['column_name'] / x
+    """
+
     def __init__(self, table, name: AnyStr):
         if not isinstance(table, SQLite3xTable):
             raise TypeError(f"Argument table have oto be SQLite3xTable not {type(table)}")
@@ -76,40 +97,40 @@ class SQLite3xColumn:
                 f"({self}{operator}{value})"
             )
 
-    def __lt__(self, value):
+    def __lt__(self, value) -> SQLite3xSearchCondition:
         return self._str_gen(value, '<')
 
-    def __le__(self, value):
+    def __le__(self, value) -> SQLite3xSearchCondition:
         return self._str_gen(value, '<=')
 
-    def __eq__(self, value):
+    def __eq__(self, value) -> SQLite3xSearchCondition:
         return self._str_gen(value, '=')
 
-    def __ne__(self, value):
+    def __ne__(self, value) -> SQLite3xSearchCondition:
         return self._str_gen(value, '<>')
 
-    def __gt__(self, value):
+    def __gt__(self, value) -> SQLite3xSearchCondition:
         return self._str_gen(value, '>')
 
-    def __ge__(self, value):
+    def __ge__(self, value) -> SQLite3xSearchCondition:
         return self._str_gen(value, '>=')
 
-    def __add__(self, value):
+    def __add__(self, value) -> SQLite3xSearchCondition:
         return self._str_gen(value, '+')
 
-    def __sub__(self, value):
+    def __sub__(self, value) -> SQLite3xSearchCondition:
         return self._str_gen(value, '-')
 
-    def __mul__(self, value):
+    def __mul__(self, value) -> SQLite3xSearchCondition:
         return self._str_gen(value, '*')
 
-    def __truediv__(self, value):
+    def __truediv__(self, value) -> SQLite3xSearchCondition:
         return self._str_gen(value, '/')
 
-    def __divmod__(self, value):
+    def __divmod__(self, value) -> SQLite3xSearchCondition:
         return self._str_gen(value, '%')
 
-    def __list__(self):
+    def __list__(self) -> List[Any]:
         return self.table.select_all(self.name)
 
     def __hash__(self):
@@ -118,7 +139,7 @@ class SQLite3xColumn:
 
 class SQLite3xTable:
     """
-    Sub-class of SQLite3x contains one table of Database
+    Sub-class of SQLite3x, itself one table of Database
     Have same methods but without table name argument
 
     Attributes
@@ -592,19 +613,19 @@ class SQLite3x:
             self.markup(template=template)
 
     @property
-    def connection(self):
+    def connection(self) -> Union[sqlite3.Connection, None]:
         return self.__connection
 
     @property
-    def path(self):
+    def path(self) -> PathType:
         return self.__path
 
     @property
-    def tables(self):
+    def tables(self) -> Generator[SQLite3xTable, None, None]:
         return self._get_tables()
 
     @property
-    def tables_names(self):
+    def tables_names(self) -> List[str]:
         return self._get_tables_names()
 
     def __str__(self):
@@ -635,7 +656,7 @@ class SQLite3x:
 
     def _get_tables(self) -> Generator[SQLite3xTable, None, None]:
         """
-        Generator of tables list
+        Generator of tables as SQLite3xTable objects
 
         Yield
         ----------
@@ -1085,26 +1106,6 @@ class SQLite3x:
         self.connection.close()
         self.__connection = None
 
-    def get_table(self, name: AnyStr) -> SQLite3xTable:
-        """
-        Shadow method for __getitem__, that used as like: database['table_name']
-
-        Get table object (SQLite3xTable instance)
-
-        Parameters
-        ----------
-        name : AnyStr
-            Name of table
-
-        Returns
-        ----------
-        SQLite3xTable
-            Instance of SQLite3xTable, table of database
-
-        """
-
-        return self.__getitem__(key=name)
-
     def execute(
             self,
             script: AnyStr = None,
@@ -1248,6 +1249,8 @@ class SQLite3x:
         """
         Send table_info PRAGMA request
 
+        Parameters
+        ----------
         table_name : str
             Name of table
 
@@ -1375,7 +1378,8 @@ class SQLite3x:
         ----------
         table : AnyStr
             Name of table
-        column : Dict
+        column : ColumnDataType
+            Columns of table (ColumnsType-like)
             Column name and SQL type e.g. {'value': INTEGER}
 
         Returns
@@ -1422,12 +1426,35 @@ class SQLite3x:
         self.execute(
             f"ALTER TABLE '{table}' DROP COLUMN '{column_name}'")
 
+    def get_table(
+            self,
+            name: AnyStr
+    ) -> SQLite3xTable:
+        """
+        Shadow method for __getitem__, that used as like: database['table_name']
+
+        Get table object (SQLite3xTable instance)
+
+        Parameters
+        ----------
+        name : AnyStr
+            Name of table
+
+        Returns
+        ----------
+        SQLite3xTable
+            Instance of SQLite3xTable, table of database
+
+        """
+
+        return self.__getitem__(key=name)
+
     def get_columns(
             self,
             table: AnyStr
-    ) -> List[str]:
+    ) -> Generator[SQLite3xColumn, None, None]:
         """
-        Get list of table columns
+        Get list of table columns like an SQLite3xColumn objects
 
         Parameters
         ----------
@@ -1436,7 +1463,7 @@ class SQLite3x:
 
         Returns
         ----------
-        List[List]
+        Generator[SQLite3xColumn]
             Columns of table
 
         """
@@ -1461,7 +1488,7 @@ class SQLite3x:
             table: AnyStr
     ) -> List[str]:
         """
-        Get list of names of table columns
+        Get list of names of table columns as strings
 
         Parameters
         ----------

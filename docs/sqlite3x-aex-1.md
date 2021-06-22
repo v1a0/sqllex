@@ -1,102 +1,48 @@
+# SQLite3x | Awesome example #1
 
-<div align="center">
-
-<img src="./pics/sqllex-logo.svg" width="300px">
-
-# SQLLEX alpha v0.1.10 📚
-
-![Python:3.9](https://img.shields.io/badge/Python-3.9-green)
-[![Language grade: Python](https://img.shields.io/lgtm/grade/python/g/V1A0/sqllex.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/V1A0/sqllex/context:python)
-[![Total alerts](https://img.shields.io/lgtm/alerts/g/V1A0/sqllex.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/V1A0/sqllex/alerts/)
-[![Telegram group](https://img.shields.io/badge/Telegram-Group-blue.svg?logo=telegram)](https://t.me/joinchat/CKq9Mss1UlNlMDIy)
+Imagine you need create some database, with structure like:
 
 
-<br>
-Better than <b>sqlite3</b>. Seriously, try it out<br>
-</div><br>
+<table>
+    <thead>
+        <tr>
+            <th colspan=3>Your awesome database</th>
+        </tr>
+        <tr>
+            <th colspan=1>Table</th>
+            <th colspan=1>Columns</th>
+            <th colspan=1>Column params</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td rowspan=2><b>Groups</b></td>
+            <td rowspan=1>id</td>
+            <td><code>INTEGER PRIMARY KEY UNIQUE</code></td>
+        </tr>
+        <tr>
+            <td>name</td>
+            <td><code>TEXT NOT NULL DEFAULT 'Unknown'</code></td>
+        </tr>
+        <tr>
+            <td rowspan=3><b>Users</b></td>
+            <td>id</td>
+            <td><code>INTEGER PRIMARY KEY UNIQUE</code></td>
+        </tr>
+        <tr>
+            <td>username</td>
+            <td><code>TEXT NOT NULL</code></td>
+        </tr>
+        <tr>
+            <td>user_group</td>
+            <td><code>FOREIGN KEY "user_group" REFERENCES groups "id"</code></td>
+        </tr>
+    </tbody>
+</table>
 
-## Installation
-```shell
-pip install sqllex
-```
 
-If you need most stable version install **sqllex==0.1.10.3**
+[I don't need explains, just show me the code](#Code)
 
-
-| Version |  Status | Tests, and actions |
-| :--------: | :----------------------------: | :---: |
-| `0.1.10.3`    | ✔️ stable (testing)  <br> ✔️ supported      | [![CodeQL](https://github.com/v1a0/sqllex/actions/workflows/codeql-analysis.yml/badge.svg?branch=main)](https://github.com/v1a0/sqllex/actions/workflows/codeql-analysis.yml) </br> [![Test Sqlite3x](https://github.com/v1a0/sqllex/actions/workflows/test_sqlite3x.yml/badge.svg?branch=main)](https://github.com/v1a0/sqllex/actions/workflows/test_sqlite3x.yml) </br> [![Upload Python Package](https://github.com/v1a0/sqllex/actions/workflows/python-publish.yml/badge.svg)](https://github.com/v1a0/sqllex/actions/workflows/python-publish.yml) |
-| `<=0.1.9.10`  | ✔️ stable            <br> ❌️ outdated       |  ✔️Mostly passing |
-| `<= 0.1.8.x`  | ⚠️ unstable          <br> ❌️ outdated       |  ~ |
-
-v0.1.10+ | Since 0.1.10 version sqllex got some new extra features and change of usage select-like 
-methods. If you still know nothing about this, please, read: 
-[WARNING.md](https://github.com/v1a0/sqllex/blob/main/WARNING.md#sqllex-v01100)
-
-## About
-Use databases without thinking about SQL. Let me show you how sqllex makes
-your life easier. Imagine you need create some database, save some data
-into it and take it back. That's how your code will look like.
-
-### If you never used SQLite before read [this awesome example](https://github.com/v1a0/sqllex/wiki/SQLite3x-%7C-SIMPLEST-EXAMPLE#simplest-sqlite3x-example) or [this one](https://deepnote.com/@abid/SQLLEX-Simple-and-Faster-7WXrco0hRXaqvAiXo8QJBQ#)
-```python
-from sqllex import *
-
-db = SQLite3x(                              
-    path='my_database.db',                      
-    template={                              
-        "users": {                          
-            "username": [TEXT, NOT_NULL],   
-            "age": INTEGER,                 
-        }                                   
-    }                                       
-)
-
-users = db["users"]
-
-users.insert('Sqllex', 33)
-
-users_33 = users.find(age=33)
-
-print(users_33)  # [['Sqllex', 33]]
-```
-
-<br>
-<details>
-<summary id="what1"><big>WHAT IS GOING ON THERE?!</big></summary>
-
-```python
-from sqllex import *
-
-# Create some database, with simple structure
-db = SQLite3x(                              # create database 
-    path='my_data.db',                      # path to your database, or where you would like it locate
-    template={                              # schema for tables inside your database                              
-        "users": {                          # name for the 1'st table
-            "username": [TEXT, NOT_NULL],   # 1'st column of table, named "username", contains text-data, can't be NULL
-            "age": INTEGER,                 # 2'nd column of table, named "age", contains integer value
-        }                                   # end of table
-    }                                       # end of schema (template)
-)
-
-# Ok, now you have database with table inside it.
-# Let's take this table as variable
-users = db["users"]
-
-# Now add record of 33 years old user named 'Sqllex' into it
-# Dear table, please insert ['Sqllex', 33] values 
-users.insert('Sqllex', 33)
-
-# Dear table, please find records where_ column 'age' == 33
-users_33 = users.find(age=33)
-
-# Print results
-print(users_33)  # [['Sqllex', 33]]
-```
-
-</details>
-
-Ok, what if you need more complex structure with FOREIGN KEYs? Not a big deal.
 
 ```python
 # 
@@ -256,45 +202,46 @@ users.select(
 db.disconnect() # unlock your database and save all changes
 ```
 
-
 <details>
 <summary id="just_code_1">Code without comments</summary>
 
 
 
 ```python
+
 from sqllex import *
 
-db = SQLite3x(path='my_awesome_db.db')
+db = SQLite3x(path='my_awesome_db.db') 
 
 db.connect()
 
+                                                
 db.create_table(
-    name='groups',
-    columns={
-        'id': [INTEGER, PRIMARY_KEY, UNIQUE],
-        'name': [TEXT, NOT_NULL, DEFAULT, 'Unknown']
+    'groups',                                         
+    {                                                 
+        'id': [INTEGER, PRIMARY_KEY, UNIQUE],         
+        'name': [TEXT, NOT_NULL, DEFAULT, 'Unknown']  
     }
 )
 
+
 db.create_table(
-    'users',
-    {
-        'id': [INTEGER, PRIMARY_KEY, UNIQUE],
+    name='users',                                        
+    columns={
+        'id': [INTEGER, PRIMARY_KEY, UNIQUE],            
         'username': [TEXT, NOT_NULL, DEFAULT, 'Unknown'],
-        'user_group': INTEGER,
+        'user_group': INTEGER,                           
         FOREIGN_KEY: {
-            "user_group": ["groups", "id"]
+            "user_group": ["groups", "id"]               
         }
-    }
-)
+    })
 
 
 groups = db['groups']
 
 groups.insert(id=1, name="Admin")
 
-groups.insert([2, "User"])
+groups.insert([2, "User"]) 
 
 groups.insert(3, 'Guest')
 
@@ -315,41 +262,34 @@ users = db['users']
 
 users.insertmany(users_list)
 
-users_in_db = users.select('username')
+users_in_db = users.select('username')  
 
-print(users_in_db)
+print(users_in_db)  
 
-group_column = users['user_group']
-
-users_1 = users.select(
-    ALL,
-    WHERE=(group_column == 1)
+users_group_1 = users.select(
+    'username',
+    WHERE=(users['user_group'] ==  1),
 )
 
-print(users_1)
+print(users_group_1)
 
 users.select(
-    SELECT=['username', 'group_name', 'description'],
-    JOIN=[
-        ['groups', AS, 'gr', ON, 'users.group_id == gr.group_id'],
-        [CROSS_JOIN, 'about', 'ab', ON, 'ab.group_id == gr.group_id']
+    SELECT=['username', 'group_name', 'description'],                        
+    JOIN=[                                                                   
+        ['groups', AS, 'gr', ON, 'users.group_id == gr.group_id'],           
+        [CROSS_JOIN, 'about', 'ab', ON, 'ab.group_id == gr.group_id']        
     ],
     WHERE= (users['username'] != 'user_1') & (users['username'] != 'user_2'),
-    ORDER_BY='age DESC',
-    LIMIT=50,
-    OFFSET=20
+    ORDER_BY='age DESC',                                                     
+    LIMIT=50,                                                                
+    OFFSET=20                                                                
 )
 
 db.disconnect()
 ```
-
 </details>
 
-# [Not enough? Need examples? Read more in Sqllex Documentation! (link)](./docs/index.md)
 
------
-### Other
-#### [UPDATES](./UPDATES.md)
-#### [WARNING](./WARNING.md)
-#### [LICENSE](./LICENSE)
-#### [DOCUMENTATION](./docs/index.md)
+### Congratulation, now you know basic SQLite3x methods! Explore more features and method on the links down below.
+
+### [Back to home](./index.md)
