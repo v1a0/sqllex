@@ -1,6 +1,8 @@
 <div align="center">
 
+<svg width="200" height="200" xmlns="http://www.w3.org/2000/svg"> 
 <img src="https://github.com/v1a0/sqllex/blob/main/pics/sqllex-logo.svg" width="300px">
+</svg>
 
 # Welcome to the Sqllex Documentation! 👋
 
