@@ -50,4 +50,4 @@ db.drop(TABLE='table3', IF_EXIST=True)
 ```
 
 
-### [Back to home](./index.md)
+### [Back to home](README.md)

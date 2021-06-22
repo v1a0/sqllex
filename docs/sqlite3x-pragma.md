@@ -116,4 +116,4 @@ db.table_info('my_table')
 
 ```
 
-### [Back to home](./index.md)
+### [Back to home](README.md)

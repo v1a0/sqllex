@@ -52,4 +52,4 @@ db.insertmany('t6', data2, OR=REPLACE)  # actually do the same thing
 ```
 
 
-### [Back to home](./index.md)
+### [Back to home](README.md)

@@ -292,4 +292,4 @@ Run it and we got:
 
 ### Explore more and learn how awesome SQL and SQLLEX is!
 
-### [Back to home](./index.md)
+### [Back to home](README.md)

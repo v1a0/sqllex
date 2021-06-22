@@ -1,9 +1,12 @@
 <div align="center">
+  <svg width="200" height="200" xmlns="http://www.w3.org/2000/svg"> 
+    <img src="https://raw.githubusercontent.com/v1a0/sqllex/68ed90078289cf6e20d80070203f281010ab83c0/pics/sqllex-logo.svg" width="300px">
+  </svg>
+</div>
 
-<svg width="200" height="200" xmlns="http://www.w3.org/2000/svg"> 
-<img src="https://raw.githubusercontent.com/v1a0/sqllex/68ed90078289cf6e20d80070203f281010ab83c0/pics/sqllex-logo.svg" width="300px">
-</svg>
-<br>
+
+<div align="center">
+
 
 # Welcome to the Sqllex Documentation! 👋
 

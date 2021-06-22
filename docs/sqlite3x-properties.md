@@ -48,4 +48,4 @@ def tables_names(self) -> List[str]:
 List of tables names as strings
 
 
-### [Back to home](./index.md)
+### [Back to home](README.md)

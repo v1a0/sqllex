@@ -49,4 +49,4 @@ def select_all(
 
 Same as [SQLIte3x.select](./sqlite3x-select.md) 
 
-### [Back to home](./index.md)
+### [Back to home](README.md)

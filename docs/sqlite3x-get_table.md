@@ -50,4 +50,4 @@ users_table.insert([1, 'Alex'])
 
 ```
 
-### [Back to home](./index.md)
+### [Back to home](README.md)

@@ -89,4 +89,4 @@ users.select(ALL) # [[1, 'Alex'], [2, 'Blex'], [3, 'Clex'], [4, 'Dlex']]
 ```
 
 
-### [Back to home](./index.md)
+### [Back to home](README.md)

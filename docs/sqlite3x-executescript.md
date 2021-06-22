@@ -24,4 +24,4 @@ def executescript(
 Sames as sqlite3.executescript
 
 
-### [Back to home](./index.md)
+### [Back to home](README.md)

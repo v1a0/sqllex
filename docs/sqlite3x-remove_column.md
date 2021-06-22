@@ -58,4 +58,4 @@ print(db.get_columns_names('users'))  # ['id']
 ```
 
 
-### [Back to home](./index.md)
+### [Back to home](README.md)

@@ -292,4 +292,4 @@ db.disconnect()
 
 ### Congratulation, now you know basic SQLite3x methods! Explore more features and method on the links down below.
 
-### [Back to home](./index.md)
+### [Back to home](README.md)

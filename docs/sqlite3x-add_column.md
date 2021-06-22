@@ -49,4 +49,4 @@ print(db.get_columns_names('users'))  # ['id', 'name', 'group']
 
 ```
 
-### [Back to home](./index.md)
+### [Back to home](README.md)

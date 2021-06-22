@@ -345,11 +345,11 @@ db.disconnect()
 
 </details>
 
-# [Not enough? Need examples? Read more in Sqllex Documentation! (link)](./docs/index.md)
+# [Not enough? Need examples? Read more in Sqllex Documentation! (link)](docs/README.md)
 
 -----
 ### Other
 #### [UPDATES](./UPDATES.md)
 #### [WARNING](./WARNING.md)
 #### [LICENSE](./LICENSE)
-#### [DOCUMENTATION](./docs/index.md)
+#### [DOCUMENTATION](docs/README.md)
