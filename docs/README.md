@@ -85,7 +85,6 @@ It'll be a lot easier to show then explain.
     - [tables](./sqlite3x-properties.md)
     - [tables_names](./sqlite3x-properties.md)
   
-
 - ## SQLite3xTable
   
   - ### [About class](./sqlite3xtable-about.md) 
@@ -130,4 +129,9 @@ It'll be a lot easier to show then explain.
   - [OFFSET](./common-parameters.md#offset)
   - [FROM](./common-parameters.md#from)
   - [JOIN](./common-parameters.md#join)
-  
+
+- ## [Project Showcase](./sqlite3x-showcase.md)
+
+  - [Vaccine Update System](https://deepnote.com/@abid/Vaccine-Update-Dashboard-gybiCp-FTAyDgMjImOfj0w)
+  - [Sqllex for Data Science Using Pandas](https://deepnote.com/@abid/SQLLEX-Simple-and-Faster-7WXrco0hRXaqvAiXo8QJBQ)
+
