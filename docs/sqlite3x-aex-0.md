@@ -25,11 +25,11 @@ db = SQLite3x()
 
 After you run this code you'll see a database file in the same directory as your `mail.py` file
 
-<img src="https://raw.githubusercontent.com/v1a0/imgs/main/sqllex/examples/1/db_and_main.png">
+<img src="https://raw.githubusercontent.com/v1a0/imgs/main/sqllex/examples/1/db_and_main.png?raw=true">
 
 You can open it (by [sqlitebrowser](https://github.com/sqlitebrowser/sqlitebrowser) for example) and make sure it works and it's empty
 
-<img src="https://raw.githubusercontent.com/v1a0/imgs/main/sqllex/examples/1/db_0.png">
+<img src="https://raw.githubusercontent.com/v1a0/imgs/main/sqllex/examples/1/db_0.png?raw=true">
 
 
 <br><br>
@@ -57,9 +57,8 @@ db.create_table(
 
 Run it. Done, and results:
 
-<img src="https://github.com/v1a0/imgs/blob/main/sqllex/examples/1/db_1.png">
-<img src="https://github.com/v1a0/imgs/blob/main/sqllex/examples/1/db_2.png">
-
+<img src="https://github.com/v1a0/imgs/blob/main/sqllex/examples/1/db_1.png?raw=true">
+<img src="https://github.com/v1a0/imgs/blob/main/sqllex/examples/1/db_2.png?raw=true">
 
 <br><br>
 
@@ -81,7 +80,7 @@ table_users.insert(
 
 Run it.
 
-<img src="https://github.com/v1a0/imgs/blob/main/sqllex/examples/1/db_3.png">
+<img src="https://github.com/v1a0/imgs/blob/main/sqllex/examples/1/db_3.png?raw=true">
 
 
 And yup, we're in! So now we'll take it back.
@@ -124,7 +123,7 @@ table_users.insertmany(
 )
 ```
 
-<img src="https://github.com/v1a0/imgs/blob/main/sqllex/examples/1/db_4.png">
+<img src="https://github.com/v1a0/imgs/blob/main/sqllex/examples/1/db_4.png?raw=true">
 
 And select all data from table again:
 
@@ -241,8 +240,8 @@ returns:
 ['users', 'some_users']
 ```
 
-<img src="https://github.com/v1a0/imgs/blob/main/sqllex/examples/1/db_5.png">
-<img src="https://github.com/v1a0/imgs/blob/main/sqllex/examples/1/db_6.png">
+<img src="https://github.com/v1a0/imgs/blob/main/sqllex/examples/1/db_5.png?raw=true">
+<img src="https://github.com/v1a0/imgs/blob/main/sqllex/examples/1/db_6.png?raw=true">
 
 
 <br><br>
@@ -256,8 +255,9 @@ Now lest remove this new table. For this use `drop` method with name of table (`
 new_table.drop()
 ```
 
-<img src="https://github.com/v1a0/imgs/blob/main/sqllex/examples/1/db_1.png">
-<img src="https://github.com/v1a0/imgs/blob/main/sqllex/examples/1/db_4.png">
+![db1](https://github.com/v1a0/imgs/blob/main/sqllex/examples/1/db_1.png?raw=true)
+
+<img src="https://github.com/v1a0/imgs/blob/main/sqllex/examples/1/db_4.png?raw=true">
 
 Cool.
 
@@ -269,18 +269,18 @@ Cool.
 
 As you see in table `users` first record looks not like an other. I guess we have to fix it. Just updater data of this one record.
 
-<img src="https://github.com/v1a0/imgs/blob/main/sqllex/examples/1/db_4.png">
+<img src="https://github.com/v1a0/imgs/blob/main/sqllex/examples/1/db_4.png?raw=true">
 
 ```python
 table_users.update(
     SET=['username', 'User1'],
     WHERE=['id', 1]
 )
-``` 
+```
 
 Run it and we got:
 
-<img src="https://github.com/v1a0/imgs/blob/main/sqllex/examples/1/db_7.png">
+<img src="https://github.com/v1a0/imgs/blob/main/sqllex/examples/1/db_7.png?raw=true">
 
 
 <br><br>
