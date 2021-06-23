@@ -9,7 +9,7 @@ Using Deepnote schedule features, pandas, telegram bot, and sqllex for updating 
 vaccine data of both world and Pakistan. This will be also showing the progress of vaccination in different parts of
 the world with interactive visual graphs. 
 
-[![VUS](images/image-20210622204558837.png)](https://deepnote.com/@abid/Vaccine-Update-Dashboard-gybiCp-FTAyDgMjImOfj0w)
+[![VUS](images/showcase-vus.png)](https://deepnote.com/@abid/Vaccine-Update-Dashboard-gybiCp-FTAyDgMjImOfj0w)
 
 
 
@@ -19,7 +19,7 @@ In this article, **[Abid](https://github.com/kingabzpro)** has experimented with
 This is a very interesting and beginner-friendly article, which plays around with the existing database, creating a new
 database, adding a database using pandas, and then using all SQL queries to get the perfect result for Data analysis. 
 
-[![SQLEX simple](images/image-20210622204752195.png)](https://deepnote.com/@abid/SQLLEX-Simple-and-Faster-7WXrco0hRXaqvAiXo8QJBQ)
+[![SQLEX simple](images/showcase-dssbuse.png)](https://deepnote.com/@abid/SQLLEX-Simple-and-Faster-7WXrco0hRXaqvAiXo8QJBQ)
 
 
 

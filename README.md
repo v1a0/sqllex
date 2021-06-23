@@ -345,7 +345,7 @@ db.disconnect()
 
 </details>
 
-# [Not enough? Need examples? Read more in Sqllex Documentation! (link)](docs/README.md)
+# [Not enough? Need examples? Read more in Sqllex Documentation! (link)](https://v1a0.github.io/sqllex/)
 
 -----
 ### Other
