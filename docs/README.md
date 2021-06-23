@@ -1,10 +1,4 @@
 <div style="text-align: center">
-  <svg width="200" height="200" xmlns="http://www.w3.org/2000/svg"> 
-    <img src="https://raw.githubusercontent.com/v1a0/sqllex/68ed90078289cf6e20d80070203f281010ab83c0/pics/sqllex-logo.svg" width="300px" alt="sqllex logo">
-  </svg>
-</div>
-
-<div style="text-align: center">
 <h1> Welcome to the Sqllex Documentation! 👋</h1>
 <br>
 Here you can find some explanations and examples of Sqllex ORM <br>
@@ -126,8 +120,8 @@ It'll be a lot easier to show then explain.
   - [FROM](./common-parameters.md#from)
   - [JOIN](./common-parameters.md#join)
 
-- ## [Project Showcase](./sqlite3x-showcase.md)
+- ## [Project Showcase](sqllex-showcase.md)
 
-  - [Vaccine Update System](https://deepnote.com/@abid/Vaccine-Update-Dashboard-gybiCp-FTAyDgMjImOfj0w)
-  - [Sqllex for Data Science Using Pandas](https://deepnote.com/@abid/SQLLEX-Simple-and-Faster-7WXrco0hRXaqvAiXo8QJBQ)
+  - [Vaccine Update System](./sqllex-showcase.md#vaccine-update-systemhttpsdeepnotecomabidvaccine-update-dashboard-gybicp-ftaydgmjimofj0w--by-kingabzpro)
+  - [Sqllex for Data Science Using Pandas](./sqllex-showcase.md#sqllex-for-data-science-using-pandashttpsdeepnotecomabidsqllex-simple-and-faster-7wxrco0hrxaqvaixo8qjbq-by-kingabpro)
 
