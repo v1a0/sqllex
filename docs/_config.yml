@@ -1,24 +1,14 @@
-remote_theme: pmarsceill/just-the-docs
-logo: "./images/sqllex-logo-text-white.svg"
-color_scheme: dark
+remote_theme: rundocs/jekyll-rtd-theme
 
-last_edit_timestamp: true
-last_edit_time_format: "%b %e %Y at %I:%M %p"
-gh_edit_link: true
-gh_edit_link_text: "Edit this page on GitHub."
-gh_edit_repository: "https://github.com/v1a0/sqllex"
-gh_edit_branch: "main"
-gh_edit_view_mode: "tree"
+readme_index:
+  with_frontmatter: true
 
-search_enabled: true
+title: "Sqllex"
 
-search:
-  heading_level: 2
-  previews: 3
-  preview_words_before: 5
-  preview_words_after: 10
-  tokenizer_separator: /[\s/]+/
-  rel_url: true
-  button: false
+description: "Better than sqlite3. Seriously, try it out!"
 
+url: "v1a0.dev"
 
+baseurl: "sqllex"
+
+lang: en
