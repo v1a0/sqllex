@@ -7,8 +7,6 @@ title: "Sqllex"
 
 description: "Better than sqlite3. Seriously, try it out!"
 
-url: "v1a0.github.io/sqllex"
-
-baseurl: ""
+url: "v1a0.dev/sqllex"
 
 lang: en
