@@ -5,10 +5,12 @@
 
 # SQLLEX alpha v0.1.10 📚
 
-![Python:3.9](https://img.shields.io/badge/Python-3.9-green)
-[![Language grade: Python](https://img.shields.io/lgtm/grade/python/g/V1A0/sqllex.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/V1A0/sqllex/context:python)
-[![Total alerts](https://img.shields.io/lgtm/alerts/g/V1A0/sqllex.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/V1A0/sqllex/alerts/)
-[![Telegram group](https://img.shields.io/badge/Telegram-Group-blue.svg?logo=telegram)](https://t.me/joinchat/CKq9Mss1UlNlMDIy)
+![python-3-9]
+[![lgtm-quality-img]][lgtm-quality-img]
+[![lgtm-alerts-img]][lgtm-alerts-src]
+
+[![telegram-group-img]][telegram-group-src]
+[![Wiki][wiki-img]][wiki]
 
 
 <br>
@@ -353,3 +355,20 @@ db.disconnect()
 #### [WARNING](./WARNING.md)
 #### [LICENSE](./LICENSE)
 #### [DOCUMENTATION](docs/README.md)
+
+
+  [wiki-img]: https://img.shields.io/badge/docs-Wiki-blue.svg
+  [wiki]: https://v1a0.github.io/sqllex
+
+  [python-3-9]: https://img.shields.io/badge/Python-3.9-green
+
+  [python-3-8]: https://img.shields.io/badge/Python-3.8-green
+
+  [lgtm-quality-img]: https://img.shields.io/lgtm/grade/python/g/V1A0/sqllex.svg?logo=lgtm&logoWidth=18
+  [lgtm-quality-src]: https://lgtm.com/projects/g/V1A0/sqllex/context:python
+
+  [lgtm-alerts-img]: https://img.shields.io/lgtm/alerts/g/V1A0/sqllex.svg?logo=lgtm&logoWidth=18
+  [lgtm-alerts-src]: https://lgtm.com/projects/g/V1A0/sqllex/alerts/
+  
+  [telegram-group-img]: https://img.shields.io/badge/Telegram-Group-blue.svg?logo=telegram
+  [telegram-group-src]: https://t.me/joinchat/CKq9Mss1UlNlMDIy
