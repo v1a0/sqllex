@@ -1,15 +1,11 @@
-<div align="center">
+<div style="text-align: center">
   <svg width="200" height="200" xmlns="http://www.w3.org/2000/svg"> 
-    <img src="https://raw.githubusercontent.com/v1a0/sqllex/68ed90078289cf6e20d80070203f281010ab83c0/pics/sqllex-logo.svg" width="300px">
+    <img src="https://raw.githubusercontent.com/v1a0/sqllex/68ed90078289cf6e20d80070203f281010ab83c0/pics/sqllex-logo.svg" width="300px" alt="sqllex logo">
   </svg>
 </div>
 
-
-<div align="center">
-
-
-# Welcome to the Sqllex Documentation! 👋
-
+<div style="text-align: center">
+<h1> Welcome to the Sqllex Documentation! 👋</h1>
 <br>
 Here you can find some explanations and examples of Sqllex ORM <br>
 </div><br>
