@@ -154,4 +154,4 @@ print(users_33)  # [['Sqllex', 33]]
   [awesome-example-0]: https://v1a0.github.io/sqllex/sqlite3x-aex-0.html
   [awesome-example-1]: https://v1a0.github.io/sqllex/sqlite3x-aex-1.html
   [data-science-example]: https://deepnote.com/@abid/SQLLEX-Simple-and-Faster-7WXrco0hRXaqvAiXo8QJBQ
-  [project-showcase]: https://v1a0.github.io/sqllex/sqllex-showcase.md
+  [project-showcase]: https://v1a0.github.io/sqllex/sqllex-showcase
