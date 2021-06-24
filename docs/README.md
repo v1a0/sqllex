@@ -1,7 +1,7 @@
 <div style="text-align: center">
 <h1> Welcome to the Sqllex Documentation! 👋</h1>
 <br>
-Here you can find some explanations and examples of Sqllex ORM <br>
+Here you can find some explanations and examples for Sqllex ORM <br>
 </div><br>
 
 
@@ -10,6 +10,10 @@ Here you can find some explanations and examples of Sqllex ORM <br>
 - [Pages](#Pages)
   - [SQLite3x](#SQLite3x)
   - [SQLite3xTable](#SQLite3xTable)
+  - [SQLite3xColumn](#SQLite3xColumn)
+  - [SQLite3xSearchCondition](#SQLite3xSearchCondition)
+  - [Common Parameters](#Common-Parameters)
+  - [Project Showcase](#Project-Showcase)
 
 ---
 
@@ -17,20 +21,23 @@ Here you can find some explanations and examples of Sqllex ORM <br>
 
 ### What the heck is Sqllex? 🤔
 
-Sqllex is a python (ORM) library for comfortable and safe working with databases.
+Sqllex is a python ORM library for comfortable and safe interaction with databases.
 
-If you've ever worked with databases using python, you know what does "to eat nails while writing SQL-scripts" means. But don't have to. No `con.cursor()`, only human `db.insert()`, `db.select()`, beautiful and pythonic code without unnecessary SQL-witchcrafting.
+If you've ever worked with databases using python, you know what does "Eat nails while writing SQL-scripts" means.
+So give a sqllex deal with it, just call needed method, give it a data or necessary parameters and it's done.
+There no `con.cursor()`, only human `db.insert()`, `db.select()`, `db['my_table']`, only beautiful and pythonic code without unnecessary SQL-witchcrafting.
 
-If you never tried working with databases before, but you really wan to, I'm highly recommend starting with SQLLEX. Due to it is add-on for sqlite3, it's really simple to find guides and fix bugs.
+Sqllex is not like other ORM's, has unfriendly API and awesome for beginners (and not only). 
+By the reason it is just an add-on for sqlite3, there will be easy to find explains for typical sqlite3 raised errors.
+And any moment you could call `db.execute()` method and run any sql-script directly in sqlite3.
 
-How I told before it calls ORM, but sqllex is not really like other.
-
-It'll be a lot easier to show then explain.
+It'll be a lot easier to show then explain. So down below is a few examples.
 
 ### If you never used SQLite before read [this awesome example #0](./sqlite3x-aex-0.md)  
 
-### Otherwise, check out [this one example #1](./sqlite3x-aex-1.md)
+### Otherwise, you can check out [this one example #1](./sqlite3x-aex-1.md)
 
+### [Project showcase](sqllex-showcase.md)
 
 # Pages
 
@@ -49,12 +56,12 @@ It'll be a lot easier to show then explain.
     - [updatemany](./sqlite3x-updatemany.md)
     - [replace](./sqlite3x-replace.md)
     - [select](./sqlite3x-select.md)
-    - select_distinct
+    - ~~select_distinct~~
     - [select_all](./sqlite3x-select_all.md)
     - [markup](./sqlite3x-markup.md)
     - [create_table](./sqlite3x-create_table.md)
-    - create_temp_table
-    - create_temporary_table
+    - ~~create_temp_table~~
+    - ~~create_temporary_table~~
     - [connect](./sqlite3x-connect.md)
     - [disconnect](./sqlite3x-disconnect.md)
     - [delete](./sqlite3x-delete.md)
@@ -86,7 +93,7 @@ It'll be a lot easier to show then explain.
     - [updatemany](./sqlite3x-updatemany.md)
     - [replace](./sqlite3x-replace.md)
     - [select](./sqlite3x-select.md)
-    - select_distinct
+    - ~~select_distinct~~
     - [select_all](./sqlite3x-select_all.md)
     - [delete](./sqlite3x-delete.md)
     - [drop](./sqlite3x-drop.md)
@@ -121,7 +128,6 @@ It'll be a lot easier to show then explain.
   - [JOIN](./common-parameters.md#join)
 
 - ## [Project Showcase](sqllex-showcase.md)
-
   - [Vaccine Update System](./sqllex-showcase.md#vaccine-update-systemhttpsdeepnotecomabidvaccine-update-dashboard-gybicp-ftaydgmjimofj0w--by-kingabzpro)
   - [Sqllex for Data Science Using Pandas](./sqllex-showcase.md#sqllex-for-data-science-using-pandashttpsdeepnotecomabidsqllex-simple-and-faster-7wxrco0hrxaqvaixo8qjbq-by-kingabpro)
-
+  - [Add your own project at this list](https://github.com/v1a0/sqllex/edit/main/docs/sqllex-showcase.md)
