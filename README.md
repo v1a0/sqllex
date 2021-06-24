@@ -30,7 +30,7 @@ If you need most stable version install **sqllex==0.1.10.3**
 
 | Version |  Status | Tests, and actions |
 | :--------: | :----------------------------: | :---: |
-| `0.1.10.3`    | ✔️ stable (testing)  <br> ✔️ supported      | [![code-ql-img]][code-ql-src] [![sqlite3x-test-img]][sqlite3x-test-src] [![pypi-upload-img]][pypi-upload-img] |
+| `0.1.10.3`    | ✔️ stable (testing)  <br> ✔️ supported      | [![code-ql-img]][code-ql-src] <br> [![sqlite3x-test-img]][sqlite3x-test-src] <br> [![pypi-upload-img]][pypi-upload-img] |
 | `<=0.1.9.10`  | ✔️ stable            <br> ❌️ outdated       |  ✔️Mostly passing |
 | `<= 0.1.8.x`  | ⚠️ unstable          <br> ❌️ outdated       |  ~ |
 
