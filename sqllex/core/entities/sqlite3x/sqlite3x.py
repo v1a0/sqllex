@@ -988,6 +988,9 @@ class SQLite3x:
         elif isinstance(SELECT, str):
             SELECT = [SELECT]
 
+        elif isinstance(SELECT, SQLite3xColumn):
+            SELECT = [SELECT]
+
         script += f"{method} " f"{', '.join(str(sel) for sel in SELECT)} " f"FROM '{str(TABLE)}' "
 
         return SQLStatement(SQLRequest(script, values), self.path, self.connection)
