@@ -1,12 +1,4 @@
-<div align="center">
-
 # SQLite3x.pragma
-
-</div><br>
-
-## About
-
-Method to set PRAGMA parameter or send PRAGMA-request
 
 ```python
 def pragma(

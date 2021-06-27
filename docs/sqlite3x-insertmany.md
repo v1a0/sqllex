@@ -1,12 +1,4 @@
-<div align="center">
-
 # SQLite3x.insertmany
-
-</div><br>
-
-## About
-
-Method to INSERT many values into db's table. The same as regular insert but for lists of inserting values.
 
 ```python
 def insertmany(

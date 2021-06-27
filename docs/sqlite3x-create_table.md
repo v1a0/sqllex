@@ -1,12 +1,4 @@
-<div align="center">
-
 # SQLite3x.create_table
-
-</div><br>
-
-## About
-
-Method to CREATE TABLE, parent method of [SQLite3x.markup](https://github.com/V1A0/sqllex/wiki/SQLite3x.markup) 
 
 
 ```python

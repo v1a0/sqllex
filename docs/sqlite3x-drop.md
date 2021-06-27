@@ -1,12 +1,5 @@
-<div align="center">
-
 # SQLite3x.drop
 
-</div><br>
-
-## About
-
-Method to DROP TABLE (IF EXIST)
 
 ```python
 def drop(

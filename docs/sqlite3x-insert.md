@@ -1,12 +1,5 @@
-<div align="center">
-
 # SQLite3x.insert
 
-</div><br>
-
-## About
-
-Method to INSERT data into db's table
 
 ```python
 def insert(
