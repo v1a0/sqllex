@@ -5,6 +5,17 @@ name: Telegram notifications
 on:
   release:
     types: [created]
+  push:
+    branches:
+      - main
+      - dev
+      - 'dev/**'
+  pull_request:
+    branches:
+      - main
+      - dev
+      - 'dev/**'
+
 
 jobs:
   telegram-bot:
