@@ -1,5 +1,7 @@
 from sqllex.types import *
 from sqllex.constants.sql import *
+import cProfile
+import pstats
 
 
 def from_as_(func: callable):
@@ -422,6 +424,9 @@ def offset_(func: callable) -> callable:
     return offset_wrapper
 
 
+
+
+
 def args_parser(func: callable):
     """
     Decorator for parsing argument method.
@@ -447,7 +452,7 @@ def args_parser(func: callable):
         Decorated method with parsed args
     """
 
-    def wrapper(*args: Any, **kwargs: Any):
+    def args_parser_wrapper(*args: Any, **kwargs: Any):
         if not args:
             return func(*args, **kwargs)
 
@@ -469,7 +474,7 @@ def args_parser(func: callable):
 
         return func(*args, **kwargs)
 
-    return wrapper
+    return args_parser_wrapper
 
 
 __all__ = [

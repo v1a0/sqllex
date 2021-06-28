@@ -32,17 +32,20 @@ def bench_sqlite3():
             # if time.time() - t > 0: print(time.time()-t, i)
 
 
+print("\nRunning sqllex_connect")
 beg = time.time()
 bench_sqllex_connect()
 end = time.time()
-print(f"sqllex_connect\t{end - beg:.3}s")   # sqllex_connect	0.069s
+print(f"sqllex_connect\t{end - beg:.3}s")   # sqllex_connect (v0.1.10.4 = 0.123s) vs (v0.1.10.3b = 0.445 sec) (3.3969x)
 
-# beg = time.time()
-# bench_sqllex_without_connect()
-# end = time.time()
-# print(f"sqllex_without_connect\t{end - beg:.3}s")
+print("\nRunning sqllex_without_connect")
+beg = time.time()
+bench_sqllex_without_connect()
+end = time.time()
+print(f"sqllex_without_connect\t{end - beg:.3}s")    # sqllex_without_connect (v0.1.10.4 = 45.4s) vs (.3b = 0.461 sec)
 
+print("\nRunning sqlite3")
 beg = time.time()
 bench_sqlite3()
 end = time.time()
-print(f"sqlite3\t{end - beg:.3}s")  # sqlite3	0.0212s
+print(f"sqlite3\t{end - beg:.3}s")  # sqlite3	0.0308s

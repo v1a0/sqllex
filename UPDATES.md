@@ -1,5 +1,15 @@
 # 0.1.10
 
+### 0.1.10.4
+- Insert method got 3x speed up (!!!) using caching
+- Select method got 1.68x speed up (!) using caching
+- Other methods got <0.1x speed up using caching
+- All string generating scripts  moved to core/entities/sqlite3x/script_gens.py
+- SQLite3xTable.add_column fixed
+- Created custom logger over loguru logger, SqllexLogger
+- Typo "ConstrainType" changed to "ConstantType"
+- Updated results of speed tests
+
 ### 0.1.10.3
 - added add_column, remove_column, has_column methods to SQLite3xTable (#22)
 - add_column, remove_column to SQLite3x class (#22)

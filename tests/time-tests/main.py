@@ -1,6 +1,9 @@
 import cProfile
 import pstats
 from sqllex import *
+from sqllex.debug import debug_mode
+
+LIM = 10000
 
 
 def init_db():
@@ -19,29 +22,29 @@ def crete_table(db: SQLite3x):
 
 
 def insert_fats(db: SQLite3x):
-    for _ in range(1000):
+    for _ in range(LIM):
         db.insert('main', [None, f'Alex', 33])
 
 
 def insert_slow(db: SQLite3x):
-    for _ in range(1000):
+    for _ in range(LIM):
         db.insert('main', [None, 'Alex'])
 
 
 def insert_many_fast(db: SQLite3x):
-    data = [[None, 'Alex', 33] for _ in range(1000)]
+    data = [[None, 'Alex', 33] for _ in range(LIM)]
 
     db.insertmany('main', data)
 
 
 def insert_many_slow(db: SQLite3x):
-    data = [[None, 'Alex'] for _ in range(1000)]
+    data = [[None, 'Alex'] for _ in range(LIM)]
 
     db.insertmany('main', data)
 
 
 def select_all(db: SQLite3x):
-    db.select_all('main', LIMIT=1000)
+    db.select_all('main', LIMIT=LIM)
 
 
 def select_where_1(db: SQLite3x):
@@ -50,7 +53,7 @@ def select_where_1(db: SQLite3x):
         WHERE={
             'name': 'Alex'
         },
-        LIMIT=1000
+        LIMIT=LIM
     )
 
 
@@ -65,7 +68,7 @@ def select_where_2(db: SQLite3x):
     db.select(
         main_tab, id_col,
         WHERE=(name_col == 'Alex'),
-        LIMIT=1000
+        LIMIT=LIM
     )
 
 
@@ -75,14 +78,15 @@ if __name__ == '__main__':
     db.connect()
 
     with cProfile.Profile() as pr:
-        # crete_table(db)       # 0.003847
-        # insert_fats(db)       # 0.06685 sec (1000 rec)
-        # insert_slow(db)       # 0.2699 sec  (1000 rec)
-        # insert_many_fast(db)  # 0.005199    (1000 rec)
-        # insert_many_slow(db)  # 0.005518    (1000 rec)
-        # select_all(db)        # 0.005709    (1000 rec)
-        # select_where_1(db)    # 0.002922    (1000 rec)
-        # select_where_2(db)    # 0.003836    (1000 rec) << why?
+        #                       # total runtime/(records), speedup .4/.3b
+        # crete_table(db)       # 0.00332 sec/(1    table), 1x
+        # insert_fats(db)       # 0.21690 sec/(10_000 rec), 3x
+        # insert_slow(db)       # 0.92790 sec/(10_000 rec), 3x
+        # insert_many_fast(db)  # 0.04220 sec/(10_000 rec), 1.06x
+        # insert_many_slow(db)  # 0.04269 sec/(10_000 rec), 1.01x
+        # select_all(db)        # 0.03394 sec/(10_000 rec), 1.68x
+        # select_where_1(db)    # 0.02888 sec/(10_000 rec), 1.01x
+        # select_where_2(db)    # 0.02556 sec/(10_000 rec), 1.5x
         pass
 
     db.disconnect()
@@ -91,12 +95,3 @@ if __name__ == '__main__':
     stat.sort_stats(pstats.SortKey.TIME)
     stat.dump_stats(filename='time_tst.prof')
 
-
-# RESULTS
-# 0.002004 = listers.py:5(lister)
-# LISTER TAKES HALF OF ALL TIME IN SELECT-LIKE METHODS
-#
-# 0.000353
-# <built-in method builtins.isinstance> takes 1/10 of all time
-#
-#
