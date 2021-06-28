@@ -1,4 +1,4 @@
-from typing import Any, AnyStr, Generator, List, Literal, Mapping, Tuple, Union
+from typing import Any, AnyStr, Generator, List, Literal, Mapping, Tuple, Union, Iterable, Sized
 from pathlib import Path
 from numbers import Number
 from sqlite3 import Connection
@@ -52,7 +52,7 @@ DataType = Literal[
 
 
 # Types of constants used as keywords for column settings
-ConstrainType = Union[
+ConstantType = Union[
     Literal[
         "*",
         "NOT NULL",
@@ -72,7 +72,7 @@ ConstrainType = Union[
 ]
 
 # Subtypes for DBTemplateType
-ListDataType = List[Union[DataType, ConstrainType, Number]]
+ListDataType = List[Union[DataType, ConstantType, Number]]
 ColumnDataType = Union[ListDataType, DataType, AnyStr]
 ColumnsType = Mapping[AnyStr, ColumnDataType]
 
@@ -167,7 +167,7 @@ JoinArgType = Union[
             Union[
                 JoinType,
                 NumStr,
-                ConstrainType,
+                ConstantType,
             ]
         ]
     ],
@@ -175,13 +175,13 @@ JoinArgType = Union[
         Union[
             JoinType,
             NumStr,
-            ConstrainType,
+            ConstantType,
         ]
     ],
     Union[
         JoinType,
         NumStr,
-        ConstrainType,
+        ConstantType,
     ],
 ]
 
@@ -191,7 +191,7 @@ __all__ = [
     'SQLStatement',
     'ForeignKey',
     'DataType',
-    'ConstrainType',
+    'ConstantType',
     'ListDataType',
     'ColumnDataType',
     'ColumnsType',
@@ -216,4 +216,6 @@ __all__ = [
     'Any',
     'Tuple',
     'Generator',
+    'Iterable',
+    'Sized',
 ]

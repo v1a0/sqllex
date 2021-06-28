@@ -1,21 +1,58 @@
-from loguru import logger
-import sys
+from loguru import logger as __logger
+from sys import stderr
 
-
-class LogFilter:
+class SqllexLogger:
     """
-    Class to filter logging
+    0 - debug
+    1 - info
+    2 - ?
+    3 - warning
+    4 - error
 
     """
-    def __init__(self, level):
-        self.level = level
+    def __init__(self, logger, level=3):
+        self._level = level
+        self.logger = logger
 
-    def __call__(self, record):
-        levelno = logger.level(self.level).no
-        return record["level"].no >= levelno
+    def warning(self, message: str, *args, **kwargs):
+        if self._level <= 3:
+            self.logger.warning(message, *args, **kwargs)
+
+    def info(self, message: str, *args, **kwargs):
+        if self._level <= 1:
+            self.logger.info(message, *args, **kwargs)
+
+    def debug(self, message: str, *args, **kwargs):
+        if self._level == 0:
+            self.logger.debug(message, *args, **kwargs)
+
+    def level(self, level: int, log_file="sqllex.log"):
+        self._level = level
+
+        if self._level == 0:
+            self.logger.remove(0)
+            self.logger.add(log_file, level=0, rotation="10Mb", compression="zip")
+            self.logger.add(stderr, level=0)
+
+    def stop(self):
+        self.logger.stop()
+#
+#
+# class LogFilter:
+#     """
+#     Class to filter logging
+#
+#     """
+#     def __init__(self, level):
+#         self.level = level
+#
+#     def __call__(self, record):
+#         levelno = __logger.level(self.level).no
+#         return record["level"].no >= levelno
 
 
-def debug_mode(switch: bool = False, log_file: str = "", mode: str = ''):
+
+def debug_mode(switch: bool = False, log_file: str = "sqllex.log", mode: str = ''):
     """
     Set logger on/off
 
@@ -27,20 +64,35 @@ def debug_mode(switch: bool = False, log_file: str = "", mode: str = ''):
         Advanced mode options
     """
 
-    if not mode:
-        if switch:
-            mode = "DEBUG"
-        else:
-            mode = "INFO"
+    # if not mode:
+    #     if switch:
+    #         mode = "DEBUG"
+    #     else:
+    #         mode = "INFO"
+    #
+    # if log_file:
+    #     logger.add(log_file, filter=LogFilter(mode), level=0, rotation="10Mb", compression="zip")
+    #
+    # logger.add(sys.stderr, filter=LogFilter(mode), level=0)
 
-    if log_file:
-        logger.add(log_file, filter=LogFilter(mode), level=0, rotation="10Mb", compression="zip")
+    if mode == "DEBUG":
+        logger.level(0)
+    elif mode == "INFO":
+        logger.level(1)
+    elif mode == "WARNING":
+        logger.level(2)
+    elif mode == "?":
+        logger.level(3)
+    elif mode == "ERROR":
+        logger.level(4)
 
-    logger.add(sys.stderr, filter=LogFilter(mode), level=0)
+    if switch:
+        logger.level(level=0, log_file=log_file)
+    else:
+        logger.level(4)
 
 
-logger.remove(0)
-debug_mode(False)
+logger = SqllexLogger(logger=__logger, level=3)
 
 
 __all__ = [

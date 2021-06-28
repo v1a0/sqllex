@@ -10,18 +10,18 @@ BLOB: DataType = "BLOB"
 
 
 # Options of column value
-ALL: ConstrainType = "*"
-AUTOINCREMENT: ConstrainType = "AUTOINCREMENT"
-CHECK: ConstrainType = "CHECK"
-DEFAULT: ConstrainType = "DEFAULT"
+ALL: ConstantType = "*"
+AUTOINCREMENT: ConstantType = "AUTOINCREMENT"
+CHECK: ConstantType = "CHECK"
+DEFAULT: ConstantType = "DEFAULT"
 FOREIGN_KEY: ForeignKey = "FOREIGN KEY"
-NOT_NULL: ConstrainType = "NOT NULL"
-NULL: ConstrainType = "NULL"
-PRIMARY_KEY: ConstrainType = "PRIMARY KEY"
-REFERENCES: ConstrainType = "REFERENCES"
-UNIQUE: ConstrainType = "UNIQUE"
-AS: ConstrainType = "AS"
-ON: ConstrainType = "ON"
+NOT_NULL: ConstantType = "NOT NULL"
+NULL: ConstantType = "NULL"
+PRIMARY_KEY: ConstantType = "PRIMARY KEY"
+REFERENCES: ConstantType = "REFERENCES"
+UNIQUE: ConstantType = "UNIQUE"
+AS: ConstantType = "AS"
+ON: ConstantType = "ON"
 
 
 # Options for JOIN-ing

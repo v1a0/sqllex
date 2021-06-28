@@ -2,6 +2,7 @@ from sqllex.debug import logger
 from sqllex.exceptions import TableInfoError
 from sqllex.types.types import *
 from sqllex.constants.sql import *
+import sqllex.core.entities.sqlite3x.script_gens as script_gen
 from sqllex.core.tools.convertors import tuple2list, return2list, crop
 import sqllex.core.tools.sorters as sort
 import sqllex.core.tools.parsers.parsers as parse
@@ -206,7 +207,7 @@ class SQLite3xTable:
 
         return self.db.pragma(f"table_info({self.name})")
 
-    def add_column(self, column: dict) -> None:
+    def add_column(self, column: ColumnsType) -> None:
         """
         Adds column to the table
 
@@ -221,7 +222,7 @@ class SQLite3xTable:
 
         """
 
-        self.db.add_column(self.name, column)
+        self.db.add_column(table=self.name, column=column)
 
     def remove_column(self, column: Union[AnyStr, SQLite3xColumn]) -> None:
         """
@@ -739,9 +740,11 @@ class SQLite3x:
         """
 
         if args:
-            script = f"PRAGMA {args[0]}"
+            parameter = args[0]
+            script = script_gen.pragma_args(parameter)
         elif kwargs:
-            script = f"PRAGMA {list(kwargs.keys())[0]}={list(kwargs.values())[0]}"
+            parameter, value = tuple(kwargs.items())[0]
+            script = script_gen.pragma_kwargs(parameter=parameter, value=value)
         else:
             raise ValueError(f"No data to execute, args: {args}, kwargs: {kwargs}")
 
@@ -772,30 +775,24 @@ class SQLite3x:
             # For {'col': [param2, param1]} -> {'col': [param1, param2]}
             if isinstance(params, list):
                 params = sorted(params, key=lambda par: sort.column_types(par))
-                content += f"{col} {' '.join(str(param) for param in params)},\n"
+                content += script_gen.column(name=col, params=tuple(params))
 
             # For {'col': {FK: {a: b}}}
             elif isinstance(params, dict) and col == FOREIGN_KEY:
                 res = ""
                 for (key, refs) in params.items():
-                    res += (
-                        f"FOREIGN KEY ({key}) REFERENCES {refs[0]} ({refs[1]}), \n"
-                    )
+                    res += script_gen.column_with_foreign_key(key=key, table=refs[0], column=refs[1])
                 content += res[:-1]
 
             else:
                 raise TypeError
 
-        content = f"{content[:-2]}"
-
-        script = (
-            f"CREATE "
-            f"{temp} "
-            f"TABLE "
-            f"{'IF NOT EXISTS' if IF_NOT_EXIST else ''} "
-            f"'{name}' "
-            f" (\n{content}\n) "
-            f"{'WITHOUT ROWID' if without_rowid else ''};"
+        script = script_gen.create(
+            temp=temp,
+            if_not_exist=IF_NOT_EXIST,
+            name=name,
+            content=content[:-2],
+            without_rowid=without_rowid
         )
 
         return SQLStatement(
@@ -830,13 +827,7 @@ class SQLite3x:
         else:
             raise ValueError(f"No data to insert, args: {args}, kwargs: {kwargs}")
 
-        script += (
-            f"{' ' if script else ''}"
-            f"INTO '{TABLE}' ("
-            f"{', '.join(column for column in _columns)}) "
-            f"VALUES ("
-            f"{', '.join('?' * len(insert_values))}) "
-        )
+        script += script_gen.insert(columns=tuple(_columns), table=TABLE, need_space=bool(script))
 
         all_values = tuple(values) + tuple(insert_values)
 
@@ -845,6 +836,7 @@ class SQLite3x:
             self.path,
             self.connection,
         )
+
 
     @run.execute
     @parse.or_param_
@@ -864,18 +856,12 @@ class SQLite3x:
         if not args:
             raise sqlite3.OperationalError
 
-        script += (
-            f"{' ' if script else ''}"
-            f"INTO '{TABLE}' "
-            f"VALUES ("
-            f"{', '.join('?' * len(args))}) "
-        )
+        script += script_gen.insert_fast(table=TABLE, placeholders=len(args), need_space=bool(script))
 
         values = tuple(list(values) + list(args))
 
         return SQLStatement(SQLRequest(script, values), self.path, self.connection)
 
-    @logger.catch
     @run.executemany
     @parse.or_param_
     @parse.from_as_
@@ -971,7 +957,7 @@ class SQLite3x:
             script="",
             values=(),
             method: AnyStr = "SELECT ",
-            SELECT: Union[str, SQLite3xColumn, List[Union[str, SQLite3xColumn]]] = None,
+            SELECT: Union[str, SQLite3xColumn, List[Union[str, SQLite3xColumn]], Tuple[Union[str, SQLite3xColumn]]] = None,
     ):
         """
         Parent method for all SELECT-like methods
@@ -983,15 +969,18 @@ class SQLite3x:
         if SELECT is None:
             if method != "SELECT ALL ":
                 logger.warning("Argument SELECT not specified, default value is '*'")
-            SELECT = ["*"]
+            SELECT = ("*",)
 
         elif isinstance(SELECT, str):
-            SELECT = [SELECT]
+            SELECT = (SELECT,)
 
         elif isinstance(SELECT, SQLite3xColumn):
-            SELECT = [SELECT]
+            SELECT = (SELECT,)
 
-        script += f"{method} " f"{', '.join(str(sel) for sel in SELECT)} " f"FROM '{str(TABLE)}' "
+        elif isinstance(SELECT, list):
+            SELECT = (*SELECT,)
+
+        script += script_gen.select(method=method, columns=SELECT, table=TABLE)
 
         return SQLStatement(SQLRequest(script, values), self.path, self.connection)
 
@@ -1004,7 +993,7 @@ class SQLite3x:
 
         """
 
-        script += f"DELETE FROM '{TABLE}' "
+        script += script_gen.delete(table=TABLE)
         return SQLStatement(SQLRequest(script, values), self.path, self.connection)
 
     @run.execute
@@ -1058,7 +1047,6 @@ class SQLite3x:
                 script += "?, "
                 values = tuple(list(values) + [val])
 
-
         script = script[:-2]
 
         return SQLStatement(
@@ -1078,7 +1066,7 @@ class SQLite3x:
 
         """
 
-        script += f"DROP TABLE {'IF EXISTS' if IF_EXIST else ''} '{TABLE}' "
+        script += script_gen.drop(table=TABLE, if_exist=IF_EXIST)
         return SQLStatement(SQLRequest(script=script), self.path, self.connection)
 
     # ============================== PUBLIC METHODS ==============================
@@ -1370,9 +1358,9 @@ class SQLite3x:
             )
 
     def add_column(
-        self,
-        table: AnyStr,
-        column: ColumnDataType
+            self,
+            table: AnyStr,
+            column: ColumnsType
     ) -> None:
         """
         Adds column to the table
@@ -1402,9 +1390,9 @@ class SQLite3x:
                 f"{' '.join(ct for ct in column_type)}")
 
     def remove_column(
-        self,
-        table: AnyStr,
-        column: Union[AnyStr, SQLite3xColumn]
+            self,
+            table: AnyStr,
+            column: Union[AnyStr, SQLite3xColumn]
     ):
         """
         Removes column from the table

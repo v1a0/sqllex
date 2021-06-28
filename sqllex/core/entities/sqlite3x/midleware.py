@@ -50,12 +50,7 @@ def execute(func: callable):
             if not execute:
                 return stmt
 
-            logger.debug(
-                f"\n"
-                f"{stmt.request.script.strip()}\n"
-                f"{stmt.request.values if stmt.request.values else ''}"
-                f"\n"
-            )
+            logger.debug(f"\n {stmt.request.script.strip()}\n {stmt.request.values if stmt.request.values else ''}\n")
 
             # If connection does not exist
             if not stmt.connection:
@@ -113,10 +108,7 @@ def executemany(func: callable):
                 return stmt
 
             logger.debug(
-                f"\n"
-                f"{stmt.request.script.strip()}\n"
-                f"{stmt.request.values if stmt.request.values else ''}"
-                f"\n"
+                f"\n {stmt.request.script.strip()}\n {stmt.request.values if stmt.request.values else ''}\n"
             )
 
             if not stmt.connection:
@@ -174,10 +166,7 @@ def executescript(func: callable):
                 return stmt
 
             logger.debug(
-                f"\n"
-                f"{stmt.request.script.strip()}\n"
-                f"{stmt.request.values if stmt.request.values else ''}"
-                f"\n"
+                f"\n {stmt.request.script.strip()}\n {stmt.request.values if stmt.request.values else ''}\n"
             )
 
             if not stmt.connection:
