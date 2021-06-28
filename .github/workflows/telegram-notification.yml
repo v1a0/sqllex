@@ -40,9 +40,8 @@ jobs:
         
     - name: Run bot
       env:
-        secrets.WF_API_TOKEN: ${{ secrets.WF_API_TOKEN }}
-        secrets.WF_CHAT_IDS: ${{ secrets.WF_CHAT_IDS }}
-        secrets.WF_REPO: "v1a0/sqllex"
+        secrets.TG_API_TOKEN: ${{ secrets.WF_API_TOKEN }}
+        secrets.TG_CHAT_IDS: ${{ secrets.WF_CHAT_IDS }}
       run: |
         cd telegram-notify-workflow
-        python bot.py --action release
+        python bot.py
