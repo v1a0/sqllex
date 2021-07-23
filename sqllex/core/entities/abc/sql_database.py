@@ -1,16 +1,23 @@
+# Here is contains Abstract Base Classes for Parent Database Classes
+#
+# - AbstractDatabase
+# + - AbstractTable
+#   + - AbstractColumn
+#     + - AbstractSearchCondition
+#
+
+from abc import ABC, abstractmethod
 from sqllex.debug import logger
-from sqllex.exceptions import TableInfoError
 from sqllex.types.types import *
 from sqllex.constants.sql import *
-import sqllex.core.entities.sqlite3x.script_gens as script_gen
-from sqllex.core.tools.convertors import tuple2list, return2list, crop
+import sqllex.core.entities.abc.script_gens as script_gen
+from sqllex.core.tools.convertors import crop
 import sqllex.core.tools.sorters as sort
 import sqllex.core.tools.parsers.parsers as parse
-import sqllex.core.entities.sqlite3x.midleware as run
 import sqlite3
 
 
-class SQLite3xSearchCondition(str):
+class AbstractSearchCondition(str):
     def __init__(self, value: AnyStr):
         super().__init__()
         self.value = value
@@ -20,11 +27,11 @@ class SQLite3xSearchCondition(str):
 
     def _str_gen(self, value, operator: str):
         if type(value) == str:
-            return SQLite3xSearchCondition(
+            return AbstractSearchCondition(
                 f"({self}{operator}'{value}')"  # unsafe!
             )
         else:
-            return SQLite3xSearchCondition(
+            return AbstractSearchCondition(
                 f"({self}{operator}{value})"
             )
 
@@ -56,18 +63,18 @@ class SQLite3xSearchCondition(str):
         return hash(f"{self.value}")
 
 
-class SQLite3xColumn:
+class AbstractColumn(ABC):
     """
-    Sub-class of SQLite3xTable, itself one column of table (SQLite3xTable)
+    Sub-class of AbstractTable, itself one column of table (AbstractTable)
     Have same methods but without table name argument
     Attributes
     ----------
-    table : SQLite3xTable
-        SQLite3xTable parent table object
+    table : AbstractTable
+        AbstractTable parent table object
     name : str
         Name of column
 
-    Existing for generating SQLite3xSearchCondition for WHERE, SET
+    Existing for generating AbstractSearchCondition for WHERE, SET
     and other parameters of parents classes
 
     db['table_name']['column_name'] = x
@@ -79,10 +86,10 @@ class SQLite3xColumn:
     """
 
     def __init__(self, table, name: AnyStr):
-        if not isinstance(table, SQLite3xTable):
-            raise TypeError(f"Argument table have oto be SQLite3xTable not {type(table)}")
+        if not isinstance(table, AbstractTable):
+            raise TypeError(f"Argument table have oto be AbstractTable not {type(table)}")
 
-        self.table: SQLite3xTable = table
+        self.table: AbstractTable = table
         self.name = name
 
     def __str__(self):
@@ -90,45 +97,45 @@ class SQLite3xColumn:
 
     def _str_gen(self, value, operator: str):
         if type(value) == str:
-            return SQLite3xSearchCondition(
+            return AbstractSearchCondition(
                 f"({self}{operator}'{value}')"  # unsafe!
             )
         else:
-            return SQLite3xSearchCondition(
+            return AbstractSearchCondition(
                 f"({self}{operator}{value})"
             )
 
-    def __lt__(self, value) -> SQLite3xSearchCondition:
+    def __lt__(self, value) -> AbstractSearchCondition:
         return self._str_gen(value, '<')
 
-    def __le__(self, value) -> SQLite3xSearchCondition:
+    def __le__(self, value) -> AbstractSearchCondition:
         return self._str_gen(value, '<=')
 
-    def __eq__(self, value) -> SQLite3xSearchCondition:
+    def __eq__(self, value) -> AbstractSearchCondition:
         return self._str_gen(value, '=')
 
-    def __ne__(self, value) -> SQLite3xSearchCondition:
+    def __ne__(self, value) -> AbstractSearchCondition:
         return self._str_gen(value, '<>')
 
-    def __gt__(self, value) -> SQLite3xSearchCondition:
+    def __gt__(self, value) -> AbstractSearchCondition:
         return self._str_gen(value, '>')
 
-    def __ge__(self, value) -> SQLite3xSearchCondition:
+    def __ge__(self, value) -> AbstractSearchCondition:
         return self._str_gen(value, '>=')
 
-    def __add__(self, value) -> SQLite3xSearchCondition:
+    def __add__(self, value) -> AbstractSearchCondition:
         return self._str_gen(value, '+')
 
-    def __sub__(self, value) -> SQLite3xSearchCondition:
+    def __sub__(self, value) -> AbstractSearchCondition:
         return self._str_gen(value, '-')
 
-    def __mul__(self, value) -> SQLite3xSearchCondition:
+    def __mul__(self, value) -> AbstractSearchCondition:
         return self._str_gen(value, '*')
 
-    def __truediv__(self, value) -> SQLite3xSearchCondition:
+    def __truediv__(self, value) -> AbstractSearchCondition:
         return self._str_gen(value, '/')
 
-    def __divmod__(self, value) -> SQLite3xSearchCondition:
+    def __divmod__(self, value) -> AbstractSearchCondition:
         return self._str_gen(value, '%')
 
     def __list__(self) -> List[Any]:
@@ -138,15 +145,15 @@ class SQLite3xColumn:
         return hash(f"'{self.name}'.'{self.table}'")
 
 
-class SQLite3xTable:
+class AbstractTable(ABC):
     """
-    Sub-class of SQLite3x, itself one table of Database
+    Sub-class of AbstractDatabase, itself one table of Database
     Have same methods but without table name argument
 
     Attributes
     ----------
-    db : SQLite3x
-        SQLite3x database object
+    db : AbstractDatabase
+        AbstractDatabase database object
     name : str
         Name of table
 
@@ -157,20 +164,20 @@ class SQLite3xTable:
         Generator of column's names in table
 
     """
-
+    
     def __init__(self, db, name: AnyStr):
         """
         Parameters
         ----------
-        db : SQLite3x
-            SQLite3x database object
+        db : AbstractDatabase
+            AbstractDatabase database object
         name : str
             Name of table
 
         """
-        if not isinstance(db, SQLite3x):
-            raise TypeError(f"Argument db have oto be SQLite3x not {type(db)}")
-        self.db: SQLite3x = db
+        if not isinstance(db, AbstractDatabase):
+            raise TypeError(f"Argument db have oto be AbstractDatabase not {type(db)}")
+        self.db: AbstractDatabase = db
         self.name: AnyStr = name
 
     def __str__(self):
@@ -179,21 +186,22 @@ class SQLite3xTable:
     def __bool__(self):
         return bool(self.get_columns_names())
 
-    def __getitem__(self, key) -> SQLite3xColumn:
+    def __getitem__(self, key) -> AbstractColumn:
         if key not in self.columns_names:
             raise KeyError(key, "No such column in table")
 
-        return SQLite3xColumn(table=self, name=key)
+        return AbstractColumn(table=self, name=key)
 
     @property
-    def columns(self) -> Generator[SQLite3xColumn, None, None]:
+    def columns(self) -> Generator[AbstractColumn, None, None]:
         for column in self.columns_names:
-            yield SQLite3xColumn(table=self, name=column)
+            yield AbstractColumn(table=self, name=column)
 
     @property
     def columns_names(self) -> List:
         return self.get_columns_names()
 
+    @abstractmethod
     def info(self):
         """
         Send PRAGMA request table_info(table_name)
@@ -205,7 +213,8 @@ class SQLite3xTable:
 
         """
 
-        return self.db.pragma(f"table_info({self.name})")
+        # return self.db.pragma(f"table_info({self.name})")
+        pass
 
     def add_column(self, column: ColumnsType) -> None:
         """
@@ -224,14 +233,14 @@ class SQLite3xTable:
 
         self.db.add_column(table=self.name, column=column)
 
-    def remove_column(self, column: Union[AnyStr, SQLite3xColumn]) -> None:
+    def remove_column(self, column: Union[AnyStr, AbstractColumn]) -> None:
         """
         Removes column from the table
 
         Parameters
         ----------
-        column : Union[AnyStr, SQLite3xColumn]
-            Name of column or SQLite3xColumn object.
+        column : Union[AnyStr, AbstractColumn]
+            Name of column or AbstractColumn object.
 
         Returns
         ----------
@@ -241,14 +250,14 @@ class SQLite3xTable:
 
         self.db.remove_column(self.name, column)
 
-    def has_column(self, column: Union[AnyStr, SQLite3xColumn]) -> bool:
+    def has_column(self, column: Union[AnyStr, AbstractColumn]) -> bool:
         """
         Checks if column exists in the table
 
         Parameters
         ----------
-        column : Union[AnyStr, SQLite3xColumn]
-            Name of column or SQLite3xColumn object.
+        column : Union[AnyStr, AbstractColumn]
+            Name of column or AbstractColumn object.
 
         Returns
         ----------
@@ -257,7 +266,7 @@ class SQLite3xTable:
 
         """
 
-        if isinstance(column, SQLite3xColumn):
+        if isinstance(column, AbstractColumn):
             column = column.name
 
         if column in self.columns_names:
@@ -354,7 +363,7 @@ class SQLite3xTable:
 
     def select(
             self,
-            SELECT: Union[str, SQLite3xColumn, List[Union[str, SQLite3xColumn]]] = None,
+            SELECT: Union[str, AbstractColumn, List[Union[str, AbstractColumn]]] = None,
             WHERE: WhereType = None,
             WITH: WithType = None,
             ORDER_BY: OrderByType = None,
@@ -406,7 +415,7 @@ class SQLite3xTable:
 
     def select_distinct(
             self,
-            SELECT: Union[str, SQLite3xColumn, List[Union[str, SQLite3xColumn]]] = None,
+            SELECT: Union[str, AbstractColumn, List[Union[str, AbstractColumn]]] = None,
             WHERE: WhereType = None,
             WITH: WithType = None,
             ORDER_BY: OrderByType = None,
@@ -581,80 +590,45 @@ class SQLite3xTable:
         return self.select_all(WHERE=WHERE, ORDER_BY=ORDER_BY, LIMIT=LIMIT)
 
 
-class SQLite3x:
-    """
-    Main SQLite3x Database Class
+class AbstractDatabase(ABC):
 
-    Attributes
-    ----------
-    __connection : Union[sqlite3.Connection, None]
-        SQLite connection
-    __path : PathType
-        Local __str__ to database (PathType)
-
-    """
-
-    def __init__(self, path: PathType = "sql3x.db", template: DBTemplateType = None):
-        """
-        Initialization
-
-        Parameters
-        ----------
-        path : PathType
-            Local __str__ to database (PathType)
-        template : DBTemplateType
-            template of database structure (DBTemplateType)
-
-        """
-        self.__path = path
-
+    @abstractmethod
+    def __init__(self):
         self.__connection = None
-        self.connect()
-
-        self.journal_mode(mode="WAL")  # make db little bit faster
-        self.foreign_keys(mode="ON")   # turning on foreign keys
-
-        if template:
-            self.markup(template=template)
+        pass
 
     @property
     def connection(self) -> Union[sqlite3.Connection, None]:
         return self.__connection
 
     @property
-    def path(self) -> PathType:
-        return self.__path
-
-    @property
-    def tables(self) -> Generator[SQLite3xTable, None, None]:
+    def tables(self) -> Generator[AbstractTable, None, None]:
         return self._get_tables()
 
     @property
     def tables_names(self) -> List[str]:
         return self._get_tables_names()
 
+    @abstractmethod
     def __str__(self):
-        return f"{{SQLite3x: __str__='{self.path}'}}"
+        pass
 
+    @abstractmethod
     def __bool__(self):
-        try:
-            return bool(self.pragma("database_list"))
-        except Exception as error:
-            logger.error(error)
-            return False
+        pass
 
-    def __getitem__(self, key) -> SQLite3xTable:
+    def __getitem__(self, key) -> AbstractTable:
         return self._get_table(key)
 
     def __del__(self):
         if self.connection:
             self.disconnect()
 
-        del self  # ?
+        del self    # ?
 
     # ============================== PRIVATE METHODS ==============================
 
-    def _get_table(self, name) -> SQLite3xTable:
+    def _get_table(self, name) -> AbstractTable:
         # To call method down below is necessary,
         # otherwise it might fall in case of multiple DB objects
 
@@ -662,15 +636,15 @@ class SQLite3x:
             raise KeyError(name, "No such table in database",
                            f"Available tables: {self.tables_names}")
 
-        return SQLite3xTable(db=self, name=name)
+        return AbstractTable(db=self, name=name)
 
-    def _get_tables(self) -> Generator[SQLite3xTable, None, None]:
+    def _get_tables(self) -> Generator[AbstractTable, None, None]:
         """
-        Generator of tables as SQLite3xTable objects
+        Generator of tables as AbstractTable objects
 
         Yield
         ----------
-        SQLite3xTable
+        AbstractTable
             Tables list
 
         """
@@ -684,65 +658,29 @@ class SQLite3x:
         for tab_name in self.tables_names:
             yield self._get_table(tab_name)
 
+    @abstractmethod
     def _get_tables_names(self) -> List[str]:
-        """
-        Get list of tables names from database
+        pass
 
-        Returns
-        ----------
-        List[str]
-            list of tables names
-
-        """
-        return tuple2list(
-            self.execute("SELECT name FROM sqlite_master WHERE type='table'"),
-            remove_one_len=True
-        )
-
-    @return2list
-    @run.execute
+    @abstractmethod
     def _execute_stmt(
             self, script: AnyStr = None, values: Tuple = None, request: SQLRequest = None
     ):
-        """
-        Parent method for execute
-        """
+        pass
 
-        if not request:
-            return SQLStatement(SQLRequest(script, values), self.path, self.connection)
-        else:
-            return SQLStatement(request, self.path, self.connection)
-
-    @return2list
-    @run.executemany
+    @abstractmethod
     def _executemany_stmt(
             self, script: AnyStr = None, values: Tuple = None, request: SQLRequest = None
     ):
-        """
-        Parent method for executemany
-        """
+        pass
 
-        if not request:
-            return SQLStatement(SQLRequest(script, values), self.path, self.connection)
-        else:
-            return SQLStatement(request, self.path, self.connection)
-
-    @return2list
-    @run.executescript
+    @abstractmethod
     def _executescript_stmt(
             self, script: AnyStr = None, values: Tuple = None, request: SQLRequest = None
     ):
-        """
-        Parent method for executescript
-        """
+        pass
 
-        if not request:
-            return SQLStatement(SQLRequest(script, values), self.path, self.connection)
-        else:
-            return SQLStatement(request, self.path, self.connection)
-
-    @return2list
-    @run.execute
+    @abstractmethod
     def _pragma_stmt(self, *args: str, **kwargs):
         """
         Parent method for all pragma-like methods
@@ -757,9 +695,9 @@ class SQLite3x:
         else:
             raise ValueError(f"No data to execute, args: {args}, kwargs: {kwargs}")
 
-        return SQLStatement(SQLRequest(script), self.path, self.connection)
+        return script   # !!!
 
-    @run.execute
+    @abstractmethod
     def _create_stmt(
             self,
             temp: AnyStr,
@@ -804,11 +742,9 @@ class SQLite3x:
             without_rowid=without_rowid
         )
 
-        return SQLStatement(
-            SQLRequest(script=script, values=values), self.path, self.connection
-        )
+        return script, values
 
-    @run.execute
+    @abstractmethod
     @parse.or_param_
     @parse.with_
     @parse.from_as_
@@ -840,14 +776,9 @@ class SQLite3x:
 
         all_values = tuple(values) + tuple(insert_values)
 
-        return SQLStatement(
-            SQLRequest(script, tuple(value for value in all_values)),
-            self.path,
-            self.connection,
-        )
+        return script, tuple(value for value in all_values)
 
-
-    @run.execute
+    @abstractmethod
     @parse.or_param_
     @parse.with_
     @parse.from_as_
@@ -869,9 +800,9 @@ class SQLite3x:
 
         values = tuple(list(values) + list(args))
 
-        return SQLStatement(SQLRequest(script, values), self.path, self.connection)
+        return script, values
 
-    @run.executemany
+    @abstractmethod
     @parse.or_param_
     @parse.from_as_
     @parse.args_parser
@@ -947,12 +878,9 @@ class SQLite3x:
             map(lambda arg: tuple(arg), values)
         )  # make values tuple[tuple] (yes it's necessary)
 
-        return SQLStatement(
-            SQLRequest(stmt.request.script, values), self.path, self.connection
-        )
+        return stmt.request.script, values
 
-    @return2list
-    @run.execute
+    @abstractmethod
     @parse.offset_
     @parse.limit_
     @parse.order_by_
@@ -962,11 +890,12 @@ class SQLite3x:
     @parse.from_as_
     def _select_stmt(
             self,
-            TABLE: Union[str, SQLite3xTable],
+            TABLE: Union[str, AbstractTable],
             script="",
             values=(),
             method: AnyStr = "SELECT ",
-            SELECT: Union[str, SQLite3xColumn, List[Union[str, SQLite3xColumn]], Tuple[Union[str, SQLite3xColumn]]] = None,
+            SELECT: Union[
+                str, AbstractColumn, List[Union[str, AbstractColumn]], Tuple[Union[str, AbstractColumn]]] = None,
     ):
         """
         Parent method for all SELECT-like methods
@@ -983,7 +912,7 @@ class SQLite3x:
         elif isinstance(SELECT, str):
             SELECT = (SELECT,)
 
-        elif isinstance(SELECT, SQLite3xColumn):
+        elif isinstance(SELECT, AbstractColumn):
             SELECT = (SELECT,)
 
         elif isinstance(SELECT, list):
@@ -991,9 +920,9 @@ class SQLite3x:
 
         script += script_gen.select(method=method, columns=SELECT, table=TABLE)
 
-        return SQLStatement(SQLRequest(script, values), self.path, self.connection)
+        return script, values
 
-    @run.execute
+    @abstractmethod
     @parse.where_
     @parse.with_
     def _delete_stmt(self, TABLE: str, script="", values=()):
@@ -1003,9 +932,9 @@ class SQLite3x:
         """
 
         script += script_gen.delete(table=TABLE)
-        return SQLStatement(SQLRequest(script, values), self.path, self.connection)
+        return script, values
 
-    @run.execute
+    @abstractmethod
     @parse.where_
     @parse.or_param_
     @parse.with_
@@ -1045,12 +974,12 @@ class SQLite3x:
         script += f"UPDATE '{TABLE}' SET "
 
         for (key, val) in set_.items():
-            if issubclass(type(key), SQLite3xColumn):
+            if issubclass(type(key), AbstractColumn):
                 script += f"'{key.name}'="
             else:
                 script += f"'{key}'="
 
-            if issubclass(type(val), SQLite3xSearchCondition):
+            if issubclass(type(val), AbstractColumn):
                 script += f"{val}, "
             else:
                 script += "?, "
@@ -1058,11 +987,9 @@ class SQLite3x:
 
         script = script[:-2]
 
-        return SQLStatement(
-            SQLRequest(script=script, values=values), self.path, self.connection
-        )
+        return script, values
 
-    @run.execute
+    @abstractmethod
     def _drop_stmt(
             self,
             TABLE: AnyStr,
@@ -1076,38 +1003,17 @@ class SQLite3x:
         """
 
         script += script_gen.drop(table=TABLE, if_exist=IF_EXIST)
-        return SQLStatement(SQLRequest(script=script), self.path, self.connection)
+        return script
 
     # ============================== PUBLIC METHODS ==============================
 
+    @abstractmethod
     def connect(self):
-        """
-        Create connection to database
+        pass
 
-        Creating sqlite3.connect(__str__) connection to interact with database
-
-        """
-
-        if not self.connection:
-            self.__connection = sqlite3.connect(self.path)
-
-        else:
-            logger.warning("Connection already exist")
-
-        # Not sure is this reasonable
-        # return self.connection
-
+    @abstractmethod
     def disconnect(self):
-        """
-        Drop connection to database
-
-        Commit changes and close connection
-
-        """
-
-        self.connection.commit()
-        self.connection.close()
-        self.__connection = None
+        pass
 
     def execute(
             self,
@@ -1369,7 +1275,8 @@ class SQLite3x:
                 IF_NOT_EXIST=True
             )
 
-    def add_column(
+    @abstractmethod
+    def add_column(     # !!!
             self,
             table: AnyStr,
             column: ColumnsType
@@ -1401,10 +1308,10 @@ class SQLite3x:
                 f"'{column_name}' "
                 f"{' '.join(ct for ct in column_type)}")
 
-    def remove_column(
+    def remove_column(      # !!!
             self,
             table: AnyStr,
-            column: Union[AnyStr, SQLite3xColumn]
+            column: Union[AnyStr, AbstractColumn]
     ):
         """
         Removes column from the table
@@ -1413,8 +1320,8 @@ class SQLite3x:
         ----------
         table : AnyStr
             Name of table
-        column : Union[AnyStr, SQLite3xColumn]
-            Name of column or SQLite3xColumn object.
+        column : Union[AnyStr, AbstractColumn]
+            Name of column or AbstractColumn object.
 
         Returns
         ----------
@@ -1423,7 +1330,7 @@ class SQLite3x:
 
         column_name = column
 
-        if isinstance(column, SQLite3xColumn):
+        if isinstance(column, AbstractColumn):
             column_name = column.name
 
         self.execute(
@@ -1432,11 +1339,11 @@ class SQLite3x:
     def get_table(
             self,
             name: AnyStr
-    ) -> SQLite3xTable:
+    ) -> AbstractTable:
         """
         Shadow method for __getitem__, that used as like: database['table_name']
 
-        Get table object (SQLite3xTable instance)
+        Get table object (AbstractTable instance)
 
         Parameters
         ----------
@@ -1445,19 +1352,20 @@ class SQLite3x:
 
         Returns
         ----------
-        SQLite3xTable
-            Instance of SQLite3xTable, table of database
+        AbstractTable
+            Instance of AbstractTable, table of database
 
         """
 
-        return self.__getitem__(key=name)
+        return self._get_table(name=name)
 
+    @abstractmethod
     def get_columns(
             self,
             table: AnyStr
-    ) -> Generator[SQLite3xColumn, None, None]:
+    ) -> Generator[AbstractColumn, None, None]:
         """
-        Get list of table columns like an SQLite3xColumn objects
+        Get list of table columns like an AbstractColumn objects
 
         Parameters
         ----------
@@ -1466,26 +1374,13 @@ class SQLite3x:
 
         Returns
         ----------
-        Generator[SQLite3xColumn]
+        Generator[AbstractColumn]
             Columns of table
 
         """
+        pass
 
-        try:
-            columns_: List[List[str]] = self.execute(f"SELECT name FROM PRAGMA_TABLE_INFO('{table}')")
-            columns: List[str] = list(map(lambda item: item[0], columns_))
-
-        except sqlite3.OperationalError:
-            # Fix for compatibility issues #19, by some reason it can't find PRAGMA_TABLE_INFO table
-            columns_: List[List[str]] = self.pragma(f"table_info('{table}')")
-            columns: List[str] = list(map(lambda item: item[1], columns_))
-
-        if not columns:
-            raise TableInfoError
-
-        for column in columns:
-            yield SQLite3xColumn(table=self, name=column)
-
+    @abstractmethod
     def get_columns_names(
             self,
             table: AnyStr
@@ -1504,20 +1399,7 @@ class SQLite3x:
             Columns of table
 
         """
-
-        try:
-            columns_: List[List[str]] = self.execute(f"SELECT name FROM PRAGMA_TABLE_INFO('{table}')")
-            columns: List[str] = list(map(lambda item: item[0], columns_))
-
-        except sqlite3.OperationalError:
-            # Fix for compatibility issues #19, by some reason it can't find PRAGMA_TABLE_INFO table
-            columns_: List[List[str]] = self.pragma(f"table_info('{table}')")
-            columns: List[str] = list(map(lambda item: item[1], columns_))
-
-        if not columns:
-            raise TableInfoError
-
-        return columns
+        pass
 
     def insert(
             self,
@@ -1654,14 +1536,14 @@ class SQLite3x:
 
     def select(
             self,
-            TABLE: Union[str, List[str], SQLite3xTable] = None,
-            SELECT: Union[str, SQLite3xColumn, List[Union[str, SQLite3xColumn]]] = None,
+            TABLE: Union[str, List[str], AbstractTable] = None,
+            SELECT: Union[str, AbstractColumn, List[Union[str, AbstractColumn]]] = None,
             WHERE: WhereType = None,
             WITH: WithType = None,
             ORDER_BY: OrderByType = None,
             LIMIT: LimitOffsetType = None,
             OFFSET: LimitOffsetType = None,
-            FROM: Union[str, List[str], SQLite3xTable] = None,
+            FROM: Union[str, List[str], AbstractTable] = None,
             JOIN: Union[str, List[str], List[List[str]]] = None,
             _method="SELECT",
             **kwargs,
@@ -1727,14 +1609,14 @@ class SQLite3x:
 
     def select_distinct(
             self,
-            TABLE: Union[str, List[str], SQLite3xTable] = None,
-            SELECT: Union[str, SQLite3xColumn, List[Union[str, SQLite3xColumn]]] = None,
+            TABLE: Union[str, List[str], AbstractTable] = None,
+            SELECT: Union[str, AbstractColumn, List[Union[str, AbstractColumn]]] = None,
             WHERE: WhereType = None,
             WITH: WithType = None,
             ORDER_BY: OrderByType = None,
             LIMIT: LimitOffsetType = None,
             OFFSET: LimitOffsetType = None,
-            FROM: Union[str, List[str], SQLite3xTable] = None,
+            FROM: Union[str, List[str], AbstractTable] = None,
             JOIN: Union[str, List[str], List[List[str]]] = None,
             **kwargs,
     ) -> Union[SQLStatement, List[Any]]:
@@ -1785,14 +1667,14 @@ class SQLite3x:
 
     def select_all(
             self,
-            TABLE: Union[str, List[str], SQLite3xTable] = None,
-            SELECT: Union[str, SQLite3xColumn, List[Union[str, SQLite3xColumn]]] = None,
+            TABLE: Union[str, List[str], AbstractTable] = None,
+            SELECT: Union[str, AbstractColumn, List[Union[str, AbstractColumn]]] = None,
             WHERE: WhereType = None,
             WITH: WithType = None,
             ORDER_BY: OrderByType = None,
             LIMIT: LimitOffsetType = None,
             OFFSET: LimitOffsetType = None,
-            FROM: Union[str, List[str], SQLite3xTable] = None,
+            FROM: Union[str, List[str], AbstractTable] = None,
             JOIN: Union[str, List[str], List[List[str]]] = None,
             **kwargs,
     ) -> Union[SQLStatement, List[Any]]:
@@ -1941,7 +1823,7 @@ class SQLite3x:
         else:
             # In case if SET == []
             logger.warning(
-                f"SQLite3x.updatemany "
+                f"AbstractDatabase.updatemany "
                 f"got empty list of data to update or got nothing at all, "
                 f"SET={SET}"
             )
@@ -1970,9 +1852,3 @@ class SQLite3x:
         )
 
 
-__all__ = [
-    "SQLite3x",  # lgtm [py/undefined-export]
-    "SQLite3xTable",  # lgtm [py/undefined-export]
-    "SQLite3xColumn",  # lgtm [py/undefined-export]
-    "SQLite3xSearchCondition"  # lgtm [py/undefined-export]
-]

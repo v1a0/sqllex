@@ -17,7 +17,6 @@ class TestFailed(Exception):
 def is_exist(file: str = ''):
     return file in next(walk(getcwd()))[2]
 
-
 debug_mode(False)
 
 DB_NAME = "test_table.db"
@@ -155,8 +154,8 @@ logger.info(f"\nAll from users where_ group_id=1, order_by [2,1]: {selects[6]}")
 
 ####################################################
 # SELECT data from DB
-users_table.insertmany([10, 1], [11, 2], [12, 3])
-users_table.insertmany([(20, 1), (21, 2), (23, 3)])
+users_table.insertmany([10, 1], [11, 2], [12, 2])
+users_table.insertmany([(20, 1), (21, 2), (23, 2)])
 users_table.insertmany([[30], [31, 2]])
 users_table.insertmany(username=[41, 42, 43], group_id=[1, 2])
 
