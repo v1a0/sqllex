@@ -1,23 +1,13 @@
+from sqllex.core.entities.abc import AbstractDatabase, AbstractTable, AbstractColumn, AbstractSearchCondition
 from sqllex.debug import logger
 from sqllex.exceptions import TableInfoError
 from sqllex.types.types import *
-from sqllex.constants.sql import *
-import sqllex.core.entities.sqlite3x.script_gens as script_gen
-from sqllex.core.tools.convertors import tuple2list, return2list, crop
-import sqllex.core.tools.sorters as sort
-import sqllex.core.tools.parsers.parsers as parse
+from sqllex.core.tools.convertors import tuple2list, return2list
 import sqllex.core.entities.sqlite3x.midleware as run
 import sqlite3
 
 
-class SQLite3xSearchCondition(str):
-    def __init__(self, value: AnyStr):
-        super().__init__()
-        self.value = value
-
-    def __str__(self):
-        return self.value
-
+class SQLite3xSearchCondition(AbstractSearchCondition):
     def _str_gen(self, value, operator: str):
         if type(value) == str:
             return SQLite3xSearchCondition(
@@ -28,35 +18,8 @@ class SQLite3xSearchCondition(str):
                 f"({self}{operator}{value})"
             )
 
-    def __lt__(self, value):
-        return self._str_gen(value, '<')
 
-    def __le__(self, value):
-        return self._str_gen(value, '<=')
-
-    def __eq__(self, value):
-        return self._str_gen(value, '=')
-
-    def __ne__(self, value):
-        return self._str_gen(value, '<>')
-
-    def __gt__(self, value):
-        return self._str_gen(value, '>')
-
-    def __ge__(self, value):
-        return self._str_gen(value, '>=')
-
-    def __and__(self, other):
-        return self._str_gen(other, ' AND ')
-
-    def __or__(self, other):
-        return self._str_gen(other, ' OR ')
-
-    def __hash__(self):
-        return hash(f"{self.value}")
-
-
-class SQLite3xColumn:
+class SQLite3xColumn(AbstractColumn):
     """
     Sub-class of SQLite3xTable, itself one column of table (SQLite3xTable)
     Have same methods but without table name argument
@@ -77,16 +40,6 @@ class SQLite3xColumn:
     ...
     db['table_name']['column_name'] / x
     """
-
-    def __init__(self, table, name: AnyStr):
-        if not isinstance(table, SQLite3xTable):
-            raise TypeError(f"Argument table have oto be SQLite3xTable not {type(table)}")
-
-        self.table: SQLite3xTable = table
-        self.name = name
-
-    def __str__(self):
-        return f"'{self.table.name}'.'{self.name}'"
 
     def _str_gen(self, value, operator: str):
         if type(value) == str:
@@ -131,14 +84,11 @@ class SQLite3xColumn:
     def __divmod__(self, value) -> SQLite3xSearchCondition:
         return self._str_gen(value, '%')
 
-    def __list__(self) -> List[Any]:
-        return self.table.select_all(self.name)
-
     def __hash__(self):
-        return hash(f"'{self.name}'.'{self.table}'")
+        return super(SQLite3xColumn, self).__hash__()
 
 
-class SQLite3xTable:
+class SQLite3xTable(AbstractTable):
     """
     Sub-class of SQLite3x, itself one table of Database
     Have same methods but without table name argument
@@ -168,16 +118,13 @@ class SQLite3xTable:
             Name of table
 
         """
+
+        super(SQLite3xTable, self).__init__(db=db, name=name)
+
         if not isinstance(db, SQLite3x):
             raise TypeError(f"Argument db have oto be SQLite3x not {type(db)}")
         self.db: SQLite3x = db
         self.name: AnyStr = name
-
-    def __str__(self):
-        return self.name
-
-    def __bool__(self):
-        return bool(self.get_columns_names())
 
     def __getitem__(self, key) -> SQLite3xColumn:
         if key not in self.columns_names:
@@ -207,381 +154,8 @@ class SQLite3xTable:
 
         return self.db.pragma(f"table_info({self.name})")
 
-    def add_column(self, column: ColumnsType) -> None:
-        """
-        Adds column to the table
 
-        Parameters
-        ----------
-        column : Dict
-            Column name and SQL type e.g. {'value': TEXT}
-
-        Returns
-        ----------
-        None
-
-        """
-
-        self.db.add_column(table=self.name, column=column)
-
-    def remove_column(self, column: Union[AnyStr, SQLite3xColumn]) -> None:
-        """
-        Removes column from the table
-
-        Parameters
-        ----------
-        column : Union[AnyStr, SQLite3xColumn]
-            Name of column or SQLite3xColumn object.
-
-        Returns
-        ----------
-        None
-
-        """
-
-        self.db.remove_column(self.name, column)
-
-    def has_column(self, column: Union[AnyStr, SQLite3xColumn]) -> bool:
-        """
-        Checks if column exists in the table
-
-        Parameters
-        ----------
-        column : Union[AnyStr, SQLite3xColumn]
-            Name of column or SQLite3xColumn object.
-
-        Returns
-        ----------
-        bool
-            logical value of column's existence.
-
-        """
-
-        if isinstance(column, SQLite3xColumn):
-            column = column.name
-
-        if column in self.columns_names:
-            return True
-
-        return False
-
-    def get_columns_names(self) -> List:
-        """
-        Get list of table columns
-
-        Returns
-        ----------
-        List[List]
-            All table's columns
-
-        """
-        return self.db.get_columns_names(table=self.name)
-
-    def insert(
-            self,
-            *args: InsertData,
-            OR: OrOptionsType = None,
-            WITH: WithType = None,
-            **kwargs: Any,
-    ) -> None:
-        """
-        INSERT data into table
-
-        Parameters
-        ----------
-        OR : OrOptionsType
-            Optional parameter. If INSERT failed, type OrOptionsType
-        WITH : WithType
-            Optional parameter.
-
-        Returns
-        ----------
-            None or SQL-script in SQLStatement
-        """
-
-        self.db.insert(
-            self.name, *args, OR=OR, WITH=WITH, **kwargs
-        )
-
-    def replace(
-            self,
-            *args: Any,
-            WITH: WithType = None,
-            **kwargs: Any
-    ) -> None:
-        """
-        REPLACE data into table
-
-        Parameters
-        ----------
-        WITH : WithType
-            Optional parameter.
-
-        Returns
-        ----------
-            None or SQL-script in SQLStatement
-
-        """
-
-        self.db.replace(self.name, *args, **kwargs, WITH=WITH)
-
-    def insertmany(
-            self,
-            *args: Union[List[InsertData], Tuple[InsertData]],
-            OR: OrOptionsType = None,
-            **kwargs: Any,
-    ) -> None:
-        """
-        INSERT many data into table.
-        The same as regular insert but for lists of inserting values
-
-        Parameters
-        ----------
-        args : Union[List, Tuple]
-            1'st way set values for insert
-        OR : OrOptionsType
-            Optional parameter. If INSERT failed, type OrOptionsType
-        kwargs : Any
-            An 2'st way set values for insert
-
-        Returns
-        ----------
-            None or SQL-script in SQLStatement
-
-        """
-
-        self.db.insertmany(self.name, *args, OR=OR, **kwargs)
-
-    def select(
-            self,
-            SELECT: Union[str, SQLite3xColumn, List[Union[str, SQLite3xColumn]]] = None,
-            WHERE: WhereType = None,
-            WITH: WithType = None,
-            ORDER_BY: OrderByType = None,
-            LIMIT: LimitOffsetType = None,
-            OFFSET: LimitOffsetType = None,
-            JOIN: Union[str, List[str], List[List[str]]] = None,
-            **kwargs,
-    ) -> Union[SQLStatement, List[List[Any]]]:
-        """
-        SELECT data from table
-
-        Parameters
-        ----------
-        *args: Union[str, List[str]]
-            selecting column or list of columns
-        SELECT : Union[str, List[str]]
-            columns to select. Value '*' by default
-        WHERE : WhereType
-            optional parameter for conditions, example: {'name': 'Alex', 'group': 2}
-        WITH : WithType
-            with_statement (don't really work well)
-        ORDER_BY : OrderByType
-            optional parameter for conditions, example: {'name': ['NULLS', 'LAST']}
-        LIMIT: LimitOffsetType
-            optional parameter for conditions, example: 10
-        OFFSET : LimitOffsetType
-            optional parameter for conditions, example: 5
-        JOIN: Union[str, List[str], List[List[str]]]
-            optional parameter for joining data from other tables ['groups'],
-
-        Returns
-        ----------
-        List[List]
-            selected data
-
-        """
-
-        return self.db.select(
-            self.name,
-            SELECT=SELECT,
-            WHERE=WHERE,
-            WITH=WITH,
-            ORDER_BY=ORDER_BY,
-            LIMIT=LIMIT,
-            OFFSET=OFFSET,
-            JOIN=JOIN,
-            **kwargs,
-        )
-
-    def select_distinct(
-            self,
-            SELECT: Union[str, SQLite3xColumn, List[Union[str, SQLite3xColumn]]] = None,
-            WHERE: WhereType = None,
-            WITH: WithType = None,
-            ORDER_BY: OrderByType = None,
-            LIMIT: LimitOffsetType = None,
-            OFFSET: LimitOffsetType = None,
-            JOIN: Union[str, List[str], List[List[str]]] = None,
-            **kwargs,
-    ) -> Union[SQLRequest, List]:
-        return self.db.select_distinct(
-            self.name,
-            SELECT=SELECT,
-            WHERE=WHERE,
-            WITH=WITH,
-            ORDER_BY=ORDER_BY,
-            LIMIT=LIMIT,
-            OFFSET=OFFSET,
-            JOIN=JOIN,
-            **kwargs,
-        )
-
-    def select_all(
-            self,
-            WHERE: WhereType = None,
-            WITH: WithType = None,
-            ORDER_BY: OrderByType = None,
-            LIMIT: LimitOffsetType = None,
-            OFFSET: LimitOffsetType = None,
-            JOIN: Union[str, List[str], List[List[str]]] = None,
-            **kwargs,
-    ) -> Union[SQLRequest, List]:
-        """
-        SELECT data from table
-
-        Parameters
-        ----------
-        WHERE : WhereType
-            optional parameter for conditions, example: {'name': 'Alex', 'group': 2}
-        WITH : WithType
-            with_statement (don't really work well)
-        ORDER_BY : OrderByType
-            optional parameter for conditions, example: {'name': ['NULLS', 'LAST']}
-        LIMIT: LimitOffsetType
-            optional parameter for conditions, example: 10
-        OFFSET : LimitOffsetType
-            optional parameter for conditions, example: 5
-
-        Returns
-        ----------
-        List[List]
-            selected data
-
-        """
-
-        return self.db.select_all(
-            self.name,
-            WHERE=WHERE,
-            WITH=WITH,
-            ORDER_BY=ORDER_BY,
-            LIMIT=LIMIT,
-            OFFSET=OFFSET,
-            JOIN=JOIN,
-            **kwargs,
-        )
-
-    def delete(
-            self,
-            WHERE: WhereType = None,
-            WITH: WithType = None,
-            **kwargs,
-    ) -> None:
-        """
-        DELETE FROM table WHERE {something}
-
-        Parameters
-        ----------
-        WHERE : WhereType
-            optional parameter for conditions, example: {'name': 'Alex', 'group': 2}
-        WITH : WithType
-            with_statement (don't really work well)
-
-        """
-
-        self.db.delete(
-            self.name, WHERE=WHERE, WITH=WITH, **kwargs
-        )
-
-    def update(
-            self,
-            SET: Union[List, Tuple, Mapping],
-            WHERE: WhereType = None,
-            OR: OrOptionsType = None,
-            WITH: WithType = None,
-            **kwargs,
-    ) -> None:
-        """
-        UPDATE, SET column_name=something WHERE x=y and more complex requests
-
-        Parameters
-        ----------
-        SET : Union[List, Tuple, Mapping]
-            Column and value to set
-        WHERE : WhereType
-            optional parameter for conditions, example: {'name': 'Alex', 'group': 2}
-        OR : OrOptionsType
-            Optional parameter. If INSERT failed, type OrOptionsType
-        WITH : WithType
-            with_statement (don't really work well)
-        """
-
-        self.db.update(
-            self.name, SET=SET, OR=OR, WHERE=WHERE, WITH=WITH, **kwargs
-        )
-
-    def updatemany(
-            self,
-            SET: Union[List[List], List[Tuple], Tuple[List], Tuple[Tuple]] = None,
-            **kwargs,
-    ) -> None:
-        """
-        ACTUALLY IT'S JUST "INSERT OR REPLACE" BUT SOUNDS EASIER TO UNDERSTAND
-
-        Update many values (or insert)
-
-        Parameters
-        ----------
-        SET : Union[List, Tuple, Mapping]
-            Values to insert or update
-        """
-
-        self.db.updatemany(TABLE=self.name, SET=SET, **kwargs)
-
-    def drop(self, IF_EXIST: bool = True, **kwargs):
-        """
-        DROP TABLE (IF EXIST)
-
-        Parameters
-        ----------
-        IF_EXIST : bool
-            Check is table exist (boolean)
-        """
-
-        self.db.drop(self.name, IF_EXIST=IF_EXIST, **kwargs)
-
-    def find(
-            self,
-            WHERE: WhereType = None,
-            ORDER_BY: OrderByType = None,
-            LIMIT: LimitOffsetType = None,
-            **kwargs,
-    ) -> Union[SQLRequest, List]:
-        """
-        Find all records in table where_
-
-        Parameters
-        ----------
-        WHERE : WhereType
-            optional parameter for conditions, example: {'name': 'Alex', 'group': 2}
-        ORDER_BY : OrderByType
-            optional parameter for conditions, example: {'name': ['NULLS', 'LAST']}
-        LIMIT : LimitOffsetType
-            optional parameter for conditions, example: 10
-        **kwargs :
-
-        Returns
-        ----------
-        List[List]
-            selected data
-        """
-        if not WHERE:
-            WHERE = kwargs
-
-        return self.select_all(WHERE=WHERE, ORDER_BY=ORDER_BY, LIMIT=LIMIT)
-
-
-class SQLite3x:
+class SQLite3x(AbstractDatabase):
     """
     Main SQLite3x Database Class
 
@@ -606,8 +180,10 @@ class SQLite3x:
             template of database structure (DBTemplateType)
 
         """
-        self.__path = path
 
+        super().__init__()      # self.__connection = None
+
+        self.__path = path
         self.__connection = None
         self.connect()
 
@@ -618,23 +194,15 @@ class SQLite3x:
             self.markup(template=template)
 
     @property
-    def connection(self) -> Union[sqlite3.Connection, None]:
-        return self.__connection
-
-    @property
     def path(self) -> PathType:
         return self.__path
 
     @property
-    def tables(self) -> Generator[SQLite3xTable, None, None]:
-        return self._get_tables()
-
-    @property
-    def tables_names(self) -> List[str]:
-        return self._get_tables_names()
+    def connection(self) -> Union[sqlite3.Connection, None]:
+        return self.__connection
 
     def __str__(self):
-        return f"{{SQLite3x: __str__='{self.path}'}}"
+        return f"{{SQLite3x: '{self.path}'}}"
 
     def __bool__(self):
         try:
@@ -643,25 +211,10 @@ class SQLite3x:
             logger.error(error)
             return False
 
-    def __getitem__(self, key) -> SQLite3xTable:
-        return self._get_table(key)
-
-    def __del__(self):
-        if self.connection:
-            self.disconnect()
-
-        del self  # ?
-
     # ============================== PRIVATE METHODS ==============================
 
     def _get_table(self, name) -> SQLite3xTable:
-        # To call method down below is necessary,
-        # otherwise it might fall in case of multiple DB objects
-
-        if name not in self.tables_names:
-            raise KeyError(name, "No such table in database",
-                           f"Available tables: {self.tables_names}")
-
+        super(SQLite3x, self)._get_table(name=name)
         return SQLite3xTable(db=self, name=name)
 
     def _get_tables(self) -> Generator[SQLite3xTable, None, None]:
@@ -748,15 +301,7 @@ class SQLite3x:
         Parent method for all pragma-like methods
         """
 
-        if args:
-            parameter = args[0]
-            script = script_gen.pragma_args(parameter)
-        elif kwargs:
-            parameter, value = tuple(kwargs.items())[0]
-            script = script_gen.pragma_kwargs(parameter=parameter, value=value)
-        else:
-            raise ValueError(f"No data to execute, args: {args}, kwargs: {kwargs}")
-
+        script = super(SQLite3x, self)._pragma_stmt(*args, **kwargs)
         return SQLStatement(SQLRequest(script), self.path, self.connection)
 
     @run.execute
@@ -772,35 +317,11 @@ class SQLite3x:
         Parent method for all CREATE-like methods
         """
 
-        content = ""
-        values = ()
-
-        for (col, params) in columns.items():
-
-            # For {'col': 'params'} -> {'col': ['params']}
-            if isinstance(params, str):
-                params = [f"{params} "]
-
-            # For {'col': [param2, param1]} -> {'col': [param1, param2]}
-            if isinstance(params, list):
-                params = sorted(params, key=lambda par: sort.column_types(par))
-                content += script_gen.column(name=col, params=tuple(params))
-
-            # For {'col': {FK: {a: b}}}
-            elif isinstance(params, dict) and col == FOREIGN_KEY:
-                res = ""
-                for (key, refs) in params.items():
-                    res += script_gen.column_with_foreign_key(key=key, table=refs[0], column=refs[1])
-                content += res[:-1]
-
-            else:
-                raise TypeError
-
-        script = script_gen.create(
+        script, values = super(SQLite3x, self)._create_stmt(
             temp=temp,
-            if_not_exist=IF_NOT_EXIST,
             name=name,
-            content=content[:-2],
+            columns=columns,
+            IF_NOT_EXIST=IF_NOT_EXIST,
             without_rowid=without_rowid
         )
 
@@ -809,10 +330,6 @@ class SQLite3x:
         )
 
     @run.execute
-    @parse.or_param_
-    @parse.with_
-    @parse.from_as_
-    @parse.args_parser
     def _insert_stmt(
             self, *args: Any, TABLE: AnyStr, script="", values=(), **kwargs: Any
     ):
@@ -823,35 +340,18 @@ class SQLite3x:
 
         """
 
-        # parsing args or kwargs for _columns and insert_values
-        if args:
-            _columns = self.get_columns_names(table=TABLE)
-            _columns, args = crop(_columns, args)
-            insert_values = args
-
-        elif kwargs:
-            _columns = tuple(kwargs.keys())
-            insert_values = list(kwargs.values())
-
-        else:
-            raise ValueError(f"No data to insert, args: {args}, kwargs: {kwargs}")
-
-        script += script_gen.insert(columns=tuple(_columns), table=TABLE, need_space=bool(script))
-
-        all_values = tuple(values) + tuple(insert_values)
-
-        return SQLStatement(
-            SQLRequest(script, tuple(value for value in all_values)),
-            self.path,
-            self.connection,
+        script, values = super(SQLite3x, self)._insert_stmt(
+            *args,
+            TABLE=TABLE,
+            script=script,
+            values=values,
+            **kwargs,
         )
+
+        return SQLStatement(SQLRequest(script, values), self.path, self.connection)
 
 
     @run.execute
-    @parse.or_param_
-    @parse.with_
-    @parse.from_as_
-    @parse.args_parser
     def _fast_insert_stmt(
             self, *args, TABLE: AnyStr, script="", values=(), **kwargs: Any
     ):
@@ -862,23 +362,21 @@ class SQLite3x:
         (without get_columns_names req because it's f-g slow)
         """
 
-        if not args:
-            raise sqlite3.OperationalError
-
-        script += script_gen.insert_fast(table=TABLE, placeholders=len(args), need_space=bool(script))
-
-        values = tuple(list(values) + list(args))
+        script, values = super(SQLite3x, self)._fast_insert_stmt(
+            *args,
+            TABLE=TABLE,
+            script=script,
+            values=values,
+            **kwargs,
+        )
 
         return SQLStatement(SQLRequest(script, values), self.path, self.connection)
 
     @run.executemany
-    @parse.or_param_
-    @parse.from_as_
-    @parse.args_parser
     def _insertmany_stmt(
             self,
-            TABLE: AnyStr,
             *args: Union[List[List], List[Tuple], Tuple[List], Tuple[Tuple], List, Tuple],
+            TABLE: AnyStr,
             script="",
             values=(),
             **kwargs: Any,
@@ -891,75 +389,20 @@ class SQLite3x:
 
         """
 
-        if args:
-            args = list(filter(lambda ar: len(ar) > 0, args[0]))  # removing [] (empty lists from inserting values)
-
-            if len(args) == 0:  # if args empty after filtering, break the function, yes it'll break
-                logger.warning("insertmany/updatemany failed, due to no values to insert/update")
-                return
-
-            values = list(
-                map(lambda arg: list(arg), args)
-            )
-
-            max_l = max(map(lambda arg: len(arg), values))  # max len of arg in values
-            temp_ = [0 for _ in range(max_l)]  # example values [] for script
-            stmt = self._insert_stmt(temp_, script=script, TABLE=TABLE,
-                                     execute=False)  # getting stmt for maxsize value
-            max_len = len(stmt.request.values)  # len of max supported val list
-
-            for i in range(len(values)):  # cropping or appending values, making it's needed size
-                len_val_i = len(values[i])
-                if len_val_i < max_len:
-                    values[i] += [None] * (max_len - len_val_i)
-                elif len_val_i > max_len:
-                    values[i] = values[i][:max_len]
-
-        elif kwargs:
-            temp_ = {}
-            values = []
-            columns = list(kwargs.keys())
-            args = list(map(lambda vals: list(vals), kwargs.values()))
-
-            for i in range(len(args)):
-                try:
-                    temp_[columns[i]] = args[i][0]
-                except IndexError:
-                    temp_[columns[i]] = None
-
-            stmt = self._insert_stmt(temp_, script=script, TABLE=TABLE,
-                                     execute=False)  # getting stmt for maxsize value
-            max_l = max(map(lambda val: len(val), args))  # max len of arg in values
-
-            for _ in range(max_l):
-                temp_ = []
-                for arg in args:
-                    if arg:
-                        temp_.append(arg.pop(0))
-                    else:
-                        temp_.append(None)
-                values.append(temp_)
-
-        else:
-            raise ValueError(f"No data to insert, args: {args}, kwargs: {kwargs}")
-
-        values = tuple(
-            map(lambda arg: tuple(arg), values)
-        )  # make values tuple[tuple] (yes it's necessary)
+        script, values = super(SQLite3x, self)._insertmany_stmt(
+            *args,
+            TABLE=TABLE,
+            script=script,
+            values=values,
+            **kwargs,
+        )
 
         return SQLStatement(
-            SQLRequest(stmt.request.script, values), self.path, self.connection
+            SQLRequest(script, values), self.path, self.connection
         )
 
     @return2list
     @run.execute
-    @parse.offset_
-    @parse.limit_
-    @parse.order_by_
-    @parse.where_
-    @parse.join_
-    @parse.with_
-    @parse.from_as_
     def _select_stmt(
             self,
             TABLE: Union[str, SQLite3xTable],
@@ -967,48 +410,39 @@ class SQLite3x:
             values=(),
             method: AnyStr = "SELECT ",
             SELECT: Union[str, SQLite3xColumn, List[Union[str, SQLite3xColumn]], Tuple[Union[str, SQLite3xColumn]]] = None,
+            **kwargs,
     ):
         """
         Parent method for all SELECT-like methods
 
         """
-        if not TABLE:
-            raise ValueError("Argument TABLE unset and have not default value")
 
-        if SELECT is None:
-            if method != "SELECT ALL ":
-                logger.warning("Argument SELECT not specified, default value is '*'")
-            SELECT = ("*",)
-
-        elif isinstance(SELECT, str):
-            SELECT = (SELECT,)
-
-        elif isinstance(SELECT, SQLite3xColumn):
-            SELECT = (SELECT,)
-
-        elif isinstance(SELECT, list):
-            SELECT = (*SELECT,)
-
-        script += script_gen.select(method=method, columns=SELECT, table=TABLE)
+        script, values = super(SQLite3x, self)._select_stmt(
+            TABLE,
+            script=script,
+            values=values,
+            method=method,
+            SELECT=SELECT,
+            **kwargs,
+        )
 
         return SQLStatement(SQLRequest(script, values), self.path, self.connection)
 
     @run.execute
-    @parse.where_
-    @parse.with_
-    def _delete_stmt(self, TABLE: str, script="", values=()):
+    def _delete_stmt(self, TABLE: str, script="", values=(), **kwargs):
         """
         Parent method for delete method
 
         """
 
-        script += script_gen.delete(table=TABLE)
+        script, values = super(SQLite3x, self)._delete_stmt(
+            TABLE=TABLE,
+            script=script,
+            values=values
+        )
         return SQLStatement(SQLRequest(script, values), self.path, self.connection)
 
     @run.execute
-    @parse.where_
-    @parse.or_param_
-    @parse.with_
     def _update_stmt(
             self,
             TABLE: AnyStr,
@@ -1022,41 +456,13 @@ class SQLite3x:
 
         """
 
-        set_ = SET if SET else None
-
-        if not set_ and kwargs:
-            set_ = kwargs
-
-        if isinstance(set_, tuple):
-            set_ = list(set_)
-
-        if isinstance(set_, list):
-            new_set = {}
-
-            if len(set_) % 2 == 0:  # for ['name', 'Alex', 'age', 2]
-                for i in range(len(set_) // 2):
-                    new_set.update({set_[2 * i]: set_[2 * i + 1]})
-
-            else:
-                raise TypeError
-
-            set_ = new_set
-
-        script += f"UPDATE '{TABLE}' SET "
-
-        for (key, val) in set_.items():
-            if issubclass(type(key), SQLite3xColumn):
-                script += f"'{key.name}'="
-            else:
-                script += f"'{key}'="
-
-            if issubclass(type(val), SQLite3xSearchCondition):
-                script += f"{val}, "
-            else:
-                script += "?, "
-                values = tuple(list(values) + [val])
-
-        script = script[:-2]
+        script, values = super(SQLite3x, self)._update_stmt(
+            TABLE=TABLE,
+            SET=SET,
+            script=script,
+            values=values,
+            **kwargs
+        )
 
         return SQLStatement(
             SQLRequest(script=script, values=values), self.path, self.connection
@@ -1075,7 +481,13 @@ class SQLite3x:
 
         """
 
-        script += script_gen.drop(table=TABLE, if_exist=IF_EXIST)
+        script = super(SQLite3x, self)._drop_stmt(
+            TABLE=TABLE,
+            IF_EXIST=IF_EXIST,
+            script=script,
+            **kwargs,
+        )
+
         return SQLStatement(SQLRequest(script=script), self.path, self.connection)
 
     # ============================== PUBLIC METHODS ==============================
@@ -1105,269 +517,12 @@ class SQLite3x:
 
         """
 
+        if not self.connection:
+            return
+
         self.connection.commit()
         self.connection.close()
         self.__connection = None
-
-    def execute(
-            self,
-            script: AnyStr = None,
-            values: Tuple = None,
-            request: SQLRequest = None
-    ) -> Union[List, None]:
-        """
-        Execute any SQL-script whit (or without) values, or execute SQLRequest
-
-        Parameters
-        ----------
-        script : AnyStr
-            single SQLite script, might contains placeholders
-        values : Tuple
-            Values for placeholders if script contains it
-        request : SQLRequest
-            Instead of script and values might execute full statement
-
-        Returns
-        ----------
-        Union[List, None]
-            Database answer if it has
-
-        """
-
-        return self._execute_stmt(script=script, values=values, request=request)
-
-    def executemany(
-            self,
-            script: AnyStr = None,
-            values: Tuple[Tuple] = None,
-            request: SQLRequest = None
-    ) -> Union[List, None]:
-        """
-        Execute any SQL-script for many values sets, or execute SQLRequest
-
-        Parameters
-        ----------
-        script : AnyStr
-            single or multiple SQLite script(s), might contains placeholders
-        values : Tuple[Tuple]
-            Values for placeholders if script contains it
-        request : SQLRequest
-            Instead of script and values might execute full request
-
-        Returns
-        ----------
-        Union[List, None]
-            Database answer if it has
-
-        """
-
-        return self._executemany_stmt(script=script, values=values, request=request)
-
-    def executescript(
-            self,
-            script: AnyStr = None,
-            request: SQLRequest = None
-    ) -> Union[List, None]:
-        """
-        Execute many SQL-scripts whit (or without) values
-
-        Parameters
-        ----------
-        script : AnyStr
-            single SQLite script, might contains placeholders
-        request : SQLRequest
-            Instead of script and values might execute full statement
-
-        Returns
-        ----------
-        Union[List, None]
-            Database answer if it has
-
-        """
-
-        return self._executescript_stmt(script=script, request=request)
-
-    def pragma(
-            self,
-            *args: str,
-            **kwargs: NumStr
-    ) -> Union[List, None]:
-        """
-        Set PRAGMA parameter or send PRAGMA-request
-
-        Parameters
-        ----------
-        args : str
-            Might be used like this:
-            Example: db.pragma("database_list")
-        kwargs : NumStr
-            Might be used like this:
-            Example: db.pragma(foreign_keys="ON")
-
-        Returns
-        ----------
-        Union[List, None]
-            Database answer if it has
-
-        """
-
-        return self._pragma_stmt(*args, **kwargs)
-
-    def foreign_keys(
-            self,
-            mode: Literal["ON", "OFF"]
-    ):
-        """
-        Turn on/off PRAGMA parameter FOREIGN KEYS
-
-        Parameters
-        ----------
-        mode : Literal["ON", "OFF"]
-            "ON" or "OFF" FOREIGN KEYS support
-
-        """
-
-        return self.pragma(foreign_keys=mode)
-
-    def journal_mode(
-            self,
-            mode: Literal["DELETE", "TRUNCATE", "PERSIST", "MEMORY", "WAL", "OFF"]
-    ):
-        """
-        Set PRAGMA param journal_mode
-
-        Parameters
-        ----------
-        mode : Literal["DELETE", "TRUNCATE", "PERSIST", "MEMORY", "WAL", "OFF"]
-            Journal mode
-
-        """
-
-        return self.pragma(journal_mode=mode)
-
-    def table_info(
-            self,
-            table_name: str
-    ):
-        """
-        Send table_info PRAGMA request
-
-        Parameters
-        ----------
-        table_name : str
-            Name of table
-
-        """
-
-        return self.pragma(f"table_info({table_name})")
-
-    def create_table(
-            self,
-            name: AnyStr,
-            columns: ColumnsType,
-            IF_NOT_EXIST: bool = None,
-            without_rowid: bool = None,
-    ):
-        """
-        Method to create new table
-
-        Parameters
-        ----------
-        name : AnyStr
-            Name of creating table
-        columns : ColumnsType
-            Columns of table (ColumnsType-like)
-        IF_NOT_EXIST :
-            Turn on/off "IF NOT EXISTS" prefix
-        without_rowid :
-            Turn on/off "WITHOUT ROWID" postfix
-
-        """
-
-        self._create_stmt(
-            temp="",
-            name=name,
-            columns=columns,
-            IF_NOT_EXIST=IF_NOT_EXIST,
-            without_rowid=without_rowid,
-        )
-
-    def create_temp_table(
-            self,
-            name: AnyStr,
-            columns: ColumnsType,
-            **kwargs
-    ):
-        """
-        CREATE TEMP TABLE (IF NOT EXISTS) schema-name.table-name ...
-        (AS select-stmt)/(column-def table-constraint) (WITHOUT ROWID)
-
-        Parameters
-        ----------
-        name : AnyStr
-            Name of creating table
-        columns : ColumnsType
-            Columns of table (ColumnsType-like)
-        kwargs : Any
-            Other optional kwargs
-
-        """
-
-        self._create_stmt(
-            temp="TEMP",
-            name=name,
-            columns=columns,
-            **kwargs
-        )
-
-    def create_temporary_table(
-            self,
-            name: AnyStr,
-            columns: ColumnsType,
-            **kwargs
-    ):
-        """
-        CREATE TEMPORARY TABLE (IF NOT EXISTS) schema-name.table-name ...
-        (AS select-stmt)/(column-def table-constraint) (WITHOUT ROWID)
-
-        Parameters
-        ----------
-        name : AnyStr
-            Name of creating table
-        columns : ColumnsType
-            Columns of table (ColumnsType-like)
-        kwargs : Any
-            Other optional kwargs
-
-        """
-
-        self._create_stmt(
-            temp="TEMPORARY",
-            name=name,
-            columns=columns,
-            **kwargs
-        )
-
-    def markup(
-            self,
-            template: DBTemplateType
-    ):
-        """
-        Mark up table structure from template
-
-        Parameters
-        ----------
-        template : DBTemplateType
-            Template of database structure (DBTemplateType-like)
-
-        """
-
-        for (table_name, columns) in template.items():
-            self.create_table(
-                name=table_name,
-                columns=columns,
-                IF_NOT_EXIST=True
-            )
 
     def add_column(
             self,
@@ -1450,7 +605,8 @@ class SQLite3x:
 
         """
 
-        return self.__getitem__(key=name)
+        return self._get_table(name=name)
+
 
     def get_columns(
             self,
@@ -1518,456 +674,6 @@ class SQLite3x:
             raise TableInfoError
 
         return columns
-
-    def insert(
-            self,
-            TABLE: AnyStr,
-            *args: InsertData,
-            OR: OrOptionsType = None,
-            WITH: WithType = None,
-            **kwargs: Any,
-    ) -> None:
-        """
-        INSERT data into table
-
-        Parameters
-        ----------
-        TABLE : AnyStr
-            Name of table
-        OR : OrOptionsType
-            Optional parameter. If INSERT failed, type OrOptionsType
-        WITH : WithType
-            Optional parameter.
-
-        Returns
-        ----------
-            None or SQL-script in SQLStatement
-        """
-
-        try:
-            if args:
-                self._fast_insert_stmt(
-                    *args,
-                    script="INSERT",
-                    OR=OR,
-                    TABLE=TABLE,
-                    **kwargs,
-                    WITH=WITH,
-                )
-
-            else:
-                raise ValueError
-
-        except (sqlite3.OperationalError, ValueError):
-            self._insert_stmt(
-                *args,
-                script="INSERT",
-                OR=OR,
-                TABLE=TABLE,
-                **kwargs,
-                WITH=WITH,
-            )
-
-    def replace(
-            self,
-            TABLE: AnyStr,
-            *args: Any,
-            WITH: WithType = None,
-            **kwargs: Any,
-    ) -> None:
-        """
-        REPLACE data into table
-
-        Parameters
-        ----------
-        TABLE : AnyStr
-            Name of table
-        WITH : WithType
-            Optional parameter.
-
-        Returns
-        ----------
-            None or SQL-script in SQLStatement
-
-        """
-
-        try:
-            if args:
-                self._fast_insert_stmt(
-                    *args,
-                    script="REPLACE",
-                    TABLE=TABLE,
-                    **kwargs,
-                    WITH=WITH,
-                )
-            else:
-                raise ValueError
-
-        except (sqlite3.OperationalError, ValueError):
-            self._insert_stmt(
-                *args,
-                script="REPLACE",
-                TABLE=TABLE,
-                **kwargs,
-                WITH=WITH
-            )
-
-    def insertmany(
-            self,
-            TABLE: AnyStr,
-            *args: Union[List[List], List[Tuple], Tuple[List], Tuple[Tuple], List, Tuple],
-            OR: OrOptionsType = None,
-            **kwargs: Any,
-    ) -> None:
-        """
-        INSERT many data into table.
-        The same as regular insert but for lists of inserting values
-
-        Parameters
-        ----------
-        TABLE : AnyStr
-            Name of table
-        args : Union[List, Tuple]
-            1'st way set values for insert
-            P.S: args also support numpy.array value
-        OR : OrOptionsType
-            Optional parameter. If INSERT failed, type OrOptionsType
-        kwargs : Any
-            An 2'st way set values for insert
-
-        Returns
-        ----------
-            None or SQL-script in SQLStatement
-
-        """
-        if len(args) > 1:
-            args = [args]
-
-        self._insertmany_stmt(
-            TABLE,
-            *args,
-            OR=OR,
-            script="INSERT",
-            values=(),
-            **kwargs
-        )
-
-    def select(
-            self,
-            TABLE: Union[str, List[str], SQLite3xTable] = None,
-            SELECT: Union[str, SQLite3xColumn, List[Union[str, SQLite3xColumn]]] = None,
-            WHERE: WhereType = None,
-            WITH: WithType = None,
-            ORDER_BY: OrderByType = None,
-            LIMIT: LimitOffsetType = None,
-            OFFSET: LimitOffsetType = None,
-            FROM: Union[str, List[str], SQLite3xTable] = None,
-            JOIN: Union[str, List[str], List[List[str]]] = None,
-            _method="SELECT",
-            **kwargs,
-    ) -> Union[SQLStatement, List[Any]]:
-        """
-        SELECT data from table
-
-        Parameters
-        ----------
-        TABLE : AnyStr
-            Name of table
-        SELECT : Union[str, List[str]]
-            columns to select. Value '*' by default
-        WHERE : WhereType
-            optional parameter for conditions, example: {'name': 'Alex', 'group': 2}
-        WITH : WithType
-            with_statement (don't really work well)
-        ORDER_BY : OrderByType
-            optional parameter for conditions, example: {'name': ['NULLS', 'LAST']}
-        LIMIT: LimitOffsetType
-            optional parameter for conditions, example: 10
-        OFFSET : LimitOffsetType
-            optional parameter for conditions, example: 5
-        FROM : str
-            Name of table, same at TABLE
-        JOIN: Union[str, List[str], List[List[str]]]
-            optional parameter for joining data from other tables ['groups'],
-        _method: str
-            DON'T CHANGE IT! special argument for unite select_all, select_distinct into select()
-
-        Returns
-        ----------
-        List[List]
-            selected data
-
-        """
-
-        if not TABLE:
-            if FROM:
-                TABLE = FROM
-            else:
-                raise ValueError("No TABLE or FROM argument set")
-
-        if SELECT is None:
-            SELECT = ALL
-
-        if not WHERE:
-            WHERE = kwargs
-            kwargs = {}
-
-        return self._select_stmt(
-            SELECT=SELECT,
-            TABLE=TABLE,
-            method=_method,
-            WHERE=WHERE,
-            WITH=WITH,
-            ORDER_BY=ORDER_BY,
-            LIMIT=LIMIT,
-            OFFSET=OFFSET,
-            JOIN=JOIN,
-            **kwargs,
-        )
-
-    def select_distinct(
-            self,
-            TABLE: Union[str, List[str], SQLite3xTable] = None,
-            SELECT: Union[str, SQLite3xColumn, List[Union[str, SQLite3xColumn]]] = None,
-            WHERE: WhereType = None,
-            WITH: WithType = None,
-            ORDER_BY: OrderByType = None,
-            LIMIT: LimitOffsetType = None,
-            OFFSET: LimitOffsetType = None,
-            FROM: Union[str, List[str], SQLite3xTable] = None,
-            JOIN: Union[str, List[str], List[List[str]]] = None,
-            **kwargs,
-    ) -> Union[SQLStatement, List[Any]]:
-        """
-        SELECT distinct from table
-
-        Parameters
-        ----------
-        TABLE : AnyStr
-            Name of table
-        SELECT : Union[str, List[str]]
-            columns to select. Value '*' by default
-        WHERE : WhereType
-            optional parameter for conditions, example: {'name': 'Alex', 'group': 2}
-        WITH : WithType
-            with_statement (don't really work well)
-        ORDER_BY : OrderByType
-            optional parameter for conditions, example: {'name': ['NULLS', 'LAST']}
-        LIMIT: LimitOffsetType
-            optional parameter for conditions, example: 10
-        OFFSET : LimitOffsetType
-            optional parameter for conditions, example: 5
-        FROM : str
-            Name of table, same at TABLE
-        JOIN: Union[str, List[str], List[List[str]]]
-            optional parameter for joining data from other tables ['groups'],
-
-        Returns
-        ----------
-        List[List]
-            selected data
-
-        """
-
-        return self.select(
-            TABLE=TABLE,
-            _method="SELECT DISTINCT ",
-            SELECT=SELECT,
-            WHERE=WHERE,
-            WITH=WITH,
-            ORDER_BY=ORDER_BY,
-            LIMIT=LIMIT,
-            OFFSET=OFFSET,
-            FROM=FROM,
-            JOIN=JOIN,
-            **kwargs
-        )
-
-    def select_all(
-            self,
-            TABLE: Union[str, List[str], SQLite3xTable] = None,
-            SELECT: Union[str, SQLite3xColumn, List[Union[str, SQLite3xColumn]]] = None,
-            WHERE: WhereType = None,
-            WITH: WithType = None,
-            ORDER_BY: OrderByType = None,
-            LIMIT: LimitOffsetType = None,
-            OFFSET: LimitOffsetType = None,
-            FROM: Union[str, List[str], SQLite3xTable] = None,
-            JOIN: Union[str, List[str], List[List[str]]] = None,
-            **kwargs,
-    ) -> Union[SQLStatement, List[Any]]:
-        """
-        SELECT all data from table
-
-        Parameters
-        ----------
-        TABLE : AnyStr
-            Name of table
-        SELECT : Union[str, List[str]]
-            columns to select. Value '*' by default
-        WHERE : WhereType
-            optional parameter for conditions, example: {'name': 'Alex', 'group': 2}
-        WITH : WithType
-            with_statement (don't really work well)
-        ORDER_BY : OrderByType
-            optional parameter for conditions, example: {'name': ['NULLS', 'LAST']}
-        LIMIT: LimitOffsetType
-            optional parameter for conditions, example: 10
-        OFFSET : LimitOffsetType
-            optional parameter for conditions, example: 5
-        FROM : str
-            Name of table, same at TABLE
-        JOIN: Union[str, List[str], List[List[str]]]
-            optional parameter for joining data from other tables ['groups'],
-
-        Returns
-        ----------
-        List[List]
-            selected data
-
-        """
-
-        return self.select(
-            TABLE=TABLE,
-            _method="SELECT ALL ",
-            SELECT=SELECT,
-            WHERE=WHERE,
-            WITH=WITH,
-            ORDER_BY=ORDER_BY,
-            LIMIT=LIMIT,
-            OFFSET=OFFSET,
-            FROM=FROM,
-            JOIN=JOIN,
-            **kwargs
-        )
-
-    def delete(
-            self,
-            TABLE: str,
-            WHERE: WhereType = None,
-            WITH: WithType = None,
-            **kwargs,
-    ) -> None:
-        """
-        DELETE FROM table WHERE {something}
-
-        Parameters
-        ----------
-        TABLE : AnyStr
-            Name of table
-        WHERE : WhereType
-            optional parameter for conditions, example: {'name': 'Alex', 'group': 2}
-        WITH : WithType
-            with_statement (don't really work well)
-
-        """
-
-        if not WHERE:
-            WHERE = kwargs
-
-        self._delete_stmt(
-            TABLE=TABLE,
-            WHERE=WHERE,
-            WITH=WITH,
-        )
-
-    def update(
-            self,
-            TABLE: AnyStr,
-            SET: Union[List, Tuple, Mapping],
-            WHERE: WhereType = None,
-            OR: OrOptionsType = None,
-            WITH: WithType = None,
-            **kwargs,
-    ) -> None:
-        """
-        UPDATE, SET column_name=something WHERE x=y and more complex requests
-
-        Parameters
-        ----------
-        TABLE : AnyStr
-            Name of table
-        SET : Union[List, Tuple, Mapping]
-            Column and value to set
-        WHERE : WhereType
-            optional parameter for conditions, example: {'name': 'Alex', 'group': 2}
-        OR : OrOptionsType
-            Optional parameter. If INSERT failed, type OrOptionsType
-        WITH : WithType
-            with_statement (don't really work well)
-        """
-
-        if not WHERE:
-            WHERE = kwargs
-
-        self._update_stmt(
-            TABLE=TABLE,
-            SET=SET,
-            OR=OR,
-            WHERE=WHERE,
-            WITH=WITH,
-            **kwargs,
-        )
-
-    def updatemany(
-            self,
-            TABLE: AnyStr,
-            SET: Union[List[List], List[Tuple], Tuple[List], Tuple[Tuple]] = None,
-            **kwargs,
-    ) -> None:
-        """
-        ACTUALLY IT'S JUST "INSERT OR REPLACE" BUT SOUNDS EASIER TO UNDERSTAND
-
-        Update (or insert) many values
-
-        Parameters
-        ----------
-        TABLE : AnyStr
-            Name of table
-        SET : Union[List, Tuple, Mapping]
-            Values to insert or update
-            P.S: SET also support numpy.array value
-        """
-
-        if SET is not None:
-            self._insertmany_stmt(
-                TABLE,
-                SET,
-                script="INSERT",
-                OR=REPLACE,
-                **kwargs,
-            )
-
-        else:
-            # In case if SET == []
-            logger.warning(
-                f"SQLite3x.updatemany "
-                f"got empty list of data to update or got nothing at all, "
-                f"SET={SET}"
-            )
-
-    def drop(
-            self,
-            TABLE: AnyStr,
-            IF_EXIST: bool = True,
-            **kwargs
-    ) -> None:
-        """
-        DROP TABLE (IF EXIST)
-
-        Parameters
-        ----------
-        TABLE : AnyStr
-            Name of table
-        IF_EXIST : bool
-            Check is table exist (boolean)
-        """
-
-        self._drop_stmt(
-            TABLE=TABLE,
-            IF_EXIST=IF_EXIST,
-            **kwargs
-        )
 
 
 __all__ = [

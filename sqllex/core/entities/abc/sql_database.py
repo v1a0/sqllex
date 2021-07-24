@@ -595,10 +595,9 @@ class AbstractDatabase(ABC):
     @abstractmethod
     def __init__(self):
         self.__connection = None
-        pass
 
     @property
-    def connection(self) -> Union[sqlite3.Connection, None]:
+    def connection(self) -> Union[None]:
         return self.__connection
 
     @property
@@ -628,15 +627,11 @@ class AbstractDatabase(ABC):
 
     # ============================== PRIVATE METHODS ==============================
 
-    def _get_table(self, name) -> AbstractTable:
-        # To call method down below is necessary,
-        # otherwise it might fall in case of multiple DB objects
-
+    def _get_table(self, name):
         if name not in self.tables_names:
             raise KeyError(name, "No such table in database",
                            f"Available tables: {self.tables_names}")
 
-        return AbstractTable(db=self, name=name)
 
     def _get_tables(self) -> Generator[AbstractTable, None, None]:
         """
@@ -808,8 +803,8 @@ class AbstractDatabase(ABC):
     @parse.args_parser
     def _insertmany_stmt(
             self,
-            TABLE: AnyStr,
             *args: Union[List[List], List[Tuple], Tuple[List], Tuple[Tuple], List, Tuple],
+            TABLE: AnyStr,
             script="",
             values=(),
             **kwargs: Any,
@@ -827,7 +822,7 @@ class AbstractDatabase(ABC):
 
             if len(args) == 0:  # if args empty after filtering, break the function, yes it'll break
                 logger.warning("insertmany/updatemany failed, due to no values to insert/update")
-                return
+                return None, None
 
             values = list(
                 map(lambda arg: list(arg), args)
@@ -878,6 +873,9 @@ class AbstractDatabase(ABC):
             map(lambda arg: tuple(arg), values)
         )  # make values tuple[tuple] (yes it's necessary)
 
+        if not values:
+            values = tuple()
+
         return stmt.request.script, values
 
     @abstractmethod
@@ -896,6 +894,7 @@ class AbstractDatabase(ABC):
             method: AnyStr = "SELECT ",
             SELECT: Union[
                 str, AbstractColumn, List[Union[str, AbstractColumn]], Tuple[Union[str, AbstractColumn]]] = None,
+            **kwargs,
     ):
         """
         Parent method for all SELECT-like methods
@@ -925,7 +924,7 @@ class AbstractDatabase(ABC):
     @abstractmethod
     @parse.where_
     @parse.with_
-    def _delete_stmt(self, TABLE: str, script="", values=()):
+    def _delete_stmt(self, TABLE: str, script="", values=(), **kwargs):
         """
         Parent method for delete method
 
@@ -973,13 +972,14 @@ class AbstractDatabase(ABC):
 
         script += f"UPDATE '{TABLE}' SET "
 
+
         for (key, val) in set_.items():
             if issubclass(type(key), AbstractColumn):
                 script += f"'{key.name}'="
             else:
                 script += f"'{key}'="
 
-            if issubclass(type(val), AbstractColumn):
+            if isinstance(val, AbstractSearchCondition):
                 script += f"{val}, "
             else:
                 script += "?, "
@@ -1526,8 +1526,8 @@ class AbstractDatabase(ABC):
             args = [args]
 
         self._insertmany_stmt(
-            TABLE,
-            *args,
+            args,
+            TABLE=TABLE,
             OR=OR,
             script="INSERT",
             values=(),
@@ -1813,8 +1813,8 @@ class AbstractDatabase(ABC):
 
         if SET is not None:
             self._insertmany_stmt(
-                TABLE,
                 SET,
+                TABLE=TABLE,
                 script="INSERT",
                 OR=REPLACE,
                 **kwargs,

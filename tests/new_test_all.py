@@ -363,6 +363,8 @@ def getitem_test():
     if t7.select([t7_name, 'id'], WHERE=(t7_id == 2) | (t7_id == 1) & 1) != [['XXXX', 1], ['Blex', 2]]:
         raise MemoryError
 
+    print(t7.select_all())
+
     t7.update(
         {
             t7_id: t7_id + 2
@@ -370,8 +372,10 @@ def getitem_test():
         WHERE=t7_name == 'XXXX'
     )
 
+    print(t7.select_all())
+
     if t7.select([t7_name, t7_id], WHERE=(t7_id == 3)) != [['XXXX', 3]]:
-        print(t7.select([t7_name, t7_id], WHERE=(t7_id == 2) | (t7_id == 1) & 1))
+        print(t7.select([t7_name, t7_id], WHERE=(t7_id == 3)))
         raise MemoryError
 
 
@@ -406,8 +410,9 @@ def has_add_remove_column_test():
 # Start time counting
 t = time()
 
-# Connection
+# Connection_
 db.connect()
+
 
 # Testes
 tables_test()
@@ -422,6 +427,7 @@ get_tables_test()
 # has_add_remove_column_test()   # workflow falling by no reason issue #
 
 # Disconnect
+print(db.connection)
 db.disconnect()
 
 # Time counting

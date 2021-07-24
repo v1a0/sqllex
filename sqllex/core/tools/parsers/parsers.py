@@ -1,7 +1,5 @@
 from sqllex.types import *
 from sqllex.constants.sql import *
-import cProfile
-import pstats
 
 
 def from_as_(func: callable):
@@ -126,16 +124,15 @@ def where_(func: callable) -> callable:
         else:
             where_: None = None
 
-        stmt: SQLStatement = func(*args, **kwargs)
+        __script, __values = func(*args, **kwargs)
 
         if where_:
-            stmt.request.script += f"WHERE ("
+            __script += f" WHERE ("
 
             if isinstance(where_, tuple):  #
                 where_ = list(where_)
 
             if isinstance(where_, list):
-
                 # If WHERE is not List[List] (Just List[NotList])
                 if not isinstance(where_[0], list):
                     where_ = [where_]
@@ -176,44 +173,44 @@ def where_(func: callable) -> callable:
                     else:
                         operator = "="
 
-                    stmt.request.script += f"({f'{operator}? OR '.join(key for _ in values)}{operator}? OR "
-                    stmt.request.script = f"{stmt.request.script[:-3].strip()}) " + "AND "
+                    __script += f"({f'{operator}? OR '.join(key for _ in values)}{operator}? OR "
+                    __script = f"{__script[:-3].strip()}) " + "AND "
 
-                    if stmt.request.values:
-                        if isinstance(stmt.request.values[0], tuple):
-                            # if .values contains many values for insertmany stmt
+                    if __values:
+                        if isinstance(__values[0], tuple):
+                            # if .values contains many values for insertmany __script, __values
                             # add where_ values for each value
-                            new_values = list(stmt.request.values)
+                            new_values = list(__values)
 
                             for i in range(len(new_values)):
                                 new_values[i] = tuple(
                                     list(new_values[i]) + list(values)
                                 )
 
-                            stmt.request.values = tuple(new_values)
+                            __values = tuple(new_values)
 
                         else:
                             # if .values contains only one set of values
                             # add where_ values
-                            stmt.request.values = tuple(
-                                list(stmt.request.values) + list(values)
+                            __values = tuple(
+                                list(__values) + list(values)
                             )
                     else:
-                        stmt.request.values = values
+                        __values = values
 
-                stmt.request.script = stmt.request.script.strip()[:-3]
+                __script = __script.strip()[:-3]
 
             elif isinstance(where_, str):
-                stmt.request.script += f"{where_}"
+                __script += f"{where_}"
 
             else:
                 raise TypeError
 
-            stmt.request.script = (
-                f"{stmt.request.script.strip()}) "  # .strip() removing spaces around
+            __script = (
+                f"{__script.strip()}) "  # .strip() removing spaces around
             )
 
-        return stmt
+        return __script, __values
 
     return where_wrapper
 
@@ -243,7 +240,7 @@ def join_(func: callable) -> callable:
         else:
             JOIN: None = None
 
-        stmt: SQLStatement = func(*args, **kwargs)
+        __script, __values = func(*args, **kwargs)
 
         if JOIN:
             if isinstance(JOIN, list):
@@ -260,13 +257,13 @@ def join_(func: callable) -> callable:
                         join_method = INNER_JOIN
 
                     # Adding JOIN to script
-                    stmt.request.script += (
+                    __script += (
                         f"{join_method} {' '.join(j_arg for j_arg in join_)} "
                     )
             else:
                 raise TypeError("Unexp")
 
-        return stmt
+        return __script, __values
 
     return join_wrapper
 
@@ -327,13 +324,13 @@ def order_by_(func: callable) -> callable:
         else:
             order_by: None = None
 
-        stmt: SQLStatement = func(*args, **kwargs)
+        __script, __values = func(*args, **kwargs)
 
         if order_by:
             if isinstance(order_by, (str, int)):
-                stmt.request.script += f"ORDER BY {order_by} "
+                __script += f"ORDER BY {order_by} "
             elif isinstance(order_by, (list, tuple)):
-                stmt.request.script += (
+                __script += (
                     f"ORDER BY {', '.join(str(item_ob) for item_ob in order_by)} "
                 )
             elif isinstance(order_by, dict):
@@ -345,9 +342,9 @@ def order_by_(func: callable) -> callable:
                     else:
                         raise TypeError
 
-                    stmt.request.script += f"ORDER BY {key} {uni_val} "
+                    __script += f"ORDER BY {key} {uni_val} "
 
-        return stmt
+        return __script, __values
 
     return order_by_wrapper
 
@@ -376,14 +373,14 @@ def limit_(func: callable) -> callable:
         else:
             limit: None = None
 
-        stmt: SQLStatement = func(*args, **kwargs)
+        __script, __values = func(*args, **kwargs)
 
         if limit:
             if isinstance(limit, (float, str)):
                 limit = int(limit)
-            stmt.request.script += f"LIMIT {limit} "
+            __script += f"LIMIT {limit} "
 
-        return stmt
+        return __script, __values
 
     return limit_wrapper
 
@@ -412,14 +409,14 @@ def offset_(func: callable) -> callable:
         else:
             offset: bool = False
 
-        stmt: SQLStatement = func(*args, **kwargs)
+        __script, __values = func(*args, **kwargs)
 
         if offset:
             if isinstance(offset, (float, str)):
                 offset = int(offset)
-            stmt.request.script += f"OFFSET {offset} "
+            __script += f"OFFSET {offset} "
 
-        return stmt
+        return __script, __values
 
     return offset_wrapper
 
