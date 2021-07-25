@@ -433,3 +433,6 @@ print(t)
 
 # Remove db
 remove_db()
+
+
+# 0.12682533264160156

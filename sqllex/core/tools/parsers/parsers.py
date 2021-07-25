@@ -1,7 +1,5 @@
 from sqllex.types import *
 from sqllex.constants.sql import *
-import cProfile
-import pstats
 
 
 def from_as_(func: callable):
@@ -129,7 +127,7 @@ def where_(func: callable) -> callable:
         stmt: SQLStatement = func(*args, **kwargs)
 
         if where_:
-            stmt.request.script += f"WHERE ("
+            stmt.request.script += f" WHERE ("
 
             if isinstance(where_, tuple):  #
                 where_ = list(where_)
