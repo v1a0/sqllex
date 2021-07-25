@@ -1,5 +1,8 @@
 # 0.1.10
 
+### 0.1.10.5
+- Removed mistaken imports and requirements
+
 ### 0.1.10.4
 - Insert method got 3x speed up (!!!) using caching
 - Select method got 1.68x speed up (!) using caching

@@ -25,15 +25,14 @@ Better than <b>sqlite3</b>. Seriously, try it out<br>
 pip install sqllex
 ```
 
-If you need most stable version install **sqllex==0.1.10.3**
+If you need most stable version install **sqllex==0.1.10.5**
 
 
 | Version |  Status | Tests, and actions |
 | :--------: | :----------------------------: | :---: |
-| `0.1.10.4`    | ✔️ stable (testing)  <br> ✔️ supported      | [![code-ql-img]][code-ql-src] <br> [![sqlite3x-test-img]][sqlite3x-test-src] <br> [![pypi-upload-img]][pypi-upload-img] |
-| `0.1.10.3`    | ✔️ stable            <br> ✔️ supported      | ✔️All passed |
-| `<=0.1.9.10`  | ✔️ stable            <br> ❌️ outdated       |  ✔️Mostly passing |
-| `<= 0.1.8.x`  | ⚠️ unstable          <br> ❌️ outdated       |  ~ |
+| `0.1.10.5`    | ✔️ stable (testing)  <br> ✔️ supported      | [![code-ql-img]][code-ql-src] <br> [![sqlite3x-test-img]][sqlite3x-test-src] <br> [![pypi-upload-img]][pypi-upload-img] |
+| `0.1.9.10`  | ✔️ stable            <br> ❌️ outdated       |  ✔️Mostly passing |
+| `<= 0.1.9.9`  | ⚠️ unstable          <br> ❌️ outdated       |  ~ |
 
 
 ## About
