@@ -203,6 +203,7 @@ class SQLite3x(AbstractDatabase):
             return False
 
     # ========================== ABC METHODS INIT =================================
+
     def _executor(self, script: AnyStr, values: Tuple = None, spec: Number = 0):
         """
         Execute scripts with values
@@ -338,7 +339,7 @@ class SQLite3x(AbstractDatabase):
     def get_columns_names(
             self,
             table: AnyStr
-    ) -> List[str]:
+    ) -> Tuple[str]:
         """
         Get list of names of table columns as strings
 
@@ -355,13 +356,13 @@ class SQLite3x(AbstractDatabase):
         """
 
         try:
-            columns_: List[List[str]] = self.execute(f"SELECT name FROM PRAGMA_TABLE_INFO('{table}')")
-            columns: List[str] = list(map(lambda item: item[0], columns_))
+            columns_: Tuple[Tuple[str]] = self.execute(f"SELECT name FROM PRAGMA_TABLE_INFO('{table}')")
+            columns: Tuple = tuple(map(lambda item: item[0], columns_))
 
         except sqlite3.OperationalError:
             # Fix for compatibility issues #19, by some reason it can't find PRAGMA_TABLE_INFO table
-            columns_: List[List[str]] = self.pragma(f"table_info('{table}')")
-            columns: List[str] = list(map(lambda item: item[1], columns_))
+            columns_: Tuple[Tuple[str]] = self.pragma(f"table_info('{table}')")
+            columns: Tuple = tuple(map(lambda item: item[1], columns_))
 
         if not columns:
             raise TableInfoError

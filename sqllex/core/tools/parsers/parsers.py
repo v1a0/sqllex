@@ -294,7 +294,7 @@ def or_param_(func: callable) -> callable:
             or_arg: None = None
 
         if or_arg:
-            kwargs.update({"script": kwargs.get("script") + f" OR {or_arg}"})
+            kwargs.update({"script": f"{kwargs.get('script')} OR {or_arg}"})
 
         return func(*args, **kwargs)
 
@@ -422,6 +422,55 @@ def offset_(func: callable) -> callable:
 
 
 
+# def args_parser(func: callable):
+#     """
+#     Decorator for parsing argument method.
+#     If func got only one argument which contains args for function it'll unwrap it
+#
+#     if args is dict :
+#         return args = None, kwargs = args[0]
+#
+#     if args is list :
+#         return args = args[0], kwargs = kwargs
+#
+#     if args is tuple :
+#         return args = list(args[0]), kwargs = kwargs
+#
+#     Parameters
+#     ----------
+#     func : callable
+#         SQLite3x method contains args
+#
+#     Returns
+#     ----------
+#     callable
+#         Decorated method with parsed args
+#     """
+#
+#     def args_parser_wrapper(*args: Any, **kwargs: Any):
+#         if not args:
+#             return func(*args, **kwargs)
+#
+#         self = list(args)[0]
+#         args = list(args)[1:]
+#
+#         if len(args) == 1:
+#             if isinstance(args[0], list):
+#                 args = args[0]
+#             elif isinstance(args[0], (str, int)):
+#                 args = [args[0]]
+#             elif isinstance(args[0], tuple):
+#                 args = list(args[0])
+#             elif isinstance(args[0], dict):
+#                 kwargs.update(args[0])
+#                 args = []
+#
+#         args = [self, *args]
+#
+#         return func(*args, **kwargs)
+#
+#     return args_parser_wrapper
+
 
 
 def args_parser(func: callable):
@@ -433,10 +482,10 @@ def args_parser(func: callable):
         return args = None, kwargs = args[0]
 
     if args is list :
-        return args = args[0], kwargs = kwargs
+        return args = tuple(args[0]), kwargs = kwargs
 
     if args is tuple :
-        return args = list(args[0]), kwargs = kwargs
+        return args = args[0], kwargs = kwargs
 
     Parameters
     ----------
@@ -453,25 +502,27 @@ def args_parser(func: callable):
         if not args:
             return func(*args, **kwargs)
 
-        self = list(args)[0]
-        args = list(args)[1:]
+        self = args[:1]
+        args = args[1:]
 
         if len(args) == 1:
             if isinstance(args[0], list):
-                args = args[0]
+                args = tuple(args[0])
             elif isinstance(args[0], (str, int)):
-                args = [args[0]]
+                args = (args[0],)
             elif isinstance(args[0], tuple):
-                args = list(args[0])
+                args = args[0]
             elif isinstance(args[0], dict):
                 kwargs.update(args[0])
-                args = []
+                args = tuple()
 
-        args = [self, *args]
+        args = self + args
 
         return func(*args, **kwargs)
 
     return args_parser_wrapper
+
+
 
 
 __all__ = [

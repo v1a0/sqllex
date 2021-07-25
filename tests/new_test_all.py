@@ -237,6 +237,7 @@ def insertmany_test():
         (2, 'NO',), (2, 'NO',), (2, 'NO',), (2, 'NO',), (2, 'NO',), (2, 'NO',), (2, 'NO',),
         (2, 'NO',), (2, 'NO',), (2, 'NO',), (2, 'NO',)
     ]:
+        print(db.select_all('t3'))
         raise MemoryError
 
     db.create_table(
@@ -347,7 +348,7 @@ def getitem_test():
     t7_id = t7['id']
     t7_name = t7['name']
 
-    if t7.columns_names != ['id', 'name']:
+    if t7.columns_names != ('id', 'name'):
         raise MemoryError
 
     t7.insert([1, 'Alex'])

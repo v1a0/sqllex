@@ -16,7 +16,7 @@ setup(
 
         'sqllex.core.entities',
         'sqllex.core.entities.sqlite3x',
-        'sqllex.core.entities.super',
+        'sqllex.core.entities.abc',
 
         'sqllex.core.tools',
         'sqllex.core.tools.convertors',
@@ -36,9 +36,7 @@ setup(
     download_url=f"https://github.com/V1A0/sqllex/archive/refs/tags/v{sqllex.__version__}.tar.gz",
     keywords=['sql', 'sql3', 'sqlite', 'sqlite3', 'sqllex', 'db', 'database', 'easy'],
     install_requires=[
-        'colorama==0.4.4',
         'loguru==0.5.3',
-        'win32-setctime==1.0.3',
     ],
     classifiers=[
         'Development Status :: 3 - Alpha',

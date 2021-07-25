@@ -15,6 +15,7 @@ from sqllex.core.tools.convertors import crop
 import sqllex.core.tools.sorters as sort
 import sqllex.core.tools.parsers.parsers as parse
 import sqlite3
+from functools import lru_cache
 
 
 class AbstractSearchCondition(str):
@@ -737,16 +738,15 @@ class AbstractDatabase(ABC):
 
         elif kwargs:
             _columns = tuple(kwargs.keys())
-            insert_values = list(kwargs.values())
+            insert_values = tuple(kwargs.values())
 
         else:
             raise ValueError(f"No data to insert, args: {args}, kwargs: {kwargs}")
 
-        script += script_gen.insert(columns=tuple(_columns), table=TABLE, need_space=bool(script))
+        script = f"{script}{script_gen.insert(columns=_columns, table=TABLE, need_space=bool(script))}"
+        values += insert_values
 
-        all_values = tuple(values) + tuple(insert_values)
-
-        return script, tuple(value for value in all_values)
+        return script, values
 
     @parse.or_param_
     @parse.with_
@@ -765,9 +765,8 @@ class AbstractDatabase(ABC):
         if not args:
             raise sqlite3.OperationalError
 
-        script += script_gen.insert_fast(table=TABLE, placeholders=len(args), need_space=bool(script))
-
-        values = tuple(list(values) + list(args))
+        script = f"{script}{script_gen.insert_fast(table=TABLE, placeholders=len(args), need_space=bool(script))}"
+        values += args
 
         return script, values
 
@@ -790,64 +789,80 @@ class AbstractDatabase(ABC):
 
         """
 
+
+
         if args:
-            args = list(filter(lambda ar: len(ar) > 0, args[0]))  # removing [] (empty lists from inserting values)
+            args = tuple(filter(lambda ar: len(ar) > 0, args[0]))  # removing [] (empty lists from inserting values)
 
             if len(args) == 0:  # if args empty after filtering, break the function, yes it'll break
                 logger.warning("insertmany/updatemany failed, due to no values to insert/update")
                 return None, None
 
-            values = list(
-                map(lambda arg: list(arg), args)
-            )
 
-            max_l = max(map(lambda arg: len(arg), values))  # max len of arg in values
-            temp_ = [0 for _ in range(max_l)]  # example values [] for script
-            _script, _values = self._insert_stmt(temp_, script=script, TABLE=TABLE)  # getting stmt for maxsize value
-            max_len = len(_values)  # len of max supported val list
+            if isinstance(args[0], list):
+                args = tuple(map(lambda arg: tuple(arg), args))    # converting lists in args to tuples ([1,2],) -> ((1,2),)
 
-            for i in range(len(values)):  # cropping or appending values, making it's needed size
-                len_val_i = len(values[i])
-                if len_val_i < max_len:
-                    values[i] += [None] * (max_len - len_val_i)
-                elif len_val_i > max_len:
-                    values[i] = values[i][:max_len]
+            max_arg_len = max(map(lambda arg: len(arg), args))  # max len of arg in values
+            min_arg_len = min(map(lambda arg: len(arg), args))  # min len of arg in values
+
+            temp_ = tuple(0 for _ in range(max_arg_len))        # (1, 'Alex', 'Django')
+
 
         elif kwargs:
-            temp_ = {}
-            values = []
-            columns = list(kwargs.keys())
-            args = list(map(lambda vals: list(vals), kwargs.values()))
+            for _, arg in kwargs.items():
+                args += (tuple(arg),)
 
-            for i in range(len(args)):
-                try:
-                    temp_[columns[i]] = args[i][0]
-                except IndexError:
-                    temp_[columns[i]] = None
+            columns = tuple(kwargs.keys())
 
-            _script, _values = self._insert_stmt(temp_, script=script, TABLE=TABLE)  # getting stmt for maxsize value
-            max_l = max(map(lambda val: len(val), args))  # max len of arg in values
+            args = tuple(zip(*args))
+            print(111, columns, args)
 
-            for _ in range(max_l):
-                temp_ = []
-                for arg in args:
-                    if arg:
-                        temp_.append(arg.pop(0))
-                    else:
-                        temp_.append(None)
-                values.append(temp_)
+            max_arg_len = max(map(lambda arg: len(arg), args))     # max len of arg in values
+            min_arg_len = min(map(lambda arg: len(arg), args))     # min len of arg in values\\
+
+            temp_ = dict(zip(columns, (None,)*len(columns)))  # {'column_1': None, 'column_2': None, 'column_3': None}
 
         else:
             raise ValueError(f"No data to insert, args: {args}, kwargs: {kwargs}")
 
-        values = tuple(
-            map(lambda arg: tuple(arg), values)
-        )  # make values tuple[tuple] (yes it's necessary)
+        print(1221, temp_)
+        print(2112, args)
 
-        if not values:
-            values = tuple()
+        script, expected_values = self._insert_stmt(temp_, script=script, TABLE=TABLE)  # getting stmt for maxsize value
 
-        return _script, values
+        print(script, expected_values)
+
+        possible_len = len(expected_values)  # len of max supported val list
+
+        if min_arg_len != possible_len or max_arg_len != possible_len:
+            # if some inserting datasets have different length
+            # crop or append these sets
+
+            cropped_values = tuple()
+
+            for arg in args:  # cropping or appending args, making it's same size
+                # arg: tuple
+                if len(arg) == possible_len:
+                    cropped_values += (arg,)
+                if len(arg) < possible_len:
+                    cropped_values += (arg + ((None,) * (possible_len - len(arg))),)
+                elif len(arg) > possible_len:
+                    cropped_values += (arg[:possible_len],)
+
+            values += cropped_values
+
+        else:
+            values += args
+
+        print(2020, values)
+        # values = tuple(
+        #     map(lambda arg: tuple(arg), values)
+        # )  # make values tuple[tuple] (yes it's necessary)
+        #
+        # if not values:
+        #     values = tuple()
+        #
+        return script, values
 
     @parse.offset_
     @parse.limit_
@@ -986,7 +1001,7 @@ class AbstractDatabase(ABC):
             self,
             script: AnyStr = None,
             values: Tuple = None,
-    ) -> Union[List, None]:
+    ) -> Union[Tuple, None]:
         """
         Execute any SQL-script whit (or without) values, or execute SQLRequest
 
@@ -1055,7 +1070,7 @@ class AbstractDatabase(ABC):
             self,
             *args: str,
             **kwargs: NumStr
-    ) -> Union[List, None]:
+    ) -> Union[Tuple, None]:
         """
         Set PRAGMA parameter or send PRAGMA-request
 
