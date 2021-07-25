@@ -164,7 +164,7 @@ class AbstractTable(ABC):
         Generator of column's names in table
 
     """
-    
+
     def __init__(self, db, name: AnyStr):
         """
         Parameters
@@ -371,14 +371,12 @@ class AbstractTable(ABC):
             OFFSET: LimitOffsetType = None,
             JOIN: Union[str, List[str], List[List[str]]] = None,
             **kwargs,
-    ) -> Union[SQLStatement, List[List[Any]]]:
+    ) -> Union[Tuple, List[List[Any]]]:
         """
         SELECT data from table
 
         Parameters
         ----------
-        *args: Union[str, List[str]]
-            selecting column or list of columns
         SELECT : Union[str, List[str]]
             columns to select. Value '*' by default
         WHERE : WhereType
@@ -596,8 +594,16 @@ class AbstractDatabase(ABC):
     def __init__(self):
         self.__connection = None
 
+    @abstractmethod
+    def __str__(self):
+        pass
+
+    @abstractmethod
+    def __bool__(self):
+        pass
+
     @property
-    def connection(self) -> Union[None]:
+    def connection(self):
         return self.__connection
 
     @property
@@ -608,14 +614,6 @@ class AbstractDatabase(ABC):
     def tables_names(self) -> List[str]:
         return self._get_tables_names()
 
-    @abstractmethod
-    def __str__(self):
-        pass
-
-    @abstractmethod
-    def __bool__(self):
-        pass
-
     def __getitem__(self, key) -> AbstractTable:
         return self._get_table(key)
 
@@ -623,60 +621,39 @@ class AbstractDatabase(ABC):
         if self.connection:
             self.disconnect()
 
-        del self    # ?
+        del self  # ?
 
     # ============================== PRIVATE METHODS ==============================
 
-    def _get_table(self, name):
-        if name not in self.tables_names:
-            raise KeyError(name, "No such table in database",
-                           f"Available tables: {self.tables_names}")
-
-
-    def _get_tables(self) -> Generator[AbstractTable, None, None]:
+    @abstractmethod
+    def _executor(self, script: AnyStr, values: Tuple = None, spec: Number = 0):
         """
-        Generator of tables as AbstractTable objects
+        Execute scripts with values
 
-        Yield
+        Parameters
         ----------
-        AbstractTable
-            Tables list
-
+        spec : Number
+            Id of execution case:
+                1. Regular execute
+                2. Executemany
+                3. Executescript
         """
+        pass
 
-        # Code down below commented because I guess it's better to see all tables
-        # even Internal SQLite tables. Might be changed later
-        #
-        # if "sqlite_sequence" in table_names:
-        #     table_names.remove("sqlite_sequence")
+    @abstractmethod
+    def _get_table(self, name):
+        pass
 
-        for tab_name in self.tables_names:
-            yield self._get_table(tab_name)
+    @abstractmethod
+    def _get_tables(self) -> Generator[AbstractTable, None, None]:
+        pass
 
     @abstractmethod
     def _get_tables_names(self) -> List[str]:
         pass
 
-    @abstractmethod
-    def _execute_stmt(
-            self, script: AnyStr = None, values: Tuple = None, request: SQLRequest = None
-    ):
-        pass
-
-    @abstractmethod
-    def _executemany_stmt(
-            self, script: AnyStr = None, values: Tuple = None, request: SQLRequest = None
-    ):
-        pass
-
-    @abstractmethod
-    def _executescript_stmt(
-            self, script: AnyStr = None, values: Tuple = None, request: SQLRequest = None
-    ):
-        pass
-
-    @abstractmethod
-    def _pragma_stmt(self, *args: str, **kwargs):
+    @staticmethod
+    def _pragma_stmt(*args: str, **kwargs):
         """
         Parent method for all pragma-like methods
         """
@@ -690,11 +667,10 @@ class AbstractDatabase(ABC):
         else:
             raise ValueError(f"No data to execute, args: {args}, kwargs: {kwargs}")
 
-        return script   # !!!
+        return script
 
-    @abstractmethod
+    @staticmethod
     def _create_stmt(
-            self,
             temp: AnyStr,
             name: AnyStr,
             columns: ColumnsType,
@@ -739,13 +715,12 @@ class AbstractDatabase(ABC):
 
         return script, values
 
-    @abstractmethod
     @parse.or_param_
     @parse.with_
     @parse.from_as_
     @parse.args_parser
     def _insert_stmt(
-            self, *args: Any, TABLE: AnyStr, script="", values=(), **kwargs: Any
+            self, *args: Any, TABLE: AnyStr, script="", values=(), **kwargs: Any,
     ):
         """
         Parent method for INSERT-like methods
@@ -773,7 +748,6 @@ class AbstractDatabase(ABC):
 
         return script, tuple(value for value in all_values)
 
-    @abstractmethod
     @parse.or_param_
     @parse.with_
     @parse.from_as_
@@ -797,7 +771,6 @@ class AbstractDatabase(ABC):
 
         return script, values
 
-    @abstractmethod
     @parse.or_param_
     @parse.from_as_
     @parse.args_parser
@@ -830,9 +803,8 @@ class AbstractDatabase(ABC):
 
             max_l = max(map(lambda arg: len(arg), values))  # max len of arg in values
             temp_ = [0 for _ in range(max_l)]  # example values [] for script
-            stmt = self._insert_stmt(temp_, script=script, TABLE=TABLE,
-                                     execute=False)  # getting stmt for maxsize value
-            max_len = len(stmt.request.values)  # len of max supported val list
+            _script, _values = self._insert_stmt(temp_, script=script, TABLE=TABLE)  # getting stmt for maxsize value
+            max_len = len(_values)  # len of max supported val list
 
             for i in range(len(values)):  # cropping or appending values, making it's needed size
                 len_val_i = len(values[i])
@@ -853,8 +825,7 @@ class AbstractDatabase(ABC):
                 except IndexError:
                     temp_[columns[i]] = None
 
-            stmt = self._insert_stmt(temp_, script=script, TABLE=TABLE,
-                                     execute=False)  # getting stmt for maxsize value
+            _script, _values = self._insert_stmt(temp_, script=script, TABLE=TABLE)  # getting stmt for maxsize value
             max_l = max(map(lambda val: len(val), args))  # max len of arg in values
 
             for _ in range(max_l):
@@ -876,9 +847,8 @@ class AbstractDatabase(ABC):
         if not values:
             values = tuple()
 
-        return stmt.request.script, values
+        return _script, values
 
-    @abstractmethod
     @parse.offset_
     @parse.limit_
     @parse.order_by_
@@ -921,7 +891,6 @@ class AbstractDatabase(ABC):
 
         return script, values
 
-    @abstractmethod
     @parse.where_
     @parse.with_
     def _delete_stmt(self, TABLE: str, script="", values=(), **kwargs):
@@ -933,7 +902,6 @@ class AbstractDatabase(ABC):
         script += script_gen.delete(table=TABLE)
         return script, values
 
-    @abstractmethod
     @parse.where_
     @parse.or_param_
     @parse.with_
@@ -972,7 +940,6 @@ class AbstractDatabase(ABC):
 
         script += f"UPDATE '{TABLE}' SET "
 
-
         for (key, val) in set_.items():
             if issubclass(type(key), AbstractColumn):
                 script += f"'{key.name}'="
@@ -989,7 +956,6 @@ class AbstractDatabase(ABC):
 
         return script, values
 
-    @abstractmethod
     def _drop_stmt(
             self,
             TABLE: AnyStr,
@@ -1003,7 +969,8 @@ class AbstractDatabase(ABC):
         """
 
         script += script_gen.drop(table=TABLE, if_exist=IF_EXIST)
-        return script
+
+        return self.execute(script=script)
 
     # ============================== PUBLIC METHODS ==============================
 
@@ -1019,7 +986,6 @@ class AbstractDatabase(ABC):
             self,
             script: AnyStr = None,
             values: Tuple = None,
-            request: SQLRequest = None
     ) -> Union[List, None]:
         """
         Execute any SQL-script whit (or without) values, or execute SQLRequest
@@ -1030,8 +996,6 @@ class AbstractDatabase(ABC):
             single SQLite script, might contains placeholders
         values : Tuple
             Values for placeholders if script contains it
-        request : SQLRequest
-            Instead of script and values might execute full statement
 
         Returns
         ----------
@@ -1040,13 +1004,12 @@ class AbstractDatabase(ABC):
 
         """
 
-        return self._execute_stmt(script=script, values=values, request=request)
+        return self._executor(script=script, values=values, spec=1)
 
     def executemany(
             self,
             script: AnyStr = None,
             values: Tuple[Tuple] = None,
-            request: SQLRequest = None
     ) -> Union[List, None]:
         """
         Execute any SQL-script for many values sets, or execute SQLRequest
@@ -1057,8 +1020,6 @@ class AbstractDatabase(ABC):
             single or multiple SQLite script(s), might contains placeholders
         values : Tuple[Tuple]
             Values for placeholders if script contains it
-        request : SQLRequest
-            Instead of script and values might execute full request
 
         Returns
         ----------
@@ -1067,12 +1028,11 @@ class AbstractDatabase(ABC):
 
         """
 
-        return self._executemany_stmt(script=script, values=values, request=request)
+        return self._executor(script=script, values=values, spec=2)
 
     def executescript(
             self,
             script: AnyStr = None,
-            request: SQLRequest = None
     ) -> Union[List, None]:
         """
         Execute many SQL-scripts whit (or without) values
@@ -1081,8 +1041,6 @@ class AbstractDatabase(ABC):
         ----------
         script : AnyStr
             single SQLite script, might contains placeholders
-        request : SQLRequest
-            Instead of script and values might execute full statement
 
         Returns
         ----------
@@ -1091,7 +1049,7 @@ class AbstractDatabase(ABC):
 
         """
 
-        return self._executescript_stmt(script=script, request=request)
+        return self._executor(script=script, spec=3)
 
     def pragma(
             self,
@@ -1117,7 +1075,8 @@ class AbstractDatabase(ABC):
 
         """
 
-        return self._pragma_stmt(*args, **kwargs)
+        script = self._pragma_stmt(*args, **kwargs)
+        return self.execute(script=script)
 
     def foreign_keys(
             self,
@@ -1190,13 +1149,15 @@ class AbstractDatabase(ABC):
 
         """
 
-        self._create_stmt(
+        script, values = self._create_stmt(
             temp="",
             name=name,
             columns=columns,
             IF_NOT_EXIST=IF_NOT_EXIST,
             without_rowid=without_rowid,
         )
+
+        return self.execute(script=script, values=values)
 
     def create_temp_table(
             self,
@@ -1219,12 +1180,14 @@ class AbstractDatabase(ABC):
 
         """
 
-        self._create_stmt(
+        script, values = self._create_stmt(
             temp="TEMP",
             name=name,
             columns=columns,
             **kwargs
         )
+
+        return self.execute(script=script, values=values)
 
     def create_temporary_table(
             self,
@@ -1247,12 +1210,14 @@ class AbstractDatabase(ABC):
 
         """
 
-        self._create_stmt(
+        script, values = self._create_stmt(
             temp="TEMPORARY",
             name=name,
             columns=columns,
             **kwargs
         )
+
+        return self.execute(script=script, values=values)
 
     def markup(
             self,
@@ -1275,8 +1240,7 @@ class AbstractDatabase(ABC):
                 IF_NOT_EXIST=True
             )
 
-    @abstractmethod
-    def add_column(     # !!!
+    def add_column(  # !!!
             self,
             table: AnyStr,
             column: ColumnsType
@@ -1308,7 +1272,7 @@ class AbstractDatabase(ABC):
                 f"'{column_name}' "
                 f"{' '.join(ct for ct in column_type)}")
 
-    def remove_column(      # !!!
+    def remove_column(  # !!!
             self,
             table: AnyStr,
             column: Union[AnyStr, AbstractColumn]
@@ -1334,7 +1298,9 @@ class AbstractDatabase(ABC):
             column_name = column.name
 
         self.execute(
-            f"ALTER TABLE '{table}' DROP COLUMN '{column_name}'")
+            f"ALTER TABLE '{table}' "
+            f"DROP COLUMN '{column_name}'"
+        )
 
     def get_table(
             self,
@@ -1428,7 +1394,7 @@ class AbstractDatabase(ABC):
 
         try:
             if args:
-                self._fast_insert_stmt(
+                script, values = self._fast_insert_stmt(
                     *args,
                     script="INSERT",
                     OR=OR,
@@ -1437,11 +1403,13 @@ class AbstractDatabase(ABC):
                     WITH=WITH,
                 )
 
+                self.execute(script=script, values=values)
+
             else:
                 raise ValueError
 
         except (sqlite3.OperationalError, ValueError):
-            self._insert_stmt(
+            script, values = self._insert_stmt(
                 *args,
                 script="INSERT",
                 OR=OR,
@@ -1449,6 +1417,8 @@ class AbstractDatabase(ABC):
                 **kwargs,
                 WITH=WITH,
             )
+
+            self.execute(script=script, values=values)
 
     def replace(
             self,
@@ -1475,24 +1445,29 @@ class AbstractDatabase(ABC):
 
         try:
             if args:
-                self._fast_insert_stmt(
+                script, values = self._fast_insert_stmt(
                     *args,
                     script="REPLACE",
                     TABLE=TABLE,
                     **kwargs,
                     WITH=WITH,
                 )
+
+                self.execute(script=script, values=values)
+
             else:
                 raise ValueError
 
         except (sqlite3.OperationalError, ValueError):
-            self._insert_stmt(
+            script, values = self._insert_stmt(
                 *args,
                 script="REPLACE",
                 TABLE=TABLE,
                 **kwargs,
                 WITH=WITH
             )
+
+            self.execute(script=script, values=values)
 
     def insertmany(
             self,
@@ -1522,10 +1497,11 @@ class AbstractDatabase(ABC):
             None or SQL-script in SQLStatement
 
         """
+
         if len(args) > 1:
             args = [args]
 
-        self._insertmany_stmt(
+        script, values = self._insertmany_stmt(
             args,
             TABLE=TABLE,
             OR=OR,
@@ -1533,6 +1509,8 @@ class AbstractDatabase(ABC):
             values=(),
             **kwargs
         )
+
+        self.executemany(script=script, values=values)
 
     def select(
             self,
@@ -1547,7 +1525,7 @@ class AbstractDatabase(ABC):
             JOIN: Union[str, List[str], List[List[str]]] = None,
             _method="SELECT",
             **kwargs,
-    ) -> Union[SQLStatement, List[Any]]:
+    ) -> Union[Tuple, List[Any]]:
         """
         SELECT data from table
 
@@ -1594,7 +1572,7 @@ class AbstractDatabase(ABC):
             WHERE = kwargs
             kwargs = {}
 
-        return self._select_stmt(
+        script, values = self._select_stmt(
             SELECT=SELECT,
             TABLE=TABLE,
             method=_method,
@@ -1606,6 +1584,8 @@ class AbstractDatabase(ABC):
             JOIN=JOIN,
             **kwargs,
         )
+
+        return self.execute(script=script, values=values)
 
     def select_distinct(
             self,
@@ -1619,7 +1599,7 @@ class AbstractDatabase(ABC):
             FROM: Union[str, List[str], AbstractTable] = None,
             JOIN: Union[str, List[str], List[List[str]]] = None,
             **kwargs,
-    ) -> Union[SQLStatement, List[Any]]:
+    ) -> Union[Tuple, List[Any]]:
         """
         SELECT distinct from table
 
@@ -1677,7 +1657,7 @@ class AbstractDatabase(ABC):
             FROM: Union[str, List[str], AbstractTable] = None,
             JOIN: Union[str, List[str], List[List[str]]] = None,
             **kwargs,
-    ) -> Union[SQLStatement, List[Any]]:
+    ) -> Union[Tuple, List[Any]]:
         """
         SELECT all data from table
 
@@ -1747,11 +1727,13 @@ class AbstractDatabase(ABC):
         if not WHERE:
             WHERE = kwargs
 
-        self._delete_stmt(
+        script, values = self._delete_stmt(
             TABLE=TABLE,
             WHERE=WHERE,
             WITH=WITH,
         )
+
+        self.execute(script, values)
 
     def update(
             self,
@@ -1782,7 +1764,7 @@ class AbstractDatabase(ABC):
         if not WHERE:
             WHERE = kwargs
 
-        self._update_stmt(
+        script, values = self._update_stmt(
             TABLE=TABLE,
             SET=SET,
             OR=OR,
@@ -1790,6 +1772,8 @@ class AbstractDatabase(ABC):
             WITH=WITH,
             **kwargs,
         )
+
+        self.execute(script=script, values=values)
 
     def updatemany(
             self,
@@ -1811,8 +1795,16 @@ class AbstractDatabase(ABC):
             P.S: SET also support numpy.array value
         """
 
-        if SET is not None:
-            self._insertmany_stmt(
+        if SET is None:
+            # In case if SET == []
+            logger.warning(
+                f"AbstractDatabase.updatemany "
+                f"got empty list of data to update or got nothing at all, "
+                f"{SET=}"
+            )
+
+        else:
+            script, values = self._insertmany_stmt(
                 SET,
                 TABLE=TABLE,
                 script="INSERT",
@@ -1820,13 +1812,9 @@ class AbstractDatabase(ABC):
                 **kwargs,
             )
 
-        else:
-            # In case if SET == []
-            logger.warning(
-                f"AbstractDatabase.updatemany "
-                f"got empty list of data to update or got nothing at all, "
-                f"SET={SET}"
-            )
+            self.executemany(script=script, values=values)
+
+
 
     def drop(
             self,
@@ -1850,5 +1838,3 @@ class AbstractDatabase(ABC):
             IF_EXIST=IF_EXIST,
             **kwargs
         )
-
-

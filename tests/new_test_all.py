@@ -109,18 +109,18 @@ def insert_test():
     else:
         raise MemoryError
 
-    if not sel_all == [['asdf', 10.0, 1, 3.14, None, 2]] * 10:
+    if not sel_all == [('asdf', 10.0, 1, 3.14, None, 2)] * 10:
         print(sel_all)
-        print([['asdf', 10.0, 1, 3.14, None, 2]] * 10)
+        print([('asdf', 10.0, 1, 3.14, None, 2)] * 10)
         raise MemoryError
 
 
 def select_test():
-    if not db.select('t1', 'text_t') == [['asdf']] * 10:
+    if not db.select('t1', 'text_t') == [('asdf',)] * 10:  # <------------- HERE [] to () have to be changes!!!!!!!
         print(db.select('t1', 'text_t'))
         raise MemoryError
 
-    if not db.select('t1', ['text_t', 'num_t']) == [['asdf', 10.0]] * 10:
+    if not db.select('t1', ['text_t', 'num_t']) == [('asdf', 10.0)] * 10:
         print(db.select('t1', ['text_t', 'num_t']))
         raise MemoryError
 
@@ -128,38 +128,38 @@ def select_test():
     db.insert('t1', ['qwerty2', 11.1, 2, 4.14, None, 6])
 
     # WHERE as dict
-    if not db.select('t1', ['text_t', 'num_t'], WHERE={'num_t': 11.1}) == [['qwerty1', 11.1], ['qwerty2', 11.1]]:
+    if not db.select('t1', ['text_t', 'num_t'], WHERE={'num_t': 11.1}) == [('qwerty1', 11.1), ('qwerty2', 11.1)]:
         print(db.select('t1', ['text_t', 'num_t'], WHERE={'num_t': 11.1}))
         raise MemoryError
 
     # WHERE as dict
     if not db.select('t1', ['text_t', 'num_t'], WHERE={'num_t': ['=', 11.1], 'blob_t': ['<=', 5]}) == [
-        ['qwerty1', 11.1]]:
+        ('qwerty1', 11.1)]:
         print(db.select('t1', ['text_t', 'num_t'], WHERE={'num_t': 11.1, 'blob_t': 5}))
         raise MemoryError
 
     # WHERE as kwarg
-    if not db.select('t1', ['text_t', 'num_t'], num_t=11.1) == [['qwerty1', 11.1], ['qwerty2', 11.1]]:
+    if not db.select('t1', ['text_t', 'num_t'], num_t=11.1) == [('qwerty1', 11.1), ('qwerty2', 11.1)]:
         print(db.select('t1', ['text_t', 'num_t'], num_t=11.1))
         raise MemoryError
 
     # WHERE as kwargs
-    if not db.select('t1', ['text_t', 'num_t'], num_t=11.1, blob_t=6) == [['qwerty2', 11.1]]:
+    if not db.select('t1', ['text_t', 'num_t'], num_t=11.1, blob_t=6) == [('qwerty2', 11.1)]:
         print(db.select('t1', ['text_t', 'num_t'], num_t=11.1, blob_t=6))
         raise MemoryError
 
     # LIMIT test
-    if not db.select('t1', text_t='asdf', LIMIT=5) == [['asdf', 10.0, 1, 3.14, None, 2]] * 5:
+    if not db.select('t1', text_t='asdf', LIMIT=5) == [('asdf', 10.0, 1, 3.14, None, 2)] * 5:
         print(db.select('t1', text_t='asdf', LIMIT=5))
         raise MemoryError
 
     # OFFSET
-    if not db.select('t1', text_t='asdf', LIMIT=5, OFFSET=6) == [['asdf', 10.0, 1, 3.14, None, 2]] * 4:
+    if not db.select('t1', text_t='asdf', LIMIT=5, OFFSET=6) == [('asdf', 10.0, 1, 3.14, None, 2)] * 4:
         print(db.select('t1', text_t='asdf', LIMIT=5, OFFSET=6))
         raise MemoryError
 
     if not db.select('t1', ['text_t', 'num_t'], WHERE={'num_t': ['>=', 11.1, 10], 'text_t': 'qwerty1'}) == \
-           [['qwerty1', 11.1]]:
+           [('qwerty1', 11.1)]:
         print(db.select('t1', ['text_t', 'num_t'], WHERE={'num_t': ['>=', 11.1, 10], 'text_t': 'qwerty1'}))
         raise MemoryError
 
@@ -174,12 +174,12 @@ def select_test():
     db.insertmany('t2', [[1], [2], [3], [4]])
 
     # ORDER_BY ASC
-    if not db.select('t2', 'id', ORDER_BY='id ASC') == [[1], [2], [3], [4]]:
+    if not db.select('t2', 'id', ORDER_BY='id ASC') == [(1,), (2,), (3,), (4,)]:
         print(db.select('t2', 'id', ORDER_BY='id ASC'))
         raise MemoryError
 
     # ORDER_BY DESC
-    if not db.select('t2', ['id'], ORDER_BY='id DESC') == [[4], [3], [2], [1]]:
+    if not db.select('t2', ['id'], ORDER_BY='id DESC') == [(4,), (3,), (2,), (1,)]:
         print(db.select('t2', 'id', ORDER_BY='id DESC'))
         raise MemoryError
 
@@ -188,7 +188,7 @@ def select_test():
             WHERE={
                 'id': ['<', 3]
             },
-    ) == [[1, 8], [2, 8]]:
+    ) == [(1, 8), (2, 8)]:
         print(db.select('t2', WHERE={'id': ['<', 3]}))
         raise MemoryError
 
@@ -200,11 +200,12 @@ def select_test():
                 [CROSS_JOIN, 't1', AS, 't', ON, 't.num_t > t2.value']
             ]
     ) == [
-               [1], [1], [1], [1], [1], [1], [1], [1], [1], [1], [1], [1],
-               [2], [2], [2], [2], [2], [2], [2], [2], [2], [2], [2], [2],
-               [3], [3], [3], [3], [3], [3], [3], [3], [3], [3], [3], [3],
-               [4], [4], [4], [4], [4], [4], [4], [4], [4], [4], [4], [4]
-           ]:
+        (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,),
+        (2,), (2,), (2,), (2,), (2,), (2,), (2,), (2,), (2,), (2,), (2,), (2,),
+        (3,), (3,), (3,), (3,), (3,), (3,), (3,), (3,), (3,), (3,), (3,), (3,),
+        (4,), (4,), (4,), (4,), (4,), (4,), (4,), (4,), (4,), (4,), (4,), (4,)
+
+    ]:
         print(db.select('t2', 'id', JOIN=[[CROSS_JOIN, 't1', AS, 't', ON, 't.num_t > t2.value']]))
         raise MemoryError
 
@@ -226,15 +227,15 @@ def insertmany_test():
     db.insertmany('t3', id=(2,) * 10)
 
     if not db.select_all('t3') == [
-        [1, 'hi'], [1, 'hi'], [1, 'hi'], [1, 'hi'], [1, 'hi'], [1, 'hi'], [1, 'hi'],
-        [1, 'hi'], [1, 'hi'], [1, 'hi'], [1, 'NO'], [1, 'NO'], [1, 'NO'], [1, 'NO'],
-        [1, 'NO'], [1, 'NO'], [1, 'NO'], [1, 'NO'], [1, 'NO'], [1, 'NO'], [1, 'hi'],
-        [1, 'hi'], [1, 'hi'], [1, 'hi'], [1, 'hi'], [1, 'hi'], [1, 'hi'], [1, 'hi'],
-        [1, 'hi'], [1, 'hi'], [1, 'NO'], [1, 'NO'], [1, 'NO'], [1, 'NO'], [1, 'NO'],
-        [1, 'NO'], [1, 'NO'], [1, 'NO'], [1, 'NO'], [1, 'NO'], [2, 'NO'], [2, 'NO'],
-        [2, 'NO'], [2, 'NO'], [2, 'NO'], [2, 'NO'], [2, 'NO'], [2, 'NO'], [2, 'NO'],
-        [2, 'NO'], [2, 'NO'], [2, 'NO'], [2, 'NO'], [2, 'NO'], [2, 'NO'], [2, 'NO'],
-        [2, 'NO'], [2, 'NO'], [2, 'NO'], [2, 'NO']
+        (1, 'hi',), (1, 'hi',), (1, 'hi',), (1, 'hi',), (1, 'hi',), (1, 'hi',), (1, 'hi',),
+        (1, 'hi',), (1, 'hi',), (1, 'hi',), (1, 'NO',), (1, 'NO',), (1, 'NO',), (1, 'NO',),
+        (1, 'NO',), (1, 'NO',), (1, 'NO',), (1, 'NO',), (1, 'NO',), (1, 'NO',), (1, 'hi',),
+        (1, 'hi',), (1, 'hi',), (1, 'hi',), (1, 'hi',), (1, 'hi',), (1, 'hi',), (1, 'hi',),
+        (1, 'hi',), (1, 'hi',), (1, 'NO',), (1, 'NO',), (1, 'NO',), (1, 'NO',), (1, 'NO',),
+        (1, 'NO',), (1, 'NO',), (1, 'NO',), (1, 'NO',), (1, 'NO',), (2, 'NO',), (2, 'NO',),
+        (2, 'NO',), (2, 'NO',), (2, 'NO',), (2, 'NO',), (2, 'NO',), (2, 'NO',), (2, 'NO',),
+        (2, 'NO',), (2, 'NO',), (2, 'NO',), (2, 'NO',), (2, 'NO',), (2, 'NO',), (2, 'NO',),
+        (2, 'NO',), (2, 'NO',), (2, 'NO',), (2, 'NO',)
     ]:
         raise MemoryError
 
@@ -248,17 +249,17 @@ def insertmany_test():
 
     db.insertmany('t6', [[x, 'hi'] for x in range(100)])
 
-    if not db.select_all('t6') == [[x, 'hi'] for x in range(100)]:
+    if not db.select_all('t6') == [(x, 'hi') for x in range(100)]:
         raise MemoryError
 
-    db.insertmany('t6', [[x, 'bye'] for x in range(100)], OR=REPLACE)
+    db.insertmany('t6', [(x, 'bye') for x in range(100)], OR=REPLACE)
 
-    if not db.select_all('t6') == [[x, 'bye'] for x in range(100)]:
+    if not db.select_all('t6') == [(x, 'bye') for x in range(100)]:
         raise MemoryError
 
     db.updatemany('t6', [[], [], []])
 
-    if not db.select_all('t6') == [[x, 'bye'] for x in range(100)]:
+    if not db.select_all('t6') == [(x, 'bye') for x in range(100)]:
         raise MemoryError
 
 
@@ -281,7 +282,7 @@ def update_test():
         }
     )
 
-    if not db.select('t4', 'id', WHERE={"val": 'NEW_VAL'}) == [[x] for x in range(50)]:
+    if not db.select('t4', 'id', WHERE={"val": 'NEW_VAL'}) == [(x,) for x in range(50)]:
         print(db.select('t4', 'id', WHERE={"val": 'NEW_VAL'}))
         raise MemoryError
 
@@ -307,7 +308,7 @@ def replace_test():
 
     db.replace('t5', [99, 'O_O'])
 
-    if not db.select('t5', val='O_O') == [[99, 'O_O']]:
+    if not db.select('t5', val='O_O') == [(99, 'O_O')]:
         print(db.select('t5', val='O_O'))
         raise MemoryError
 
@@ -352,7 +353,7 @@ def getitem_test():
     t7.insert([1, 'Alex'])
     t7.insert([2, 'Blex'])
 
-    if t7.select(ALL, (t7_id == 2) | (t7_id == 1) & 1) != [[1, 'Alex'], [2, 'Blex']]:
+    if t7.select(ALL, (t7_id == 2) | (t7_id == 1) & 1) != [(1, 'Alex'), (2, 'Blex')]:
         raise MemoryError
 
     t7.update(
@@ -360,10 +361,8 @@ def getitem_test():
         WHERE=t7_id == 1
     )
 
-    if t7.select([t7_name, 'id'], WHERE=(t7_id == 2) | (t7_id == 1) & 1) != [['XXXX', 1], ['Blex', 2]]:
+    if t7.select([t7_name, 'id'], WHERE=(t7_id == 2) | (t7_id == 1) & 1) != [('XXXX', 1), ('Blex', 2)]:
         raise MemoryError
-
-    print(t7.select_all())
 
     t7.update(
         {
@@ -372,9 +371,7 @@ def getitem_test():
         WHERE=t7_name == 'XXXX'
     )
 
-    print(t7.select_all())
-
-    if t7.select([t7_name, t7_id], WHERE=(t7_id == 3)) != [['XXXX', 3]]:
+    if t7.select([t7_name, t7_id], WHERE=(t7_id == 3)) != [('XXXX', 3)]:
         print(t7.select([t7_name, t7_id], WHERE=(t7_id == 3)))
         raise MemoryError
 
@@ -427,7 +424,6 @@ get_tables_test()
 # has_add_remove_column_test()   # workflow falling by no reason issue #
 
 # Disconnect
-print(db.connection)
 db.disconnect()
 
 # Time counting

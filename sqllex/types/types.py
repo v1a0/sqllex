@@ -197,6 +197,7 @@ __all__ = [
     'ColumnsType',
     'DBTemplateType',
     'PathType',
+    'Number',
     'NumStr',
     'InsertData',
     'OrOptionsType',

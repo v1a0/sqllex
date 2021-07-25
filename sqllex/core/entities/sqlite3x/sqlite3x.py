@@ -3,7 +3,7 @@ from sqllex.debug import logger
 from sqllex.exceptions import TableInfoError
 from sqllex.types.types import *
 from sqllex.core.tools.convertors import tuple2list, return2list
-import sqllex.core.entities.sqlite3x.midleware as run
+import sqllex.core.entities.sqlite3x.middleware as middleware
 import sqlite3
 
 
@@ -181,25 +181,16 @@ class SQLite3x(AbstractDatabase):
 
         """
 
-        super().__init__()      # self.__connection = None
+        super(SQLite3x, self).__init__()
 
         self.__path = path
-        self.__connection = None
-        self.connect()
-
+        self.__connection = None       # init connection (?)
+        self.connect()                 # creating connection with db
         self.journal_mode(mode="WAL")  # make db little bit faster
         self.foreign_keys(mode="ON")   # turning on foreign keys
 
         if template:
             self.markup(template=template)
-
-    @property
-    def path(self) -> PathType:
-        return self.__path
-
-    @property
-    def connection(self) -> Union[sqlite3.Connection, None]:
-        return self.__connection
 
     def __str__(self):
         return f"{{SQLite3x: '{self.path}'}}"
@@ -210,6 +201,36 @@ class SQLite3x(AbstractDatabase):
         except Exception as error:
             logger.error(error)
             return False
+
+    # ========================== ABC METHODS INIT =================================
+    def _executor(self, script: AnyStr, values: Tuple = None, spec: Number = 0):
+        """
+        Execute scripts with values
+
+        Parameters
+        ----------
+        spec : Number
+            Id of execution case:
+                1. Regular Sqlite3.execute
+                2. Sqlite3.executemany
+                3. Sqlite3.executescript
+        """
+        if spec == 1:
+            return middleware.execute(script=script, values=values, connection=self.connection, path=self.path)
+        elif spec == 2:
+            return middleware.executemany(script=script, values=values, connection=self.connection, path=self.path)
+        elif spec == 3:
+            return middleware.executescript(script=script, connection=self.connection, path=self.path)
+
+    # =============================== PROPERTIES ==================================
+
+    @property
+    def connection(self) -> Union[sqlite3.Connection, None]:
+        return self.__connection
+
+    @property
+    def path(self) -> PathType:
+        return self.__path
 
     # ============================== PRIVATE METHODS ==============================
 
@@ -228,12 +249,6 @@ class SQLite3x(AbstractDatabase):
 
         """
 
-        # Code down below commented because I guess it's better to see all tables
-        # even Internal SQLite tables. Might be changed later
-        #
-        # if "sqlite_sequence" in table_names:
-        #     table_names.remove("sqlite_sequence")
-
         for tab_name in self.tables_names:
             yield self._get_table(tab_name)
 
@@ -251,244 +266,6 @@ class SQLite3x(AbstractDatabase):
             self.execute("SELECT name FROM sqlite_master WHERE type='table'"),
             remove_one_len=True
         )
-
-    @return2list
-    @run.execute
-    def _execute_stmt(
-            self, script: AnyStr = None, values: Tuple = None, request: SQLRequest = None
-    ):
-        """
-        Parent method for execute
-        """
-
-        if not request:
-            return SQLStatement(SQLRequest(script, values), self.path, self.connection)
-        else:
-            return SQLStatement(request, self.path, self.connection)
-
-    @return2list
-    @run.executemany
-    def _executemany_stmt(
-            self, script: AnyStr = None, values: Tuple = None, request: SQLRequest = None
-    ):
-        """
-        Parent method for executemany
-        """
-
-        if not request:
-            return SQLStatement(SQLRequest(script, values), self.path, self.connection)
-        else:
-            return SQLStatement(request, self.path, self.connection)
-
-    @return2list
-    @run.executescript
-    def _executescript_stmt(
-            self, script: AnyStr = None, values: Tuple = None, request: SQLRequest = None
-    ):
-        """
-        Parent method for executescript
-        """
-
-        if not request:
-            return SQLStatement(SQLRequest(script, values), self.path, self.connection)
-        else:
-            return SQLStatement(request, self.path, self.connection)
-
-    @return2list
-    @run.execute
-    def _pragma_stmt(self, *args: str, **kwargs):
-        """
-        Parent method for all pragma-like methods
-        """
-
-        script = super(SQLite3x, self)._pragma_stmt(*args, **kwargs)
-        return SQLStatement(SQLRequest(script), self.path, self.connection)
-
-    @run.execute
-    def _create_stmt(
-            self,
-            temp: AnyStr,
-            name: AnyStr,
-            columns: ColumnsType,
-            IF_NOT_EXIST: bool = None,
-            without_rowid: bool = None,
-    ):
-        """
-        Parent method for all CREATE-like methods
-        """
-
-        script, values = super(SQLite3x, self)._create_stmt(
-            temp=temp,
-            name=name,
-            columns=columns,
-            IF_NOT_EXIST=IF_NOT_EXIST,
-            without_rowid=without_rowid
-        )
-
-        return SQLStatement(
-            SQLRequest(script=script, values=values), self.path, self.connection
-        )
-
-    @run.execute
-    def _insert_stmt(
-            self, *args: Any, TABLE: AnyStr, script="", values=(), **kwargs: Any
-    ):
-        """
-        Parent method for INSERT-like methods
-
-        INSERT INTO request (aka insert-stmt) and REPLACE INTO request
-
-        """
-
-        script, values = super(SQLite3x, self)._insert_stmt(
-            *args,
-            TABLE=TABLE,
-            script=script,
-            values=values,
-            **kwargs,
-        )
-
-        return SQLStatement(SQLRequest(script, values), self.path, self.connection)
-
-
-    @run.execute
-    def _fast_insert_stmt(
-            self, *args, TABLE: AnyStr, script="", values=(), **kwargs: Any
-    ):
-        """
-        Parent method for fast INSERT-like methods
-
-        'INSERT INTO' request and 'REPLACE INTO' request without columns names
-        (without get_columns_names req because it's f-g slow)
-        """
-
-        script, values = super(SQLite3x, self)._fast_insert_stmt(
-            *args,
-            TABLE=TABLE,
-            script=script,
-            values=values,
-            **kwargs,
-        )
-
-        return SQLStatement(SQLRequest(script, values), self.path, self.connection)
-
-    @run.executemany
-    def _insertmany_stmt(
-            self,
-            *args: Union[List[List], List[Tuple], Tuple[List], Tuple[Tuple], List, Tuple],
-            TABLE: AnyStr,
-            script="",
-            values=(),
-            **kwargs: Any,
-    ):
-        """
-        Parent method for insertmany method
-
-        Comment:
-            args also support numpy.array value
-
-        """
-
-        script, values = super(SQLite3x, self)._insertmany_stmt(
-            *args,
-            TABLE=TABLE,
-            script=script,
-            values=values,
-            **kwargs,
-        )
-
-        return SQLStatement(
-            SQLRequest(script, values), self.path, self.connection
-        )
-
-    @return2list
-    @run.execute
-    def _select_stmt(
-            self,
-            TABLE: Union[str, SQLite3xTable],
-            script="",
-            values=(),
-            method: AnyStr = "SELECT ",
-            SELECT: Union[str, SQLite3xColumn, List[Union[str, SQLite3xColumn]], Tuple[Union[str, SQLite3xColumn]]] = None,
-            **kwargs,
-    ):
-        """
-        Parent method for all SELECT-like methods
-
-        """
-
-        script, values = super(SQLite3x, self)._select_stmt(
-            TABLE,
-            script=script,
-            values=values,
-            method=method,
-            SELECT=SELECT,
-            **kwargs,
-        )
-
-        return SQLStatement(SQLRequest(script, values), self.path, self.connection)
-
-    @run.execute
-    def _delete_stmt(self, TABLE: str, script="", values=(), **kwargs):
-        """
-        Parent method for delete method
-
-        """
-
-        script, values = super(SQLite3x, self)._delete_stmt(
-            TABLE=TABLE,
-            script=script,
-            values=values
-        )
-        return SQLStatement(SQLRequest(script, values), self.path, self.connection)
-
-    @run.execute
-    def _update_stmt(
-            self,
-            TABLE: AnyStr,
-            SET: Union[List, Tuple, Mapping] = None,
-            script="",
-            values=(),
-            **kwargs,
-    ):
-        """
-        Parent method for update method
-
-        """
-
-        script, values = super(SQLite3x, self)._update_stmt(
-            TABLE=TABLE,
-            SET=SET,
-            script=script,
-            values=values,
-            **kwargs
-        )
-
-        return SQLStatement(
-            SQLRequest(script=script, values=values), self.path, self.connection
-        )
-
-    @run.execute
-    def _drop_stmt(
-            self,
-            TABLE: AnyStr,
-            IF_EXIST: bool = True,
-            script="",
-            **kwargs
-    ):
-        """
-        Parent method for drop method
-
-        """
-
-        script = super(SQLite3x, self)._drop_stmt(
-            TABLE=TABLE,
-            IF_EXIST=IF_EXIST,
-            script=script,
-            **kwargs,
-        )
-
-        return SQLStatement(SQLRequest(script=script), self.path, self.connection)
 
     # ============================== PUBLIC METHODS ==============================
 
@@ -523,90 +300,6 @@ class SQLite3x(AbstractDatabase):
         self.connection.commit()
         self.connection.close()
         self.__connection = None
-
-    def add_column(
-            self,
-            table: AnyStr,
-            column: ColumnsType
-    ) -> None:
-        """
-        Adds column to the table
-
-        Parameters
-        ----------
-        table : AnyStr
-            Name of table
-        column : ColumnDataType
-            Columns of table (ColumnsType-like)
-            Column name and SQL type e.g. {'value': INTEGER}
-
-        Returns
-        ----------
-        None
-        """
-
-        for (column_name, column_type) in column.items():
-            if not isinstance(column_type, (list, tuple)):
-                column_type = [column_type]
-
-            self.execute(
-                f"ALTER TABLE "
-                f"'{table}' "
-                f"ADD "
-                f"'{column_name}' "
-                f"{' '.join(ct for ct in column_type)}")
-
-    def remove_column(
-            self,
-            table: AnyStr,
-            column: Union[AnyStr, SQLite3xColumn]
-    ):
-        """
-        Removes column from the table
-
-        Parameters
-        ----------
-        table : AnyStr
-            Name of table
-        column : Union[AnyStr, SQLite3xColumn]
-            Name of column or SQLite3xColumn object.
-
-        Returns
-        ----------
-        None
-        """
-
-        column_name = column
-
-        if isinstance(column, SQLite3xColumn):
-            column_name = column.name
-
-        self.execute(
-            f"ALTER TABLE '{table}' DROP COLUMN '{column_name}'")
-
-    def get_table(
-            self,
-            name: AnyStr
-    ) -> SQLite3xTable:
-        """
-        Shadow method for __getitem__, that used as like: database['table_name']
-
-        Get table object (SQLite3xTable instance)
-
-        Parameters
-        ----------
-        name : AnyStr
-            Name of table
-
-        Returns
-        ----------
-        SQLite3xTable
-            Instance of SQLite3xTable, table of database
-
-        """
-
-        return self._get_table(name=name)
-
 
     def get_columns(
             self,

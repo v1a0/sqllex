@@ -33,4 +33,5 @@ __all__ = [
     'Generator',  # lgtm [py/undefined-export]
     'Iterable',  # lgtm [py/undefined-export]
     'Sized',  # lgtm [py/undefined-export]
+    'Number',   # lgtm [py/undefined-export]
 ]
