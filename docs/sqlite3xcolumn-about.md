@@ -83,7 +83,7 @@ def __hash__(self):
 
 ```python
 from sqllex import *
-from sqllex.classes import SQLite3xColumn
+from sqllex.classes import AbstractColumn
 
 db = SQLite3x(path='database.db')
 
@@ -95,26 +95,22 @@ db.create_table(
     }
 )
 
-
-id_col: SQLite3xColumn = db['users']['id']  # SQLite3xColumn
-name_col: SQLite3xColumn = db['users']['name']  # SQLite3xColumn
-
+id_col: AbstractColumn = db['users']['id']  # AbstractColumn
+name_col: AbstractColumn = db['users']['name']  # AbstractColumn
 
 db.update(
-    TABLE='users',                            # table name
-    SET=['username', 'Updated_name_0'],       # set username 'Updated_name_0'
+    TABLE='users',  # table name
+    SET=['username', 'Updated_name_0'],  # set username 'Updated_name_0'
     WHERE=(
-            id_col == 1                       # where id == 1
+            id_col == 1  # where id == 1
     )
 )
 
-
 db.update(
-    'users',                            # table name
-    ['username', 'Updated_name_1'],     # set username 'Updated_name_1'
-    id_col > 1                          # where id > 1
+    'users',  # table name
+    ['username', 'Updated_name_1'],  # set username 'Updated_name_1'
+    id_col > 1  # where id > 1
 )
-
 
 db.update(
     'users',
@@ -122,17 +118,17 @@ db.update(
         'name': 'Updated_name_1'
     },
     WHERE=(
-        id_col == 1
+            id_col == 1
     )
 )
 
 db.update(
     'users',
     SET={
-        name_col: name_col + '__UPDATED'    # SET id column name value == old value + '__UPDATED'
+        name_col: name_col + '__UPDATED'  # SET id column name value == old value + '__UPDATED'
     },
     WHERE=(
-        id_col == 1
+            id_col == 1
     )
 )
 

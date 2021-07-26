@@ -6,14 +6,14 @@ def get_columns(
         table: AnyStr
 ) -> Generator[SQLite3xColumn, None, None]:
     """
-    Get list of table columns like an SQLite3xColumn objects
+    Get list of table columns like an AbstractColumn objects
     Parameters
     ----------
     table : AnyStr
         Name of table
     Returns
     ----------
-    Generator[SQLite3xColumn]
+    Generator[AbstractColumn]
         Columns of table
     """
 ```

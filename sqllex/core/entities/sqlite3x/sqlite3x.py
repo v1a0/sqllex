@@ -1,91 +1,10 @@
-from sqllex.core.entities.abc import AbstractDatabase, AbstractTable, AbstractColumn, AbstractSearchCondition
+from sqllex.core.entities.abc import AbstractDatabase, AbstractTable, AbstractColumn
 from sqllex.debug import logger
 from sqllex.exceptions import TableInfoError
 from sqllex.types.types import *
 from sqllex.core.tools.convertors import tuple2list, return2list
 import sqllex.core.entities.sqlite3x.middleware as middleware
 import sqlite3
-
-
-class SQLite3xSearchCondition(AbstractSearchCondition):
-    def _str_gen(self, value, operator: str):
-        if type(value) == str:
-            return SQLite3xSearchCondition(
-                f"({self}{operator}'{value}')"  # unsafe!
-            )
-        else:
-            return SQLite3xSearchCondition(
-                f"({self}{operator}{value})"
-            )
-
-
-class SQLite3xColumn(AbstractColumn):
-    """
-    Sub-class of SQLite3xTable, itself one column of table (SQLite3xTable)
-    Have same methods but without table name argument
-    Attributes
-    ----------
-    table : SQLite3xTable
-        SQLite3xTable parent table object
-    name : str
-        Name of column
-
-    Existing for generating SQLite3xSearchCondition for WHERE, SET
-    and other parameters of parents classes
-
-    db['table_name']['column_name'] = x
-    db['table_name']['column_name'] > x
-    db['table_name']['column_name'] >= x
-    db['table_name']['column_name'] != x
-    ...
-    db['table_name']['column_name'] / x
-    """
-
-    def _str_gen(self, value, operator: str):
-        if type(value) == str:
-            return SQLite3xSearchCondition(
-                f"({self}{operator}'{value}')"  # unsafe!
-            )
-        else:
-            return SQLite3xSearchCondition(
-                f"({self}{operator}{value})"
-            )
-
-    def __lt__(self, value) -> SQLite3xSearchCondition:
-        return self._str_gen(value, '<')
-
-    def __le__(self, value) -> SQLite3xSearchCondition:
-        return self._str_gen(value, '<=')
-
-    def __eq__(self, value) -> SQLite3xSearchCondition:
-        return self._str_gen(value, '=')
-
-    def __ne__(self, value) -> SQLite3xSearchCondition:
-        return self._str_gen(value, '<>')
-
-    def __gt__(self, value) -> SQLite3xSearchCondition:
-        return self._str_gen(value, '>')
-
-    def __ge__(self, value) -> SQLite3xSearchCondition:
-        return self._str_gen(value, '>=')
-
-    def __add__(self, value) -> SQLite3xSearchCondition:
-        return self._str_gen(value, '+')
-
-    def __sub__(self, value) -> SQLite3xSearchCondition:
-        return self._str_gen(value, '-')
-
-    def __mul__(self, value) -> SQLite3xSearchCondition:
-        return self._str_gen(value, '*')
-
-    def __truediv__(self, value) -> SQLite3xSearchCondition:
-        return self._str_gen(value, '/')
-
-    def __divmod__(self, value) -> SQLite3xSearchCondition:
-        return self._str_gen(value, '%')
-
-    def __hash__(self):
-        return super(SQLite3xColumn, self).__hash__()
 
 
 class SQLite3xTable(AbstractTable):
@@ -126,16 +45,16 @@ class SQLite3xTable(AbstractTable):
         self.db: SQLite3x = db
         self.name: AnyStr = name
 
-    def __getitem__(self, key) -> SQLite3xColumn:
+    def __getitem__(self, key) -> AbstractColumn:
         if key not in self.columns_names:
             raise KeyError(key, "No such column in table")
 
-        return SQLite3xColumn(table=self, name=key)
+        return AbstractColumn(table=self.name, name=key)
 
     @property
-    def columns(self) -> Generator[SQLite3xColumn, None, None]:
+    def columns(self) -> Generator[AbstractColumn, None, None]:
         for column in self.columns_names:
-            yield SQLite3xColumn(table=self, name=column)
+            yield AbstractColumn(table=self.name, name=column)
 
     @property
     def columns_names(self) -> List:
@@ -302,39 +221,7 @@ class SQLite3x(AbstractDatabase):
         self.connection.close()
         self.__connection = None
 
-    def get_columns(
-            self,
-            table: AnyStr
-    ) -> Generator[SQLite3xColumn, None, None]:
-        """
-        Get list of table columns like an SQLite3xColumn objects
 
-        Parameters
-        ----------
-        table : AnyStr
-            Name of table
-
-        Returns
-        ----------
-        Generator[SQLite3xColumn]
-            Columns of table
-
-        """
-
-        try:
-            columns_: List[List[str]] = self.execute(f"SELECT name FROM PRAGMA_TABLE_INFO('{table}')")
-            columns: List[str] = list(map(lambda item: item[0], columns_))
-
-        except sqlite3.OperationalError:
-            # Fix for compatibility issues #19, by some reason it can't find PRAGMA_TABLE_INFO table
-            columns_: List[List[str]] = self.pragma(f"table_info('{table}')")
-            columns: List[str] = list(map(lambda item: item[1], columns_))
-
-        if not columns:
-            raise TableInfoError
-
-        for column in columns:
-            yield SQLite3xColumn(table=self, name=column)
 
     def get_columns_names(
             self,
@@ -373,6 +260,4 @@ class SQLite3x(AbstractDatabase):
 __all__ = [
     "SQLite3x",  # lgtm [py/undefined-export]
     "SQLite3xTable",  # lgtm [py/undefined-export]
-    "SQLite3xColumn",  # lgtm [py/undefined-export]
-    "SQLite3xSearchCondition"  # lgtm [py/undefined-export]
 ]

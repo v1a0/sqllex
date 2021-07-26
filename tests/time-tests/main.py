@@ -80,13 +80,13 @@ if __name__ == '__main__':
     with cProfile.Profile() as pr:
         #                       # total runtime/(records), speedup .4/.3b
         # crete_table(db)       # 0.00332 sec/(1    table), 1x
-        insert_fats(db)       # 0.21690 sec/(10_000 rec), 3x
+        # insert_fats(db)       # 0.21690 sec/(10_000 rec), 3x
         # insert_slow(db)       # 0.92790 sec/(10_000 rec), 3x
         # insert_many_fast(db)  # 0.04220 sec/(10_000 rec), 1.06x
         # insert_many_slow(db)  # 0.04269 sec/(10_000 rec), 1.01x
         # select_all(db)        # 0.03394 sec/(10_000 rec), 1.68x
         # select_where_1(db)    # 0.02888 sec/(10_000 rec), 1.01x
-        # select_where_2(db)    # 0.02556 sec/(10_000 rec), 1.5x
+        select_where_2(db)    # 0.02556 sec/(10_000 rec), 1.5x
         pass
 
     db.disconnect()

@@ -1,5 +1,6 @@
 from sqllex.types import *
 from sqllex.constants.sql import *
+from sqllex.core.entities.abc.sql_column import SearchCondition
 
 
 def from_as_(func: callable):
@@ -150,7 +151,15 @@ def where_(func: callable) -> callable:
 
                 where_ = new_where
 
-            if isinstance(where_, dict):
+            if isinstance(where_, SearchCondition):
+                __script = f"{__script}{where_.script}"
+                __values += where_.values
+
+            elif isinstance(where_, SearchCondition):
+                __script = f"{__script}{where_.script}"
+                __values += where_.values
+
+            elif isinstance(where_, dict):
                 for (key, values) in where_.items():
                     # parsing WHERE values
 

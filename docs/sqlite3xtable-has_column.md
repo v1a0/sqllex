@@ -6,8 +6,8 @@ def has_column(self, column: Union[AnyStr, SQLite3xColumn]) -> bool:
     Checks if column exists in the table
     Parameters
     ----------
-    column : Union[AnyStr, SQLite3xColumn]
-        Name of column or SQLite3xColumn object.
+    column : Union[AnyStr, AbstractColumn]
+        Name of column or AbstractColumn object.
     Returns
     ----------
     bool

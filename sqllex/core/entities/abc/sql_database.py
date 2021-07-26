@@ -3,7 +3,7 @@
 # - AbstractDatabase
 # + - AbstractTable
 #   + - AbstractColumn
-#     + - AbstractSearchCondition
+#     + - SearchCondition
 #
 
 from abc import ABC, abstractmethod
@@ -15,135 +15,12 @@ from sqllex.core.tools.convertors import crop
 import sqllex.core.tools.sorters as sort
 import sqllex.core.tools.parsers.parsers as parse
 import sqlite3
-from functools import lru_cache
+from sqllex.core.entities.abc.sql_column import SearchCondition
+from sqllex.exceptions import TableInfoError
+from sqllex.core.entities.abc.sql_column import AbstractColumn
 
 
-class AbstractSearchCondition(str):
-    def __init__(self, value: AnyStr):
-        super().__init__()
-        self.value = value
 
-    def __str__(self):
-        return self.value
-
-    def _str_gen(self, value, operator: str):
-        if type(value) == str:
-            return AbstractSearchCondition(
-                f"({self}{operator}'{value}')"  # unsafe!
-            )
-        else:
-            return AbstractSearchCondition(
-                f"({self}{operator}{value})"
-            )
-
-    def __lt__(self, value):
-        return self._str_gen(value, '<')
-
-    def __le__(self, value):
-        return self._str_gen(value, '<=')
-
-    def __eq__(self, value):
-        return self._str_gen(value, '=')
-
-    def __ne__(self, value):
-        return self._str_gen(value, '<>')
-
-    def __gt__(self, value):
-        return self._str_gen(value, '>')
-
-    def __ge__(self, value):
-        return self._str_gen(value, '>=')
-
-    def __and__(self, other):
-        return self._str_gen(other, ' AND ')
-
-    def __or__(self, other):
-        return self._str_gen(other, ' OR ')
-
-    def __hash__(self):
-        return hash(f"{self.value}")
-
-
-class AbstractColumn(ABC):
-    """
-    Sub-class of AbstractTable, itself one column of table (AbstractTable)
-    Have same methods but without table name argument
-    Attributes
-    ----------
-    table : AbstractTable
-        AbstractTable parent table object
-    name : str
-        Name of column
-
-    Existing for generating AbstractSearchCondition for WHERE, SET
-    and other parameters of parents classes
-
-    db['table_name']['column_name'] = x
-    db['table_name']['column_name'] > x
-    db['table_name']['column_name'] >= x
-    db['table_name']['column_name'] != x
-    ...
-    db['table_name']['column_name'] / x
-    """
-
-    def __init__(self, table, name: AnyStr):
-        if not isinstance(table, AbstractTable):
-            raise TypeError(f"Argument table have oto be AbstractTable not {type(table)}")
-
-        self.table: AbstractTable = table
-        self.name = name
-
-    def __str__(self):
-        return f"'{self.table.name}'.'{self.name}'"
-
-    def _str_gen(self, value, operator: str):
-        if type(value) == str:
-            return AbstractSearchCondition(
-                f"({self}{operator}'{value}')"  # unsafe!
-            )
-        else:
-            return AbstractSearchCondition(
-                f"({self}{operator}{value})"
-            )
-
-    def __lt__(self, value) -> AbstractSearchCondition:
-        return self._str_gen(value, '<')
-
-    def __le__(self, value) -> AbstractSearchCondition:
-        return self._str_gen(value, '<=')
-
-    def __eq__(self, value) -> AbstractSearchCondition:
-        return self._str_gen(value, '=')
-
-    def __ne__(self, value) -> AbstractSearchCondition:
-        return self._str_gen(value, '<>')
-
-    def __gt__(self, value) -> AbstractSearchCondition:
-        return self._str_gen(value, '>')
-
-    def __ge__(self, value) -> AbstractSearchCondition:
-        return self._str_gen(value, '>=')
-
-    def __add__(self, value) -> AbstractSearchCondition:
-        return self._str_gen(value, '+')
-
-    def __sub__(self, value) -> AbstractSearchCondition:
-        return self._str_gen(value, '-')
-
-    def __mul__(self, value) -> AbstractSearchCondition:
-        return self._str_gen(value, '*')
-
-    def __truediv__(self, value) -> AbstractSearchCondition:
-        return self._str_gen(value, '/')
-
-    def __divmod__(self, value) -> AbstractSearchCondition:
-        return self._str_gen(value, '%')
-
-    def __list__(self) -> List[Any]:
-        return self.table.select_all(self.name)
-
-    def __hash__(self):
-        return hash(f"'{self.name}'.'{self.table}'")
 
 
 class AbstractTable(ABC):
@@ -191,12 +68,12 @@ class AbstractTable(ABC):
         if key not in self.columns_names:
             raise KeyError(key, "No such column in table")
 
-        return AbstractColumn(table=self, name=key)
+        return AbstractColumn(table=self.name, name=key)
 
     @property
     def columns(self) -> Generator[AbstractColumn, None, None]:
         for column in self.columns_names:
-            yield AbstractColumn(table=self, name=column)
+            yield AbstractColumn(table=self.name, name=column)
 
     @property
     def columns_names(self) -> List:
@@ -800,22 +677,23 @@ class AbstractDatabase(ABC):
 
 
             if isinstance(args[0], list):
-                args = tuple(map(lambda arg: tuple(arg), args))    # converting lists in args to tuples ([1,2],) -> ((1,2),)
+                args = tuple(
+                    map(lambda arg: tuple(arg), args)
+                )   # converting lists in args to tuples ([1,2],) -> ((1,2),)
 
             max_arg_len = max(map(lambda arg: len(arg), args))  # max len of arg in values
             min_arg_len = min(map(lambda arg: len(arg), args))  # min len of arg in values
 
-            temp_ = tuple(0 for _ in range(max_arg_len))        # (1, 'Alex', 'Django')
+            temp_ = tuple(0 for _ in range(max_arg_len))   # (1, 'Alex', 'Django')
 
 
         elif kwargs:
             for _, arg in kwargs.items():
                 args += (tuple(arg),)
 
-            columns = tuple(kwargs.keys())
-
             args = tuple(zip(*args))
-            print(111, columns, args)
+
+            columns = tuple(kwargs.keys())
 
             max_arg_len = max(map(lambda arg: len(arg), args))     # max len of arg in values
             min_arg_len = min(map(lambda arg: len(arg), args))     # min len of arg in values\\
@@ -825,12 +703,7 @@ class AbstractDatabase(ABC):
         else:
             raise ValueError(f"No data to insert, args: {args}, kwargs: {kwargs}")
 
-        print(1221, temp_)
-        print(2112, args)
-
         script, expected_values = self._insert_stmt(temp_, script=script, TABLE=TABLE)  # getting stmt for maxsize value
-
-        print(script, expected_values)
 
         possible_len = len(expected_values)  # len of max supported val list
 
@@ -854,14 +727,6 @@ class AbstractDatabase(ABC):
         else:
             values += args
 
-        print(2020, values)
-        # values = tuple(
-        #     map(lambda arg: tuple(arg), values)
-        # )  # make values tuple[tuple] (yes it's necessary)
-        #
-        # if not values:
-        #     values = tuple()
-        #
         return script, values
 
     @parse.offset_
@@ -893,10 +758,7 @@ class AbstractDatabase(ABC):
                 logger.warning("Argument SELECT not specified, default value is '*'")
             SELECT = ("*",)
 
-        elif isinstance(SELECT, str):
-            SELECT = (SELECT,)
-
-        elif isinstance(SELECT, AbstractColumn):
+        elif isinstance(SELECT, (str, AbstractColumn)):
             SELECT = (SELECT,)
 
         elif isinstance(SELECT, list):
@@ -932,40 +794,41 @@ class AbstractDatabase(ABC):
         Parent method for update method
 
         """
+        script = script_gen.update_script(table=TABLE, script=script)
 
-        set_ = SET if SET else None
+        if not SET and kwargs:
+            SET = kwargs
 
-        if not set_ and kwargs:
-            set_ = kwargs
+        # if set is not {'column': (val1, val2)}
+        # [column1, val1, column2, val2]
+        if isinstance(SET, list):
+            SET = tuple(SET)
 
-        if isinstance(set_, tuple):
-            set_ = list(set_)
-
-        if isinstance(set_, list):
+        # (column1, val1, column2, val2)
+        if isinstance(SET, tuple):
             new_set = {}
 
-            if len(set_) % 2 == 0:  # for ['name', 'Alex', 'age', 2]
-                for i in range(len(set_) // 2):
-                    new_set.update({set_[2 * i]: set_[2 * i + 1]})
+            if len(SET) % 2 == 0:  # for ['name', 'Alex', 'age', 2]
+                for i in range(len(SET) // 2):
+                    new_set.update({SET[2 * i]: SET[2 * i + 1]})
 
             else:
                 raise TypeError
 
-            set_ = new_set
+            SET: dict = new_set
 
-        script += f"UPDATE '{TABLE}' SET "
-
-        for (key, val) in set_.items():
+        for (key, val) in SET.items():
             if issubclass(type(key), AbstractColumn):
                 script += f"'{key.name}'="
             else:
                 script += f"'{key}'="
 
-            if isinstance(val, AbstractSearchCondition):
+            if isinstance(val, SearchCondition):
                 script += f"{val}, "
+                values = values + val.values
             else:
                 script += "?, "
-                values = tuple(list(values) + [val])
+                values = values + (val,)
 
         script = script[:-2]
 
@@ -1340,13 +1203,12 @@ class AbstractDatabase(ABC):
 
         return self._get_table(name=name)
 
-    @abstractmethod
     def get_columns(
             self,
             table: AnyStr
     ) -> Generator[AbstractColumn, None, None]:
         """
-        Get list of table columns like an AbstractColumn objects
+        Get list of table columns like an SQLite3xColumn objects
 
         Parameters
         ----------
@@ -1359,7 +1221,21 @@ class AbstractDatabase(ABC):
             Columns of table
 
         """
-        pass
+
+        try:
+            columns_: Tuple[Tuple] = self.execute(f"SELECT name FROM PRAGMA_TABLE_INFO('{table}')")
+            columns: Tuple = tuple(map(lambda item: item[0], columns_))
+
+        except sqlite3.OperationalError:
+            # Fix for compatibility issues #19, by some reason it can't find PRAGMA_TABLE_INFO table
+            columns_: Tuple[Tuple] = self.pragma(f"table_info('{table}')")
+            columns: Tuple = tuple(map(lambda item: item[1], columns_))
+
+        if not columns:
+            raise TableInfoError
+
+        for column in columns:
+            yield AbstractColumn(table=table, name=column)
 
     @abstractmethod
     def get_columns_names(

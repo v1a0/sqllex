@@ -31,11 +31,11 @@ SELECT = ["id", "username"],  # List
 
 SELECT = ("id", "username"),  # Tuple
 
-SELECT = db['users']['id']    # SQLite3xColumn
+SELECT = db['users']['id']    # AbstractColumn
 
-SELECT = [db['users']['id'],  db['users']['username']]   # List[SQLite3xColumn]
+SELECT = [db['users']['id'],  db['users']['username']]   # List[AbstractColumn]
 
-SELECT = (db['users']['id'],  db['users']['username'])   # Tuple[SQLite3xColumn]
+SELECT = (db['users']['id'],  db['users']['username'])   # Tuple[AbstractColumn]
 ```
 
 

@@ -1,0 +1,50 @@
+from sqllex.types import AnyStr
+
+
+class SearchCondition:
+    def __init__(self, script: AnyStr, values: tuple = ()):
+        self.script = script
+        self.values = values
+
+    def __str__(self):
+        return self.script
+
+    def _str_gen(self, value, operator: str):
+        if isinstance(value, SearchCondition):
+            return SearchCondition(
+                f"({self}{operator}{value.script})",
+                values=self.values + value.values
+            )
+
+        else:
+            return SearchCondition(
+                f"({self}{operator}?)",
+                values=self.values + (value,)
+            )
+
+    def __lt__(self, value):
+        return self._str_gen(value, '<')
+
+    def __le__(self, value):
+        return self._str_gen(value, '<=')
+
+    def __eq__(self, value):
+        return self._str_gen(value, '=')
+
+    def __ne__(self, value):
+        return self._str_gen(value, '<>')
+
+    def __gt__(self, value):
+        return self._str_gen(value, '>')
+
+    def __ge__(self, value):
+        return self._str_gen(value, '>=')
+
+    def __and__(self, other):
+        return self._str_gen(other, ' AND ')
+
+    def __or__(self, other):
+        return self._str_gen(other, ' OR ')
+
+    def __hash__(self):
+        return hash(f"{self.script}")

@@ -29,6 +29,27 @@ def insert(table: str, columns: tuple, need_space: bool = None):
 
 
 @lru_cache(maxsize=32)
+def update_script(table: str, script: str):
+    return f"{script} UPDATE '{table}' SET "
+
+
+@lru_cache(maxsize=32)
+def update_values(table: str, columns: tuple, need_space: bool = None):
+    if issubclass(type(key), AbstractColumn):
+        script += f"'{key.name}'="
+    else:
+        script += f"'{key}'="
+
+    if isinstance(val, AbstractSearchCondition):
+        script += f"{val}, "
+    else:
+        script += "?, "
+        values = tuple(list(values) + [val])
+
+
+
+
+@lru_cache(maxsize=32)
 def select(method: str, columns: tuple, table: str = None):
     return f"" \
            f"{method} "\
@@ -77,3 +98,4 @@ def pragma_args(arg):
 @lru_cache(maxsize=32)
 def pragma_kwargs(parameter: str, value: str):
     return f"PRAGMA {parameter}={value}"
+

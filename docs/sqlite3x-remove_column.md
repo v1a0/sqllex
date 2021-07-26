@@ -13,8 +13,8 @@ def remove_column(
     ----------
     table : AnyStr
         Name of table
-    column : Union[AnyStr, SQLite3xColumn]
-        Name of column or SQLite3xColumn object.
+    column : Union[AnyStr, AbstractColumn]
+        Name of column or AbstractColumn object.
     Returns
     ----------
     None

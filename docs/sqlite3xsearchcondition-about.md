@@ -20,8 +20,8 @@ db.create_table(
 )
 
 
-id_col = db['users']['id']  # SQLite3xColumn
-name_col = db['users']['name']  # SQLite3xColumn
+id_col = db['users']['id']  # AbstractColumn
+name_col = db['users']['name']  # AbstractColumn
 
 
 

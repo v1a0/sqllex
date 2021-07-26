@@ -43,8 +43,6 @@ print(f"sqllex_connect\t{end - beg:.3}s")   # sqllex_connect (v0.1.10.4 = 0.123s
 # bench_sqllex_without_connect()
 # end = time.time()
 # print(f"sqllex_without_connect\t{end - beg:.3}s")    # sqllex_without_connect (v0.1.10.4 = 45.4s) vs (.3b = 0.461 sec)
-
-print("\nRunning sqlite3")
 beg = time.time()
 bench_sqlite3()
 end = time.time()
