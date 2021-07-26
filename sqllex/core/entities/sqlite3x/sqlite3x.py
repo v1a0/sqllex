@@ -57,7 +57,7 @@ class SQLite3xTable(AbstractTable):
             yield AbstractColumn(table=self.name, name=column)
 
     @property
-    def columns_names(self) -> List:
+    def columns_names(self) -> Tuple:
         return self.get_columns_names()
 
     def info(self):
@@ -172,7 +172,7 @@ class SQLite3x(AbstractDatabase):
         for tab_name in self.tables_names:
             yield self._get_table(tab_name)
 
-    def _get_tables_names(self) -> List[str]:
+    def _get_tables_names(self) -> Tuple[str]:
         """
         Get list of tables names from database
 
@@ -182,10 +182,7 @@ class SQLite3x(AbstractDatabase):
             list of tables names
 
         """
-        return tuple2list(
-            self.execute("SELECT name FROM sqlite_master WHERE type='table'"),
-            remove_one_len=True
-        )
+        return tuple(map(lambda ret: ret[0], self.execute("SELECT name FROM sqlite_master WHERE type='table'")))
 
     # ============================== PUBLIC METHODS ==============================
 

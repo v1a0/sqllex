@@ -1,6 +1,7 @@
 from sqllex.types import *
 from sqllex.constants.sql import *
-from sqllex.core.entities.abc.sql_column import SearchCondition
+from sqllex.core.entities.abc.sql_column import AbstractColumn
+from sqllex.core.entities.abc.sql_search_condition import SearchCondition
 
 
 def from_as_(func: callable):
@@ -22,7 +23,7 @@ def from_as_(func: callable):
     def as_wrapper(*args, **kwargs):
         if "TABLE" in kwargs.keys():
 
-            if isinstance(kwargs.get("TABLE"), list) and AS in kwargs.values():
+            if isinstance(kwargs.get("TABLE"), (list, tuple)) and AS in kwargs.get("TABLE"):
                 TABLE = " ".join(t_arg for t_arg in kwargs.pop("TABLE"))
                 kwargs.update({"TABLE": TABLE})
 
@@ -128,36 +129,35 @@ def where_(func: callable) -> callable:
         __script, __values = func(*args, **kwargs)
 
         if where_:
-            __script += f" WHERE ("
+            __script = f"{__script} WHERE ("
 
-            if isinstance(where_, tuple):  #
-                where_ = list(where_)
-
-            if isinstance(where_, list):
-                # If WHERE is not List[List] (Just List[NotList])
-                if not isinstance(where_[0], list):
-                    where_ = [where_]
-
-                new_where = {}
-
-                for wh in where_:
-
-                    # List[List] -> Dict[val[0], val[1]]
-
-                    if isinstance(wh[0], str) and len(wh) > 1:
-                        new_where.update({wh[0]: wh[1:]})
-                    else:
-                        raise TypeError(f"Unexpected type of WHERE value")
-
-                where_ = new_where
+            # if isinstance(where_, tuple):  #
+            #     where_ = list(where_)
+            #
+            # if isinstance(where_, list):
+            #     # If WHERE is not List[List] (Just List[NotList])
+            #     if not isinstance(where_[0], list):
+            #         where_ = [where_]
+            #
+            #     new_where = {}
+            #
+            #     for wh in where_:
+            #
+            #         # List[List] -> Dict[val[0], val[1]]
+            #
+            #         if isinstance(wh[0], str) and len(wh) > 1:
+            #             new_where.update({wh[0]: wh[1:]})
+            #         else:
+            #             raise TypeError(f"Unexpected type of WHERE value")
+            #
+            #     where_ = new_where
 
             if isinstance(where_, SearchCondition):
                 __script = f"{__script}{where_.script}"
                 __values += where_.values
 
-            elif isinstance(where_, SearchCondition):
-                __script = f"{__script}{where_.script}"
-                __values += where_.values
+            elif isinstance(where_, AbstractColumn):
+                __script = f"{__script}{where_}"
 
             elif isinstance(where_, dict):
                 for (key, values) in where_.items():
@@ -252,16 +252,18 @@ def join_(func: callable) -> callable:
         __script, __values = func(*args, **kwargs)
 
         if JOIN:
-            if isinstance(JOIN, list):
+            if isinstance(JOIN, (list, tuple)):
 
                 # if JOIN is not List[List] make it so
-                if not isinstance(JOIN[0], list):
-                    JOIN = [JOIN]
+                if not isinstance(JOIN[0], (list, tuple)):
+                    JOIN = (JOIN,)
 
                 for join_ in JOIN:
                     # If first element is JOIN type
                     if join_[0] in [INNER_JOIN, LEFT_JOIN, CROSS_JOIN]:
-                        join_method = join_.pop(0)
+                        join_method = join_[0]
+                        join_ = join_[1:]
+
                     else:
                         join_method = INNER_JOIN
 
@@ -270,7 +272,7 @@ def join_(func: callable) -> callable:
                         f"{join_method} {' '.join(j_arg for j_arg in join_)} "
                     )
             else:
-                raise TypeError("Unexp")
+                raise TypeError("Incorrect JOIN extension type")
 
         return __script, __values
 
@@ -337,10 +339,10 @@ def order_by_(func: callable) -> callable:
 
         if order_by:
             if isinstance(order_by, (str, int)):
-                __script += f"ORDER BY {order_by} "
+                __script = f"{__script} ORDER BY {order_by} "
             elif isinstance(order_by, (list, tuple)):
-                __script += (
-                    f"ORDER BY {', '.join(str(item_ob) for item_ob in order_by)} "
+                __script = (
+                    f"{__script} ORDER BY {', '.join(str(item_ob) for item_ob in order_by)} "
                 )
             elif isinstance(order_by, dict):
                 for (key, val) in order_by.items():
@@ -349,9 +351,9 @@ def order_by_(func: callable) -> callable:
                     elif isinstance(val, (list, tuple)):
                         uni_val = " ".join(sub_val for sub_val in val)
                     else:
-                        raise TypeError
+                        raise TypeError("Incorrect ORDER BY extension type")
 
-                    __script += f"ORDER BY {key} {uni_val} "
+                    __script = f"{__script} ORDER BY {key} {uni_val} "
 
         return __script, __values
 
@@ -387,7 +389,7 @@ def limit_(func: callable) -> callable:
         if limit:
             if isinstance(limit, (float, str)):
                 limit = int(limit)
-            __script += f"LIMIT {limit} "
+            __script = f"{__script} LIMIT {limit} "
 
         return __script, __values
 
@@ -423,63 +425,11 @@ def offset_(func: callable) -> callable:
         if offset:
             if isinstance(offset, (float, str)):
                 offset = int(offset)
-            __script += f"OFFSET {offset} "
+            __script = f"{__script} OFFSET {offset} "
 
         return __script, __values
 
     return offset_wrapper
-
-
-
-# def args_parser(func: callable):
-#     """
-#     Decorator for parsing argument method.
-#     If func got only one argument which contains args for function it'll unwrap it
-#
-#     if args is dict :
-#         return args = None, kwargs = args[0]
-#
-#     if args is list :
-#         return args = args[0], kwargs = kwargs
-#
-#     if args is tuple :
-#         return args = list(args[0]), kwargs = kwargs
-#
-#     Parameters
-#     ----------
-#     func : callable
-#         SQLite3x method contains args
-#
-#     Returns
-#     ----------
-#     callable
-#         Decorated method with parsed args
-#     """
-#
-#     def args_parser_wrapper(*args: Any, **kwargs: Any):
-#         if not args:
-#             return func(*args, **kwargs)
-#
-#         self = list(args)[0]
-#         args = list(args)[1:]
-#
-#         if len(args) == 1:
-#             if isinstance(args[0], list):
-#                 args = args[0]
-#             elif isinstance(args[0], (str, int)):
-#                 args = [args[0]]
-#             elif isinstance(args[0], tuple):
-#                 args = list(args[0])
-#             elif isinstance(args[0], dict):
-#                 kwargs.update(args[0])
-#                 args = []
-#
-#         args = [self, *args]
-#
-#         return func(*args, **kwargs)
-#
-#     return args_parser_wrapper
-
 
 
 def args_parser(func: callable):
@@ -517,10 +467,10 @@ def args_parser(func: callable):
         if len(args) == 1:
             if isinstance(args[0], list):
                 args = tuple(args[0])
-            elif isinstance(args[0], (str, int)):
-                args = (args[0],)
             elif isinstance(args[0], tuple):
                 args = args[0]
+            elif isinstance(args[0], (str, int)):
+                args = (args[0],)
             elif isinstance(args[0], dict):
                 kwargs.update(args[0])
                 args = tuple()
@@ -530,7 +480,6 @@ def args_parser(func: callable):
         return func(*args, **kwargs)
 
     return args_parser_wrapper
-
 
 
 

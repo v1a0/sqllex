@@ -23,22 +23,22 @@ def crete_table(db: SQLite3x):
 
 def insert_fats(db: SQLite3x):
     for _ in range(LIM):
-        db.insert('main', [None, f'Alex', 33])
+        db.insert('main', (None, f'Alex', 33))
 
 
 def insert_slow(db: SQLite3x):
     for _ in range(LIM):
-        db.insert('main', [None, 'Alex'])
+        db.insert('main', (None, 'Alex'))
 
 
 def insert_many_fast(db: SQLite3x):
-    data = [[None, 'Alex', 33] for _ in range(LIM)]
+    data = [(None, 'Alex', 33) for _ in range(LIM)]
 
     db.insertmany('main', data)
 
 
 def insert_many_slow(db: SQLite3x):
-    data = [[None, 'Alex'] for _ in range(LIM)]
+    data = [(None, 'Alex') for _ in range(LIM)]
 
     db.insertmany('main', data)
 
@@ -78,15 +78,15 @@ if __name__ == '__main__':
     db.connect()
 
     with cProfile.Profile() as pr:
-        #                       # total runtime/(records), speedup .4/.3b
-        # crete_table(db)       # 0.00332 sec/(1    table), 1x
-        # insert_fats(db)       # 0.21690 sec/(10_000 rec), 3x
-        # insert_slow(db)       # 0.92790 sec/(10_000 rec), 3x
-        # insert_many_fast(db)  # 0.04220 sec/(10_000 rec), 1.06x
-        # insert_many_slow(db)  # 0.04269 sec/(10_000 rec), 1.01x
-        # select_all(db)        # 0.03394 sec/(10_000 rec), 1.68x
-        # select_where_1(db)    # 0.02888 sec/(10_000 rec), 1.01x
-        select_where_2(db)    # 0.02556 sec/(10_000 rec), 1.5x
+        #                       # total runtime/(records), speedup 0.1.10.4 vs 0.1.10.5c (pre 0.2)
+        # crete_table(db)       # 0.00327 sec/(1    table), 1.01x
+        # insert_fats(db)       # 0.20000 sec/(10_000 rec), 1.10x
+        # insert_slow(db)       # 0.69250 sec/(10_000 rec), 1.34x
+        # insert_many_fast(db)  # 0.03473 sec/(10_000 rec), 1.22x
+        # insert_many_slow(db)  # 0.04269 sec/(10_000 rec), 1.13x
+        # select_all(db)        # 0.01155 sec/(10_000 rec), 3.00x
+        # select_where_1(db)    # 0.00691 sec/(10_000 rec), 4.18x
+        # select_where_2(db)    # 0.00856 sec/(10_000 rec), 3.00x
         pass
 
     db.disconnect()

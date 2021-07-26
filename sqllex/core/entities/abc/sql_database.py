@@ -152,7 +152,7 @@ class AbstractTable(ABC):
 
         return False
 
-    def get_columns_names(self) -> List:
+    def get_columns_names(self) -> Tuple[str]:
         """
         Get list of table columns
 
@@ -489,7 +489,7 @@ class AbstractDatabase(ABC):
         return self._get_tables()
 
     @property
-    def tables_names(self) -> List[str]:
+    def tables_names(self) -> Tuple[str]:
         return self._get_tables_names()
 
     def __getitem__(self, key) -> AbstractTable:
@@ -527,7 +527,7 @@ class AbstractDatabase(ABC):
         pass
 
     @abstractmethod
-    def _get_tables_names(self) -> List[str]:
+    def _get_tables_names(self) -> Tuple[str]:
         pass
 
     @staticmethod
@@ -568,6 +568,9 @@ class AbstractDatabase(ABC):
             if isinstance(params, str):
                 params = [f"{params} "]
 
+            if isinstance(params, tuple):
+                params = list(params)
+
             # For {'col': [param2, param1]} -> {'col': [param1, param2]}
             if isinstance(params, list):
                 params = sorted(params, key=lambda par: sort.column_types(par))
@@ -581,7 +584,7 @@ class AbstractDatabase(ABC):
                 content += res[:-1]
 
             else:
-                raise TypeError
+                raise TypeError(f'Incorrect column "{col}" initialisation')
 
         script = script_gen.create(
             temp=temp,
@@ -642,7 +645,10 @@ class AbstractDatabase(ABC):
         if not args:
             raise sqlite3.OperationalError
 
-        script = f"{script}{script_gen.insert_fast(table=TABLE, placeholders=len(args), need_space=bool(script))}"
+        script = script_gen.insert_fast_with_prefix(
+            script=script,
+            table=TABLE, placeholders=len(args), need_space=bool(script)
+        )
         values += args
 
         return script, values
@@ -776,7 +782,7 @@ class AbstractDatabase(ABC):
 
         """
 
-        script += script_gen.delete(table=TABLE)
+        script = f"{script}{script_gen.delete(table=TABLE)}"
         return script, values
 
     @parse.where_
@@ -888,7 +894,7 @@ class AbstractDatabase(ABC):
             self,
             script: AnyStr = None,
             values: Tuple[Tuple] = None,
-    ) -> Union[List, None]:
+    ) -> Union[Tuple, None]:
         """
         Execute any SQL-script for many values sets, or execute SQLRequest
 
@@ -911,7 +917,7 @@ class AbstractDatabase(ABC):
     def executescript(
             self,
             script: AnyStr = None,
-    ) -> Union[List, None]:
+    ) -> Union[Tuple, None]:
         """
         Execute many SQL-scripts whit (or without) values
 
@@ -1141,7 +1147,7 @@ class AbstractDatabase(ABC):
 
         for (column_name, column_type) in column.items():
             if not isinstance(column_type, (list, tuple)):
-                column_type = [column_type]
+                column_type = (column_type,)
 
             self.execute(
                 f"ALTER TABLE "
@@ -1232,7 +1238,7 @@ class AbstractDatabase(ABC):
             columns: Tuple = tuple(map(lambda item: item[1], columns_))
 
         if not columns:
-            raise TableInfoError
+            raise TableInfoError(f"No columns or table {table}")
 
         for column in columns:
             yield AbstractColumn(table=table, name=column)
@@ -1241,7 +1247,7 @@ class AbstractDatabase(ABC):
     def get_columns_names(
             self,
             table: AnyStr
-    ) -> List[str]:
+    ) -> Tuple[str]:
         """
         Get list of names of table columns as strings
 
@@ -1363,7 +1369,7 @@ class AbstractDatabase(ABC):
     def insertmany(
             self,
             TABLE: AnyStr,
-            *args: Union[List[List], List[Tuple], Tuple[List], Tuple[Tuple], List, Tuple],
+            *args: Union[List[List], List[Tuple], Tuple[List], Tuple[Tuple], List, Tuple, Iterable],
             OR: OrOptionsType = None,
             **kwargs: Any,
     ) -> None:

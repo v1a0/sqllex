@@ -19,6 +19,11 @@ def insert_fast(table: str, placeholders: int, need_space: bool = None):
 
 
 @lru_cache(maxsize=32)
+def insert_fast_with_prefix(script: str, table: str, placeholders: int, need_space: bool = None):
+    return f"{script} {insert_fast(table=table, placeholders=placeholders, need_space=need_space)}"
+
+
+@lru_cache(maxsize=32)
 def insert(table: str, columns: tuple, need_space: bool = None):
     return f"" \
            f"{' ' if need_space else ''}" \
@@ -31,22 +36,6 @@ def insert(table: str, columns: tuple, need_space: bool = None):
 @lru_cache(maxsize=32)
 def update_script(table: str, script: str):
     return f"{script} UPDATE '{table}' SET "
-
-
-@lru_cache(maxsize=32)
-def update_values(table: str, columns: tuple, need_space: bool = None):
-    if issubclass(type(key), AbstractColumn):
-        script += f"'{key.name}'="
-    else:
-        script += f"'{key}'="
-
-    if isinstance(val, AbstractSearchCondition):
-        script += f"{val}, "
-    else:
-        script += "?, "
-        values = tuple(list(values) + [val])
-
-
 
 
 @lru_cache(maxsize=32)

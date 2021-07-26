@@ -73,7 +73,8 @@ ConstantType = Union[
 
 # Subtypes for DBTemplateType
 ListDataType = List[Union[DataType, ConstantType, Number]]
-ColumnDataType = Union[ListDataType, DataType, AnyStr]
+TupleDataType = Tuple[Union[DataType, ConstantType, Number]]
+ColumnDataType = Union[ListDataType, TupleDataType, DataType, AnyStr]
 ColumnsType = Mapping[AnyStr, ColumnDataType]
 
 # Type for databases template
@@ -172,6 +173,22 @@ JoinArgType = Union[
         ]
     ],
     List[
+        Union[
+            JoinType,
+            NumStr,
+            ConstantType,
+        ]
+    ],
+    Tuple[
+        Tuple[
+            Union[
+                JoinType,
+                NumStr,
+                ConstantType,
+            ]
+        ]
+    ],
+    Tuple[
         Union[
             JoinType,
             NumStr,
