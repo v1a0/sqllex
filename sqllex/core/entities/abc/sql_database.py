@@ -76,7 +76,7 @@ class AbstractTable(ABC):
             yield AbstractColumn(table=self.name, name=column)
 
     @property
-    def columns_names(self) -> List:
+    def columns_names(self) -> Tuple:
         return self.get_columns_names()
 
     @abstractmethod
@@ -469,8 +469,9 @@ class AbstractTable(ABC):
 class AbstractDatabase(ABC):
 
     @abstractmethod
-    def __init__(self):
+    def __init__(self, placeholder):
         self.__connection = None
+        self.placeholder = placeholder
 
     @abstractmethod
     def __str__(self):
@@ -499,7 +500,7 @@ class AbstractDatabase(ABC):
         if self.connection:
             self.disconnect()
 
-        del self  # ?
+        del self
 
     # ============================== PRIVATE METHODS ==============================
 
@@ -738,7 +739,7 @@ class AbstractDatabase(ABC):
     @parse.offset_
     @parse.limit_
     @parse.order_by_
-    @parse.where_
+    @parse.where_(placeholder='?')
     @parse.join_
     @parse.with_
     @parse.from_as_
@@ -774,7 +775,7 @@ class AbstractDatabase(ABC):
 
         return script, values
 
-    @parse.where_
+    @parse.where_(placeholder='?')
     @parse.with_
     def _delete_stmt(self, TABLE: str, script="", values=(), **kwargs):
         """
@@ -785,7 +786,7 @@ class AbstractDatabase(ABC):
         script = f"{script}{script_gen.delete(table=TABLE)}"
         return script, values
 
-    @parse.where_
+    @parse.where_(placeholder='?')
     @parse.or_param_
     @parse.with_
     def _update_stmt(
@@ -833,7 +834,7 @@ class AbstractDatabase(ABC):
                 script += f"{val}, "
                 values = values + val.values
             else:
-                script += "?, "
+                script += f"{self.placeholder}, "
                 values = values + (val,)
 
         script = script[:-2]

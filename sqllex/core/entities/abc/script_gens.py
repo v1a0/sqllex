@@ -3,19 +3,19 @@ from functools import lru_cache
 
 """
 Functions to generate string scripts, like:
-"INSERT INTO tablename VALUES (?, ?, ?)"
+"INSERT INTO table_name VALUES (?, ?, ?)"
 
 All functions caching in memory to make it works faster
 """
 
 
 @lru_cache(maxsize=32)
-def insert_fast(table: str, placeholders: int, need_space: bool = None):
+def insert_fast(table: str, placeholders: int, need_space: bool = None, placeholder='?'):
     return f"" \
            f"{' ' if need_space else ''}" \
            f"INTO '{str(table)}' " \
            f"VALUES (" \
-           f"{', '.join('?' * placeholders)}) "
+           f"{', '.join(placeholder * placeholders)}) "
 
 
 @lru_cache(maxsize=32)
@@ -24,13 +24,13 @@ def insert_fast_with_prefix(script: str, table: str, placeholders: int, need_spa
 
 
 @lru_cache(maxsize=32)
-def insert(table: str, columns: tuple, need_space: bool = None):
+def insert(table: str, columns: tuple, need_space: bool = None, placeholder='?'):
     return f"" \
            f"{' ' if need_space else ''}" \
            f"INTO '{str(table)}' (" \
            f"{', '.join(col for col in columns)}) " \
            f"VALUES (" \
-           f"{', '.join('?' * len(columns))}) "
+           f"{', '.join(placeholder * len(columns))}) "
 
 
 @lru_cache(maxsize=32)

@@ -2,9 +2,10 @@ from sqllex.types import AnyStr
 
 
 class SearchCondition:
-    def __init__(self, script: AnyStr, values: tuple = ()):
+    def __init__(self, script: AnyStr, values: tuple = (), placeholder='?'):
         self.script = script
         self.values = values
+        self.placeholder = placeholder
 
     def __str__(self):
         return self.script
@@ -18,7 +19,7 @@ class SearchCondition:
 
         else:
             return SearchCondition(
-                f"({self}{operator}?)",
+                f"({self}{operator}{self.placeholder})",
                 values=self.values + (value,)
             )
 

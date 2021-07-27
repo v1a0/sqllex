@@ -2,6 +2,7 @@ from sqllex.types import *
 from sqllex.constants.sql import *
 from sqllex.core.entities.abc.sql_column import AbstractColumn
 from sqllex.core.entities.abc.sql_search_condition import SearchCondition
+from functools import wraps
 
 
 def from_as_(func: callable):
@@ -101,7 +102,7 @@ def with_(func: callable) -> callable:
     return with_wrapper
 
 
-def where_(func: callable) -> callable:
+def where_(placeholder: AnyStr = '?') -> callable:
     """
     Decorator for catching WHERE argument in kwargs of method
 
@@ -112,117 +113,121 @@ def where_(func: callable) -> callable:
     ----------
     func : callable
         SQLite3x method contains arg WHERE
+    placeholder: str
+        Symbol to use for placeholder
 
     Returns
     -------
     callable
         Decorated method with script contains where_statement and values contains values of where_statement
     """
-
-    def where_wrapper(*args, **kwargs):
-        if "WHERE" in kwargs.keys():
-            where_: WhereType = kwargs.pop("WHERE")
-
-        else:
-            where_: None = None
-
-        __script, __values = func(*args, **kwargs)
-
-        if where_:
-            __script = f"{__script} WHERE ("
-
-            # if isinstance(where_, tuple):  #
-            #     where_ = list(where_)
-            #
-            # if isinstance(where_, list):
-            #     # If WHERE is not List[List] (Just List[NotList])
-            #     if not isinstance(where_[0], list):
-            #         where_ = [where_]
-            #
-            #     new_where = {}
-            #
-            #     for wh in where_:
-            #
-            #         # List[List] -> Dict[val[0], val[1]]
-            #
-            #         if isinstance(wh[0], str) and len(wh) > 1:
-            #             new_where.update({wh[0]: wh[1:]})
-            #         else:
-            #             raise TypeError(f"Unexpected type of WHERE value")
-            #
-            #     where_ = new_where
-
-            if isinstance(where_, SearchCondition):
-                __script = f"{__script}{where_.script}"
-                __values += where_.values
-
-            elif isinstance(where_, AbstractColumn):
-                __script = f"{__script}{where_}"
-
-            elif isinstance(where_, dict):
-                for (key, values) in where_.items():
-                    # parsing WHERE values
-
-                    if not isinstance(values, list):
-                        values = [values]
-
-                    # Looking for equality or inequality
-                    if len(values) > 1 and values[0] in [
-                        "<", "<<", "<=",
-                        ">=", ">>", ">",
-                        "=", "==", "!=",
-                        "<>",
-                    ]:
-                        operator = values.pop(0)
-
-                        if len(values) == 1 and isinstance(
-                                values[0], list
-                        ):
-                            values = values[0]
-                    else:
-                        operator = "="
-
-                    __script += f"({f'{operator}? OR '.join(key for _ in values)}{operator}? OR "
-                    __script = f"{__script[:-3].strip()}) " + "AND "
-
-                    if __values:
-                        if isinstance(__values[0], tuple):
-                            # if .values contains many values for insertmany __script, __values
-                            # add where_ values for each value
-                            new_values = list(__values)
-
-                            for i in range(len(new_values)):
-                                new_values[i] = tuple(
-                                    list(new_values[i]) + list(values)
-                                )
-
-                            __values = tuple(new_values)
-
-                        else:
-                            # if .values contains only one set of values
-                            # add where_ values
-                            __values = tuple(
-                                list(__values) + list(values)
-                            )
-                    else:
-                        __values = values
-
-                __script = __script.strip()[:-3]
-
-            elif isinstance(where_, str):
-                __script += f"{where_}"
+    def where_pre_wrapper(func: callable):
+        @wraps(func)
+        def where_wrapper(*args, **kwargs):
+            if "WHERE" in kwargs.keys():
+                where_: WhereType = kwargs.pop("WHERE")
 
             else:
-                raise TypeError
+                where_: None = None
 
-            __script = (
-                f"{__script.strip()}) "  # .strip() removing spaces around
-            )
+            __script, __values = func(*args, **kwargs)
 
-        return __script, __values
+            if where_:
+                __script = f"{__script} WHERE ("
 
-    return where_wrapper
+                # if isinstance(where_, tuple):  #
+                #     where_ = list(where_)
+                #
+                # if isinstance(where_, list):
+                #     # If WHERE is not List[List] (Just List[NotList])
+                #     if not isinstance(where_[0], list):
+                #         where_ = [where_]
+                #
+                #     new_where = {}
+                #
+                #     for wh in where_:
+                #
+                #         # List[List] -> Dict[val[0], val[1]]
+                #
+                #         if isinstance(wh[0], str) and len(wh) > 1:
+                #             new_where.update({wh[0]: wh[1:]})
+                #         else:
+                #             raise TypeError(f"Unexpected type of WHERE value")
+                #
+                #     where_ = new_where
 
+                if isinstance(where_, SearchCondition):
+                    __script = f"{__script}{where_.script}"
+                    __values += where_.values
+
+                elif isinstance(where_, AbstractColumn):
+                    __script = f"{__script}{where_}"
+
+                elif isinstance(where_, dict):
+                    for (key, values) in where_.items():
+                        # parsing WHERE values
+
+                        if not isinstance(values, list):
+                            values = [values]
+
+                        # Looking for equality or inequality
+                        if len(values) > 1 and values[0] in [
+                            "<", "<<", "<=",
+                            ">=", ">>", ">",
+                            "=", "==", "!=",
+                            "<>",
+                        ]:
+                            operator = values.pop(0)
+
+                            if len(values) == 1 and isinstance(
+                                    values[0], list
+                            ):
+                                values = values[0]
+                        else:
+                            operator = "="
+
+                        __script += f"({f'{operator}{placeholder} OR '.join(key for _ in values)}{operator}{placeholder} OR "
+                        __script = f"{__script[:-3].strip()}) " + "AND "
+
+                        if __values:
+                            if isinstance(__values[0], tuple):
+                                # if .values contains many values for insertmany __script, __values
+                                # add where_ values for each value
+                                new_values = list(__values)
+
+                                for i in range(len(new_values)):
+                                    new_values[i] = tuple(
+                                        list(new_values[i]) + list(values)
+                                    )
+
+                                __values = tuple(new_values)
+
+                            else:
+                                # if .values contains only one set of values
+                                # add where_ values
+                                __values = tuple(
+                                    list(__values) + list(values)
+                                )
+                        else:
+                            __values = values
+
+                    __script = __script.strip()[:-3]
+
+                elif isinstance(where_, str):
+                    __script += f"{where_}"
+
+                else:
+                    raise TypeError
+
+                __script = (
+                    f"{__script.strip()}) "  # .strip() removing spaces around
+                )
+
+            return __script, __values
+
+        return where_wrapper
+
+    return where_pre_wrapper
 
 def join_(func: callable) -> callable:
     """

@@ -24,9 +24,10 @@ class AbstractColumn:
     db['table_name']['column_name'] / x
     """
 
-    def __init__(self, table: str, name: AnyStr):
+    def __init__(self, table: str, name: AnyStr, placeholder='?'):
         self.table = table
         self.name = name
+        self.placeholder = placeholder
 
     def __str__(self):
         return f"'{self.table}'.'{self.name}'"
@@ -43,7 +44,7 @@ class AbstractColumn:
             )
         else:
             return SearchCondition(
-                f"({self}{operator}?)",
+                f"({self}{operator}{self.placeholder})",
                 values=(value,)
             )
 

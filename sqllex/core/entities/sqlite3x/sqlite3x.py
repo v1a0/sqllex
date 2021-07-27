@@ -100,10 +100,10 @@ class SQLite3x(AbstractDatabase):
 
         """
 
-        super(SQLite3x, self).__init__()
+        super(SQLite3x, self).__init__(placeholder='?')
 
         self.__path = path
-        self.__connection = None       # init connection (?)
+        self.__connection = None       # init connection
         self.connect()                 # creating connection with db
         self.journal_mode(mode="WAL")  # make db little bit faster
         self.foreign_keys(mode="ON")   # turning on foreign keys
