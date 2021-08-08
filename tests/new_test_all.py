@@ -369,7 +369,7 @@ def getitem_test():
         {
             t7_id: t7_id + 2
         },
-        WHERE=t7_name == 'XXXX'
+        WHERE=(t7_name == 'XXXX')
     )
 
     if t7.select([t7_name, t7_id], WHERE=(t7_id == 3)) != [('XXXX', 3)]:

@@ -13,13 +13,11 @@ from sqllex.constants.sql import *
 import sqllex.core.entities.abc.script_gens as script_gen
 from sqllex.core.tools.convertors import crop
 import sqllex.core.tools.sorters as sort
-import sqllex.core.tools.parsers.parsers as parse
+from sqllex.core.tools.parsers.parsers import args_parser
 import sqlite3
 from sqllex.core.entities.abc.sql_column import SearchCondition
 from sqllex.exceptions import TableInfoError
 from sqllex.core.entities.abc.sql_column import AbstractColumn
-
-
 
 
 
@@ -101,7 +99,7 @@ class AbstractTable(ABC):
         Parameters
         ----------
         column : Dict
-            Column name and SQL type e.g. {'value': TEXT}
+            ColumnType name and SQL type e.g. {'value': TEXT}
 
         Returns
         ----------
@@ -166,7 +164,7 @@ class AbstractTable(ABC):
 
     def insert(
             self,
-            *args: InsertData,
+            *args: InsertingData,
             OR: OrOptionsType = None,
             WITH: WithType = None,
             **kwargs: Any,
@@ -214,7 +212,7 @@ class AbstractTable(ABC):
 
     def insertmany(
             self,
-            *args: Union[List[InsertData], Tuple[InsertData]],
+            *args: Union[List[InsertingData], Tuple[InsertingData]],
             OR: OrOptionsType = None,
             **kwargs: Any,
     ) -> None:
@@ -299,7 +297,7 @@ class AbstractTable(ABC):
             OFFSET: LimitOffsetType = None,
             JOIN: Union[str, List[str], List[List[str]]] = None,
             **kwargs,
-    ) -> Union[SQLRequest, List]:
+    ) -> Tuple[Any]:
         return self.db.select_distinct(
             self.name,
             SELECT=SELECT,
@@ -321,7 +319,7 @@ class AbstractTable(ABC):
             OFFSET: LimitOffsetType = None,
             JOIN: Union[str, List[str], List[List[str]]] = None,
             **kwargs,
-    ) -> Union[SQLRequest, List]:
+    ) -> Tuple:
         """
         SELECT data from table
 
@@ -392,7 +390,7 @@ class AbstractTable(ABC):
         Parameters
         ----------
         SET : Union[List, Tuple, Mapping]
-            Column and value to set
+            ColumnType and value to set
         WHERE : WhereType
             optional parameter for conditions, example: {'name': 'Alex', 'group': 2}
         OR : OrOptionsType
@@ -441,7 +439,7 @@ class AbstractTable(ABC):
             ORDER_BY: OrderByType = None,
             LIMIT: LimitOffsetType = None,
             **kwargs,
-    ) -> Union[SQLRequest, List]:
+    ) -> Tuple:
         """
         Find all records in table where_
 
@@ -531,6 +529,8 @@ class AbstractDatabase(ABC):
     def _get_tables_names(self) -> Tuple[str]:
         pass
 
+    # ================================ STMT'S =========================================
+
     @staticmethod
     def _pragma_stmt(*args: str, **kwargs):
         """
@@ -555,7 +555,7 @@ class AbstractDatabase(ABC):
             columns: ColumnsType,
             IF_NOT_EXIST: bool = None,
             without_rowid: bool = None,
-    ):
+    ) -> ScriptAndValues:
         """
         Parent method for all CREATE-like methods
         """
@@ -597,13 +597,11 @@ class AbstractDatabase(ABC):
 
         return script, values
 
-    @parse.or_param_
-    @parse.with_
-    @parse.from_as_
-    @parse.args_parser
+
+    @args_parser
     def _insert_stmt(
             self, *args: Any, TABLE: AnyStr, script="", values=(), **kwargs: Any,
-    ):
+    ) -> ScriptAndValues:
         """
         Parent method for INSERT-like methods
 
@@ -629,13 +627,10 @@ class AbstractDatabase(ABC):
 
         return script, values
 
-    @parse.or_param_
-    @parse.with_
-    @parse.from_as_
-    @parse.args_parser
+    @args_parser
     def _fast_insert_stmt(
             self, *args, TABLE: AnyStr, script="", values=(), **kwargs: Any
-    ):
+    ) -> ScriptAndValues:
         """
         Parent method for fast INSERT-like methods
 
@@ -654,9 +649,7 @@ class AbstractDatabase(ABC):
 
         return script, values
 
-    @parse.or_param_
-    @parse.from_as_
-    @parse.args_parser
+    @args_parser
     def _insertmany_stmt(
             self,
             *args: Union[List[List], List[Tuple], Tuple[List], Tuple[Tuple], List, Tuple],
@@ -664,7 +657,7 @@ class AbstractDatabase(ABC):
             script="",
             values=(),
             **kwargs: Any,
-    ):
+    ) -> ScriptAndValues:
         """
         Parent method for insertmany method
 
@@ -680,7 +673,7 @@ class AbstractDatabase(ABC):
 
             if len(args) == 0:  # if args empty after filtering, break the function, yes it'll break
                 logger.warning("insertmany/updatemany failed, due to no values to insert/update")
-                return None, None
+                return '', tuple()
 
 
             if isinstance(args[0], list):
@@ -736,13 +729,6 @@ class AbstractDatabase(ABC):
 
         return script, values
 
-    @parse.offset_
-    @parse.limit_
-    @parse.order_by_
-    @parse.where_(placeholder='?')
-    @parse.join_
-    @parse.with_
-    @parse.from_as_
     def _select_stmt(
             self,
             TABLE: Union[str, AbstractTable],
@@ -752,7 +738,7 @@ class AbstractDatabase(ABC):
             SELECT: Union[
                 str, AbstractColumn, List[Union[str, AbstractColumn]], Tuple[Union[str, AbstractColumn]]] = None,
             **kwargs,
-    ):
+    ) -> ScriptAndValues:
         """
         Parent method for all SELECT-like methods
 
@@ -775,9 +761,7 @@ class AbstractDatabase(ABC):
 
         return script, values
 
-    @parse.where_(placeholder='?')
-    @parse.with_
-    def _delete_stmt(self, TABLE: str, script="", values=(), **kwargs):
+    def _delete_stmt(self, TABLE: str, script="", values=(), **kwargs) -> ScriptAndValues:
         """
         Parent method for delete method
 
@@ -786,9 +770,6 @@ class AbstractDatabase(ABC):
         script = f"{script}{script_gen.delete(table=TABLE)}"
         return script, values
 
-    @parse.where_(placeholder='?')
-    @parse.or_param_
-    @parse.with_
     def _update_stmt(
             self,
             TABLE: AnyStr,
@@ -796,7 +777,7 @@ class AbstractDatabase(ABC):
             script="",
             values=(),
             **kwargs,
-    ):
+    ) -> ScriptAndValues:
         """
         Parent method for update method
 
@@ -841,13 +822,13 @@ class AbstractDatabase(ABC):
 
         return script, values
 
+    @staticmethod
     def _drop_stmt(
-            self,
             TABLE: AnyStr,
             IF_EXIST: bool = True,
             script="",
             **kwargs
-    ):
+    ) -> AnyStr:
         """
         Parent method for drop method
 
@@ -855,7 +836,7 @@ class AbstractDatabase(ABC):
 
         script += script_gen.drop(table=TABLE, if_exist=IF_EXIST)
 
-        return self.execute(script=script)
+        return script
 
     # ============================== PUBLIC METHODS ==============================
 
@@ -1137,9 +1118,9 @@ class AbstractDatabase(ABC):
         ----------
         table : AnyStr
             Name of table
-        column : ColumnDataType
+        column : ColumnType
             Columns of table (ColumnsType-like)
-            Column name and SQL type e.g. {'value': INTEGER}
+            ColumnType name and SQL type e.g. {'value': INTEGER}
 
         Returns
         ----------
@@ -1268,7 +1249,7 @@ class AbstractDatabase(ABC):
     def insert(
             self,
             TABLE: AnyStr,
-            *args: InsertData,
+            *args: InsertingData,
             OR: OrOptionsType = None,
             WITH: WithType = None,
             **kwargs: Any,
@@ -1423,7 +1404,7 @@ class AbstractDatabase(ABC):
             JOIN: Union[str, List[str], List[List[str]]] = None,
             _method="SELECT",
             **kwargs,
-    ) -> Union[Tuple, List[Any]]:
+    ) -> Tuple:
         """
         SELECT data from table
 
@@ -1497,7 +1478,7 @@ class AbstractDatabase(ABC):
             FROM: Union[str, List[str], AbstractTable] = None,
             JOIN: Union[str, List[str], List[List[str]]] = None,
             **kwargs,
-    ) -> Union[Tuple, List[Any]]:
+    ) -> Tuple:
         """
         SELECT distinct from table
 
@@ -1555,7 +1536,7 @@ class AbstractDatabase(ABC):
             FROM: Union[str, List[str], AbstractTable] = None,
             JOIN: Union[str, List[str], List[List[str]]] = None,
             **kwargs,
-    ) -> Union[Tuple, List[Any]]:
+    ) -> Tuple:
         """
         SELECT all data from table
 
@@ -1650,7 +1631,7 @@ class AbstractDatabase(ABC):
         TABLE : AnyStr
             Name of table
         SET : Union[List, Tuple, Mapping]
-            Column and value to set
+            ColumnType and value to set
         WHERE : WhereType
             optional parameter for conditions, example: {'name': 'Alex', 'group': 2}
         OR : OrOptionsType
@@ -1731,8 +1712,10 @@ class AbstractDatabase(ABC):
             Check is table exist (boolean)
         """
 
-        self._drop_stmt(
+        script = self._drop_stmt(
             TABLE=TABLE,
             IF_EXIST=IF_EXIST,
             **kwargs
         )
+
+        self.execute(script=script)

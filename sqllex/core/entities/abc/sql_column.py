@@ -29,10 +29,10 @@ class AbstractColumn:
         self.name = name
         self.placeholder = placeholder
 
-    def __str__(self):
+    def __str__(self) -> AnyStr:
         return f"'{self.table}'.'{self.name}'"
 
-    def _str_gen(self, value, operator: str):
+    def _str_gen(self, value, operator: str) -> SearchCondition:
         if isinstance(value, SearchCondition):
             return SearchCondition(
                 f"({self}{operator}({value.script})",

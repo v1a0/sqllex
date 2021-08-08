@@ -349,16 +349,9 @@ def order_by_(func: callable) -> callable:
                 __script = (
                     f"{__script} ORDER BY {', '.join(str(item_ob) for item_ob in order_by)} "
                 )
-            elif isinstance(order_by, dict):
-                for (key, val) in order_by.items():
-                    if isinstance(val, (str, int)):
-                        uni_val = f"{val} "
-                    elif isinstance(val, (list, tuple)):
-                        uni_val = " ".join(sub_val for sub_val in val)
-                    else:
-                        raise TypeError("Incorrect ORDER BY extension type")
-
-                    __script = f"{__script} ORDER BY {key} {uni_val} "
+            else:
+                raise TypeError(f"Unexpected type of ORDER_BY parameter, "
+                                f"expected str or tuple, got {type(order_by)} instead")
 
         return __script, __values
 

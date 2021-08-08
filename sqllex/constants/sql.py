@@ -1,12 +1,12 @@
 from sqllex.types.types import *
 
 # Options of column datatype of value
-TEXT: DataType = "TEXT"
-NUMERIC: DataType = "NUMERIC"
-INTEGER: DataType = "INTEGER"
-REAL: DataType = "REAL"
-NONE: DataType = "NONE"
-BLOB: DataType = "BLOB"
+TEXT: ColumnDataType = "TEXT"
+NUMERIC: ColumnDataType = "NUMERIC"
+INTEGER: ColumnDataType = "INTEGER"
+REAL: ColumnDataType = "REAL"
+NONE: ColumnDataType = "NONE"
+BLOB: ColumnDataType = "BLOB"
 
 
 # Options of column value

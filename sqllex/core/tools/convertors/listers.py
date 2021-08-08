@@ -1,5 +1,4 @@
 from sqllex.types import Any, List
-from sqllex.types import SQLStatement
 
 
 def lister(data: Any, remove_one_len: bool = False) -> List:

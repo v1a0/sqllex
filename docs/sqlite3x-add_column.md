@@ -12,9 +12,9 @@ def add_column(
     ----------
     table : AnyStr
         Name of table
-    column : ColumnDataType
+    column : ColumnType
         Columns of table (ColumnsType-like)
-        Column name and SQL type e.g. {'value': INTEGER}
+        ColumnType name and SQL type e.g. {'value': INTEGER}
     Returns
     ----------
     None

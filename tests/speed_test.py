@@ -78,7 +78,7 @@ print("\nRunning branch_fast_insert_sqllex")
 beg = time.time()
 branch_fast_insert_sqllex()
 end = time.time()
-print(f"branch_fast_insert_sqllex\t{end - beg:.3}s")   # sqllex_connect (v0.1.10.4 = 0.123s) vs (v0.1.10.3b = 0.445 sec) (3.3969x)
+print(f"branch_fast_insert_sqllex\t{end - beg:.3}s")   # sqllex_connect (v0.1.10.4 = 0.0266s) vs (v0.1.10.3b = 0.145 sec) (3.3969x)
 
 # print("\nRunning sqllex_without_connect")
 # beg = time.time()

@@ -1,15 +1,15 @@
-from sqllex.types import AnyStr, DataType, Union
+from sqllex.types import AnyStr, ColumnDataType, Union
 from sqllex.constants import CONST_PRIORITY
 
 
-def column_types(val: Union[DataType, AnyStr]) -> int:
+def column_types(val: Union[ColumnDataType, AnyStr]) -> int:
     """
-    Sorting function for DataType objects
+    Sorting function for ColumnDataType objects
     It's getting objects and returns index of priority (0,1,2,3)
 
     Parameters
     ----------
-    val : Union[DataType, AnyStr]
+    val : Union[ColumnDataType, AnyStr]
         param of column type
 
     Returns

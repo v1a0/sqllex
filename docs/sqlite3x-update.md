@@ -19,7 +19,7 @@ def update(
     TABLE : AnyStr
         Name of table
     SET : Union[List, Tuple, Mapping]
-        Column and value to set
+        ColumnType and value to set
     WHERE : WhereType
         optional parameter for conditions, example: {'name': 'Alex', 'group': 2}
     OR : OrOptionsType

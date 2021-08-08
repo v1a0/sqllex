@@ -1,4 +1,4 @@
-from sqllex.types import Tuple, AnyStr, SQLStatement
+from sqllex.types import Tuple, AnyStr
 from sqllex.debug import logger
 import sqlite3
 

@@ -30,7 +30,6 @@ def executemany(
 ```python
 
 from sqllex import *
-from sqllex.types import SQLRequest
 
 db = SQLite3x(path='database.db')
 
@@ -51,14 +50,12 @@ db.executemany(
 )
 
 
-request = SQLRequest(
-    script="""
-    INSERT INTO users (id, text) VALUES (?, ?)
-    """,
-    values=((3, 'Cate'), (4, 'Dex'))
-)
+request = {
+    'script': "INSERT INTO users (id, text) VALUES (?, ?)",
+    'values': ((3, 'Cate'), (4, 'Dex'))
+}
 
-db.executemany(request=request)
+db.executemany(**request)
 
 ```
 

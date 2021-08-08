@@ -30,7 +30,6 @@ def execute(
 ```python
 
 from sqllex import *
-from sqllex.types import SQLRequest
 
 db = SQLite3x(path='database.db')
 
@@ -51,14 +50,12 @@ db.execute(
 )
 
 
-request = SQLRequest(
-    script="""
-    INSERT INTO users (id, text) VALUES (?, ?)
-    """,
-    values=(2, 'Bob')
-)
+request = {
+    'script': "INSERT INTO users (id, text) VALUES (?, ?)",
+    'values': (2, 'Bob')
+}
 
-db.execute(request=request)
+db.execute(**request)
 
 ```
 

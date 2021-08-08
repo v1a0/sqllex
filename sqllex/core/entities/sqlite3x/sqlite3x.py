@@ -1,8 +1,8 @@
 from sqllex.core.entities.abc import AbstractDatabase, AbstractTable, AbstractColumn
+import sqllex.core.tools.parsers.parsers as parse
 from sqllex.debug import logger
 from sqllex.exceptions import TableInfoError
 from sqllex.types.types import *
-from sqllex.core.tools.convertors import tuple2list, return2list
 import sqllex.core.entities.sqlite3x.middleware as middleware
 import sqlite3
 
@@ -37,6 +37,8 @@ class SQLite3xTable(AbstractTable):
             Name of table
 
         """
+
+#        __slots__ = ('__path', '__connection') # Memory optimisation !!!
 
         super(SQLite3xTable, self).__init__(db=db, name=name)
 
@@ -87,6 +89,8 @@ class SQLite3x(AbstractDatabase):
 
     """
 
+    # ============================ MAGIC METHODS =================================
+
     def __init__(self, path: PathType = "sql3x.db", template: DBTemplateType = None):
         """
         Initialization
@@ -99,6 +103,8 @@ class SQLite3x(AbstractDatabase):
             template of database structure (DBTemplateType)
 
         """
+
+#        __slots__ = ('__path', '__connection') # Memory optimisation !!!
 
         super(SQLite3x, self).__init__(placeholder='?')
 
@@ -121,7 +127,167 @@ class SQLite3x(AbstractDatabase):
             logger.error(error)
             return False
 
-    # ========================== ABC METHODS INIT =================================
+    # =============================== PROPERTIES ==================================
+
+    @property
+    def connection(self) -> Union[sqlite3.Connection, None]:
+        return self.__connection
+
+    @property
+    def path(self) -> PathType:
+        return self.__path
+
+    # ================================== STMT'S ====================================
+
+    def _pragma_stmt(self, *args: str, **kwargs):
+        """
+
+        """
+        return super(SQLite3x, self)._pragma_stmt(*args, **kwargs)
+
+    def _create_stmt(
+            self,
+            temp: AnyStr,
+            name: AnyStr,
+            columns: ColumnsType,
+            IF_NOT_EXIST: bool = None,
+            without_rowid: bool = None,
+    ) -> ScriptAndValues:
+        """
+
+        """
+        return super(SQLite3x, self)._create_stmt(
+            temp=temp,
+            name=name,
+            columns=columns,
+            IF_NOT_EXIST=IF_NOT_EXIST,
+            without_rowid=without_rowid
+        )
+
+    @parse.or_param_
+    @parse.with_
+    @parse.from_as_
+    @parse.args_parser
+    def _insert_stmt(
+            self, *args: Any, TABLE: AnyStr, script="", values=(), **kwargs: Any,
+    ) -> ScriptAndValues:
+        """
+
+        """
+        return super(SQLite3x, self)._insert_stmt(
+            *args,
+            TABLE=TABLE,
+            script=script,
+            values=values,
+            **kwargs
+        )
+
+    @parse.or_param_
+    @parse.with_
+    @parse.from_as_
+    @parse.args_parser
+    def _fast_insert_stmt(
+            self, *args, TABLE: AnyStr, script="", values=(), **kwargs: Any
+    ) -> ScriptAndValues:
+        """
+
+        """
+        return super(SQLite3x, self)._fast_insert_stmt(
+            *args,
+            TABLE=TABLE,
+            script=script,
+            values=values,
+            **kwargs
+        )
+
+    @parse.or_param_
+    @parse.from_as_
+    def _insertmany_stmt(
+            self,
+            *args: Union[List[List], List[Tuple], Tuple[List], Tuple[Tuple], List, Tuple],
+            TABLE: AnyStr,
+            script="",
+            values=(),
+            **kwargs: Any,
+    ) -> ScriptAndValues:
+        """
+
+        """
+        return super(SQLite3x, self)._insertmany_stmt(
+            *args,
+            TABLE=TABLE,
+            script=script,
+            values=values,
+            **kwargs
+        )
+
+
+    @parse.offset_
+    @parse.limit_
+    @parse.order_by_
+    @parse.where_(placeholder='?')
+    @parse.join_
+    @parse.with_
+    @parse.from_as_
+    def _select_stmt(
+            self,
+            TABLE: Union[str, AbstractTable],
+            script="",
+            values=(),
+            method: AnyStr = "SELECT ",
+            SELECT: Union[
+                str, AbstractColumn, List[Union[str, AbstractColumn]], Tuple[Union[str, AbstractColumn]]] = None,
+            **kwargs,
+    ) -> ScriptAndValues:
+        """
+
+        """
+        return super(SQLite3x, self)._select_stmt(
+            TABLE=TABLE,
+            script=script,
+            values=values,
+            method=method,
+            SELECT=SELECT,
+            **kwargs
+        )
+
+
+    @parse.where_(placeholder='?')
+    @parse.with_
+    def _delete_stmt(self, TABLE: str, script="", values=(), **kwargs) -> ScriptAndValues:
+        """
+
+        """
+        return super(SQLite3x, self)._delete_stmt(
+            TABLE=TABLE,
+            script=script,
+            values=values,
+            **kwargs
+        )
+
+    @parse.where_(placeholder='?')
+    @parse.or_param_
+    @parse.with_
+    def _update_stmt(
+            self,
+            TABLE: AnyStr,
+            SET: Union[List, Tuple, Mapping] = None,
+            script="",
+            values=(),
+            **kwargs,
+    ) -> ScriptAndValues:
+        """
+
+        """
+        return super(SQLite3x, self)._update_stmt(
+            TABLE=TABLE,
+            SET=SET,
+            script=script,
+            values=values,
+            **kwargs
+        )
+
+    # ============================= ABC PRIVATE METHODS ============================
 
     def _executor(self, script: AnyStr, values: Tuple = None, spec: Number = 0):
         """
@@ -141,18 +307,6 @@ class SQLite3x(AbstractDatabase):
             return middleware.executemany(script=script, values=values, connection=self.connection, path=self.path)
         elif spec == 3:
             return middleware.executescript(script=script, connection=self.connection, path=self.path)
-
-    # =============================== PROPERTIES ==================================
-
-    @property
-    def connection(self) -> Union[sqlite3.Connection, None]:
-        return self.__connection
-
-    @property
-    def path(self) -> PathType:
-        return self.__path
-
-    # ============================== PRIVATE METHODS ==============================
 
     def _get_table(self, name) -> SQLite3xTable:
         super(SQLite3x, self)._get_table(name=name)
@@ -184,7 +338,7 @@ class SQLite3x(AbstractDatabase):
         """
         return tuple(map(lambda ret: ret[0], self.execute("SELECT name FROM sqlite_master WHERE type='table'")))
 
-    # ============================== PUBLIC METHODS ==============================
+    # ============================== ABC PUBLIC METHODS ============================
 
     def connect(self):
         """
@@ -218,7 +372,7 @@ class SQLite3x(AbstractDatabase):
         self.connection.close()
         self.__connection = None
 
-
+    # ========================== ADDITIONAL PUBLIC METHODS =========================
 
     def get_columns_names(
             self,
