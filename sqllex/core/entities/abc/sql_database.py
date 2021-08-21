@@ -1,15 +1,7 @@
-# Here is contains Abstract Base Classes for Parent Database Classes
-#
-# - AbstractDatabase
-# + - AbstractTable
-#   + - AbstractColumn
-#     + - SearchCondition
-#
-
 from abc import ABC, abstractmethod
 from sqllex.debug import logger
 from sqllex.types.types import *
-from sqllex.constants.sql import *
+from sqllex.constants import FOREIGN_KEY, ALL, REPLACE
 import sqllex.core.entities.abc.script_gens as script_gen
 from sqllex.core.tools.convertors import crop
 import sqllex.core.tools.sorters as sort
@@ -212,7 +204,7 @@ class AbstractTable(ABC):
 
     def insertmany(
             self,
-            *args: Union[List[InsertingData], Tuple[InsertingData]],
+            *args: InsertingManyData,
             OR: OrOptionsType = None,
             **kwargs: Any,
     ) -> None:
@@ -239,15 +231,15 @@ class AbstractTable(ABC):
 
     def select(
             self,
-            SELECT: Union[str, AbstractColumn, List[Union[str, AbstractColumn]]] = None,
+            SELECT: Union[AnyStr, AbstractColumn, List[Union[AnyStr, AbstractColumn]]] = None,
             WHERE: WhereType = None,
             WITH: WithType = None,
             ORDER_BY: OrderByType = None,
             LIMIT: LimitOffsetType = None,
             OFFSET: LimitOffsetType = None,
-            JOIN: Union[str, List[str], List[List[str]]] = None,
+            JOIN: JoinType = None,
             **kwargs,
-    ) -> Union[Tuple, List[List[Any]]]:
+    ) -> Union[Tuple[Tuple], List[List[Any]]]:
         """
         SELECT data from table
 
@@ -465,47 +457,137 @@ class AbstractTable(ABC):
 
 
 class AbstractDatabase(ABC):
+    """
+    Main Abstract Parent class for any database.
+    Contains basic common databases properties and methods
+    used as base for all sqllex database classes
+
+    Abstract/Regular Magic Methods (amm/_mm)
+        amm/ __init__
+        amm/ __str__
+        amm/ __bool__
+        _mm/ __getitem__
+        _mm/ __del__
+
+    Properties (__p)
+        __p/ connection
+        __p/ tables
+        __p/ tables_names
+
+    Abstract/Regular Private Methods (axm/_xm)
+        axm/ _executor
+        axm/ _get_table
+        axm/ _get_tables
+        axm/ _get_tables_names
+
+    Statements Constructor (__s)
+        __s/ _pragma_stmt
+        __s/ _create_stmt
+        __s/ _insert_stmt
+        __s/ _fast_insert_stmt
+        __s/ _insertmany_stmt
+        __s/ _select_stmt
+        __s/ _delete_stmt
+        __s/ _update_stmt
+        __s/ _drop_stmt
+
+    Abstract/Regular Public Methods (apm/_pm)
+        apm/ connect
+        apm/ disconnect
+        apm/ get_columns_names
+        _pm/ execute >>> _executor
+        _pm/ executemany >>> _executor
+        _pm/ executescript >>> _executor
+        _pm/ pragma >>> _pragma_stmt >>> execute
+        _pm/    foreign_keys >>> pragma
+        _pm/    journal_mode >>> pragma
+        _pm/    table_info   >>> pragma
+        _pm/ create_table >>> _create_stmt >>> execute
+        _pm/ create_temp_table >>> _create_stmt >>> execute
+        _pm/ create_temporary_table >>> _create_stmt >>> execute
+        _pm/ markup >>> create_table
+        _pm/ add_column >>> execute
+        _pm/ remove_column >>> execute
+        _pm/ get_table >>> _get_table >>> execute
+        _pm/ get_columns >>> execute
+        _pm/ insert >>> _fast_insert_stmt / _insert_stmt >>> execute
+        _pm/ replace >>> _fast_insert_stmt / _insert_stmt >>> execute
+        _pm/ insertmany >>> _insertmany_stmt >>> execute
+        _pm/ select >>> _select_stmt >>> execute
+        _pm/ select_distinct >>> select
+        _pm/ select_all >>> select
+        _pm/ delete >>> _delete_stmt >>> execute
+        _pm/ update >>> _update_stmt >>> execute
+        _pm/ updatemany >>> _insertmany_stmt >>> execute
+        _pm/ drop >>> _drop_stmt >>> execute
+
+    """
 
     @abstractmethod
     def __init__(self, placeholder):
+        """
+        Init-ing database, connection, creating connection, setting parameters
+        """
         self.__connection = None
         self.placeholder = placeholder
 
     @abstractmethod
     def __str__(self):
+        """
+        Database as string
+        """
         pass
 
     @abstractmethod
     def __bool__(self):
+        """
+        Is connection or database exist
+        """
         pass
 
-    @property
-    def connection(self):
-        return self.__connection
-
-    @property
-    def tables(self) -> Generator[AbstractTable, None, None]:
-        return self._get_tables()
-
-    @property
-    def tables_names(self) -> Tuple[str]:
-        return self._get_tables_names()
-
     def __getitem__(self, key) -> AbstractTable:
+        """
+        Get table from database
+            db['table_name']
+        """
         return self._get_table(key)
 
     def __del__(self):
+        """
+        Death of database object
+        """
         if self.connection:
             self.disconnect()
 
         del self
+
+    @property
+    def connection(self):
+        """
+        Get connection as object
+        """
+        return self.__connection
+
+    @property
+    def tables(self) -> Generator[AbstractTable, None, None]:
+        """
+        Get generator of all tables as objects
+        """
+        return self._get_tables()
+
+    @property
+    def tables_names(self) -> Tuple[str]:
+        """
+        Get names of all tables
+        """
+        return self._get_tables_names()
 
     # ============================== PRIVATE METHODS ==============================
 
     @abstractmethod
     def _executor(self, script: AnyStr, values: Tuple = None, spec: Number = 0):
         """
-        Execute scripts with values
+        Execute scripts with (or without) values
 
         Parameters
         ----------
@@ -534,7 +616,7 @@ class AbstractDatabase(ABC):
     @staticmethod
     def _pragma_stmt(*args: str, **kwargs):
         """
-        Parent method for all pragma-like methods
+        Constructor of pragma statements
         """
 
         if args:
@@ -557,7 +639,7 @@ class AbstractDatabase(ABC):
             without_rowid: bool = None,
     ) -> ScriptAndValues:
         """
-        Parent method for all CREATE-like methods
+        Constructor of create-like statements
         """
 
         content = ""
@@ -603,13 +685,11 @@ class AbstractDatabase(ABC):
             self, *args: Any, TABLE: AnyStr, script="", values=(), **kwargs: Any,
     ) -> ScriptAndValues:
         """
-        Parent method for INSERT-like methods
+        Constructor of insert/replace statements
 
-        INSERT INTO request (aka insert-stmt) and REPLACE INTO request
-
+        Creating insert/replace stmt with specified columns names
         """
 
-        # parsing args or kwargs for _columns and insert_values
         if args:
             _columns = self.get_columns_names(table=TABLE)
             _columns, args = crop(_columns, args)
@@ -632,10 +712,10 @@ class AbstractDatabase(ABC):
             self, *args, TABLE: AnyStr, script="", values=(), **kwargs: Any
     ) -> ScriptAndValues:
         """
-        Parent method for fast INSERT-like methods
+        Constructor of fast insert/replace statements
 
-        'INSERT INTO' request and 'REPLACE INTO' request without columns names
-        (without get_columns_names req because it's f-g slow)
+        Creating insert/replace stmt without columns names
+        (without get_columns_names request, because it's slow)
         """
 
         if not args:
@@ -652,21 +732,19 @@ class AbstractDatabase(ABC):
     @args_parser
     def _insertmany_stmt(
             self,
-            *args: Union[List[List], List[Tuple], Tuple[List], Tuple[Tuple], List, Tuple],
+            *args: InsertingManyData,
             TABLE: AnyStr,
             script="",
             values=(),
             **kwargs: Any,
     ) -> ScriptAndValues:
         """
-        Parent method for insertmany method
+        Constructor of insertmany statements
 
         Comment:
             args also support numpy.array value
 
         """
-
-
 
         if args:
             args = tuple(filter(lambda ar: len(ar) > 0, args[0]))  # removing [] (empty lists from inserting values)
@@ -736,11 +814,15 @@ class AbstractDatabase(ABC):
             values=(),
             method: AnyStr = "SELECT ",
             SELECT: Union[
-                str, AbstractColumn, List[Union[str, AbstractColumn]], Tuple[Union[str, AbstractColumn]]] = None,
+                AnyStr,
+                AbstractColumn,
+                List[Union[AnyStr, AbstractColumn]],
+                Tuple[Union[AnyStr, AbstractColumn]]
+            ] = None,
             **kwargs,
     ) -> ScriptAndValues:
         """
-        Parent method for all SELECT-like methods
+       Constructor of select(-like) statements
 
         """
         if not TABLE:
@@ -763,8 +845,7 @@ class AbstractDatabase(ABC):
 
     def _delete_stmt(self, TABLE: str, script="", values=(), **kwargs) -> ScriptAndValues:
         """
-        Parent method for delete method
-
+        Constructor of delete statements
         """
 
         script = f"{script}{script_gen.delete(table=TABLE)}"
@@ -779,9 +860,9 @@ class AbstractDatabase(ABC):
             **kwargs,
     ) -> ScriptAndValues:
         """
-        Parent method for update method
-
+        Constructor of update statements
         """
+
         script = script_gen.update_script(table=TABLE, script=script)
 
         if not SET and kwargs:
@@ -830,8 +911,7 @@ class AbstractDatabase(ABC):
             **kwargs
     ) -> AnyStr:
         """
-        Parent method for drop method
-
+        Constructor of drop statements
         """
 
         script += script_gen.drop(table=TABLE, if_exist=IF_EXIST)
@@ -841,11 +921,17 @@ class AbstractDatabase(ABC):
     # ============================== PUBLIC METHODS ==============================
 
     @abstractmethod
-    def connect(self):
+    def connect(self, *args, **kwargs):
+        """
+        Create connection if it does not exist
+        """
         pass
 
     @abstractmethod
     def disconnect(self):
+        """
+        Discard connection if it is exist
+        """
         pass
 
     def execute(
@@ -854,7 +940,7 @@ class AbstractDatabase(ABC):
             values: Tuple = None,
     ) -> Union[Tuple, None]:
         """
-        Execute any SQL-script whit (or without) values, or execute SQLRequest
+        Execute any SQL-script whit (or without) values
 
         Parameters
         ----------
@@ -865,7 +951,7 @@ class AbstractDatabase(ABC):
 
         Returns
         ----------
-        Union[List, None]
+        Union[Tuple, None]
             Database answer if it has
 
         """
@@ -878,7 +964,7 @@ class AbstractDatabase(ABC):
             values: Tuple[Tuple] = None,
     ) -> Union[Tuple, None]:
         """
-        Execute any SQL-script for many values sets, or execute SQLRequest
+        Execute any SQL-script for many values sets
 
         Parameters
         ----------
@@ -889,7 +975,7 @@ class AbstractDatabase(ABC):
 
         Returns
         ----------
-        Union[List, None]
+        Union[Tuple, None]
             Database answer if it has
 
         """
@@ -910,7 +996,7 @@ class AbstractDatabase(ABC):
 
         Returns
         ----------
-        Union[List, None]
+        Union[Tuple, None]
             Database answer if it has
 
         """
@@ -936,7 +1022,7 @@ class AbstractDatabase(ABC):
 
         Returns
         ----------
-        Union[List, None]
+        Union[Tuple, None]
             Database answer if it has
 
         """
@@ -1240,7 +1326,7 @@ class AbstractDatabase(ABC):
 
         Returns
         ----------
-        List[List]
+        Tuple[str]
             Columns of table
 
         """
@@ -1303,7 +1389,7 @@ class AbstractDatabase(ABC):
             self,
             TABLE: AnyStr,
             *args: Any,
-            WITH: WithType = None,
+            WHERE: WhereType = None,
             **kwargs: Any,
     ) -> None:
         """
@@ -1313,7 +1399,7 @@ class AbstractDatabase(ABC):
         ----------
         TABLE : AnyStr
             Name of table
-        WITH : WithType
+        WHERE : WHereType
             Optional parameter.
 
         Returns
@@ -1328,8 +1414,8 @@ class AbstractDatabase(ABC):
                     *args,
                     script="REPLACE",
                     TABLE=TABLE,
+                    WHERE=WHERE,
                     **kwargs,
-                    WITH=WITH,
                 )
 
                 self.execute(script=script, values=values)
@@ -1343,7 +1429,7 @@ class AbstractDatabase(ABC):
                 script="REPLACE",
                 TABLE=TABLE,
                 **kwargs,
-                WITH=WITH
+                WHERE=WHERE
             )
 
             self.execute(script=script, values=values)
@@ -1393,15 +1479,15 @@ class AbstractDatabase(ABC):
 
     def select(
             self,
-            TABLE: Union[str, List[str], AbstractTable] = None,
-            SELECT: Union[str, AbstractColumn, List[Union[str, AbstractColumn]]] = None,
+            TABLE: Union[AnyStr, AbstractTable] = None,
+            SELECT: Union[AnyStr, AbstractColumn, List, Tuple] = None,
             WHERE: WhereType = None,
             WITH: WithType = None,
             ORDER_BY: OrderByType = None,
             LIMIT: LimitOffsetType = None,
             OFFSET: LimitOffsetType = None,
-            FROM: Union[str, List[str], AbstractTable] = None,
-            JOIN: Union[str, List[str], List[List[str]]] = None,
+            FROM: Union[AnyStr, AbstractTable] = None,
+            JOIN: JoinType = None,
             _method="SELECT",
             **kwargs,
     ) -> Tuple:
@@ -1410,9 +1496,9 @@ class AbstractDatabase(ABC):
 
         Parameters
         ----------
-        TABLE : AnyStr
+        TABLE: Union[AnyStr, AbstractTable]
             Name of table
-        SELECT : Union[str, List[str]]
+        SELECT: Union[AnyStr, AbstractColumn, List, Tuple]
             columns to select. Value '*' by default
         WHERE : WhereType
             optional parameter for conditions, example: {'name': 'Alex', 'group': 2}
@@ -1426,15 +1512,15 @@ class AbstractDatabase(ABC):
             optional parameter for conditions, example: 5
         FROM : str
             Name of table, same at TABLE
-        JOIN: Union[str, List[str], List[List[str]]]
+        JOIN: JoinType
             optional parameter for joining data from other tables ['groups'],
         _method: str
             DON'T CHANGE IT! special argument for unite select_all, select_distinct into select()
 
         Returns
         ----------
-        List[List]
-            selected data
+        Tuple[Tuple]
+            Tuple of selected data
 
         """
 
@@ -1468,15 +1554,15 @@ class AbstractDatabase(ABC):
 
     def select_distinct(
             self,
-            TABLE: Union[str, List[str], AbstractTable] = None,
-            SELECT: Union[str, AbstractColumn, List[Union[str, AbstractColumn]]] = None,
+            TABLE: Union[str, AbstractTable] = None,
+            SELECT: Union[str, AbstractColumn, Tuple, List] = None,
             WHERE: WhereType = None,
             WITH: WithType = None,
             ORDER_BY: OrderByType = None,
             LIMIT: LimitOffsetType = None,
             OFFSET: LimitOffsetType = None,
-            FROM: Union[str, List[str], AbstractTable] = None,
-            JOIN: Union[str, List[str], List[List[str]]] = None,
+            FROM: Union[str, List[str], Tuple[str], AbstractTable] = None,
+            JOIN: JoinType = None,
             **kwargs,
     ) -> Tuple:
         """
@@ -1484,9 +1570,9 @@ class AbstractDatabase(ABC):
 
         Parameters
         ----------
-        TABLE : AnyStr
+        TABLE : Union[str, List[str], AbstractTable]
             Name of table
-        SELECT : Union[str, List[str]]
+        SELECT : Union[str, AbstractColumn, Tuple, List]
             columns to select. Value '*' by default
         WHERE : WhereType
             optional parameter for conditions, example: {'name': 'Alex', 'group': 2}
@@ -1500,12 +1586,12 @@ class AbstractDatabase(ABC):
             optional parameter for conditions, example: 5
         FROM : str
             Name of table, same at TABLE
-        JOIN: Union[str, List[str], List[List[str]]]
+        JOIN: JoinType
             optional parameter for joining data from other tables ['groups'],
 
         Returns
         ----------
-        List[List]
+        Tuple[Tuple]
             selected data
 
         """
@@ -1526,15 +1612,15 @@ class AbstractDatabase(ABC):
 
     def select_all(
             self,
-            TABLE: Union[str, List[str], AbstractTable] = None,
-            SELECT: Union[str, AbstractColumn, List[Union[str, AbstractColumn]]] = None,
+            TABLE: Union[str, AbstractTable] = None,
+            SELECT: Union[str, AbstractColumn, List, Tuple] = None,
             WHERE: WhereType = None,
             WITH: WithType = None,
             ORDER_BY: OrderByType = None,
             LIMIT: LimitOffsetType = None,
             OFFSET: LimitOffsetType = None,
             FROM: Union[str, List[str], AbstractTable] = None,
-            JOIN: Union[str, List[str], List[List[str]]] = None,
+            JOIN: JoinType = None,
             **kwargs,
     ) -> Tuple:
         """
@@ -1542,9 +1628,9 @@ class AbstractDatabase(ABC):
 
         Parameters
         ----------
-        TABLE : AnyStr
+        TABLE : Union[str, AbstractTable]
             Name of table
-        SELECT : Union[str, List[str]]
+        SELECT : Union[str, AbstractColumn, List, Tuple]
             columns to select. Value '*' by default
         WHERE : WhereType
             optional parameter for conditions, example: {'name': 'Alex', 'group': 2}
@@ -1556,14 +1642,14 @@ class AbstractDatabase(ABC):
             optional parameter for conditions, example: 10
         OFFSET : LimitOffsetType
             optional parameter for conditions, example: 5
-        FROM : str
+        FROM : Union[str, List[str], AbstractTable]
             Name of table, same at TABLE
-        JOIN: Union[str, List[str], List[List[str]]]
+        JOIN: JoinType
             optional parameter for joining data from other tables ['groups'],
 
         Returns
         ----------
-        List[List]
+        Tuple[Tuple]
             selected data
 
         """
@@ -1692,8 +1778,6 @@ class AbstractDatabase(ABC):
             )
 
             self.executemany(script=script, values=values)
-
-
 
     def drop(
             self,

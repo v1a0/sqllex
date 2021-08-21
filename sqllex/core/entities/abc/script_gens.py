@@ -13,7 +13,7 @@ All functions caching in memory to make it works faster
 def insert_fast(table: str, placeholders: int, need_space: bool = None, placeholder='?'):
     return f"" \
            f"{' ' if need_space else ''}" \
-           f"INTO '{str(table)}' " \
+           f'INTO "{str(table)}" ' \
            f"VALUES (" \
            f"{', '.join(placeholder * placeholders)}) "
 
@@ -27,7 +27,7 @@ def insert_fast_with_prefix(script: str, table: str, placeholders: int, need_spa
 def insert(table: str, columns: tuple, need_space: bool = None, placeholder='?'):
     return f"" \
            f"{' ' if need_space else ''}" \
-           f"INTO '{str(table)}' (" \
+           f'INTO "{str(table)}" (' \
            f"{', '.join(col for col in columns)}) " \
            f"VALUES (" \
            f"{', '.join(placeholder * len(columns))}) "
@@ -35,7 +35,7 @@ def insert(table: str, columns: tuple, need_space: bool = None, placeholder='?')
 
 @lru_cache(maxsize=32)
 def update_script(table: str, script: str):
-    return f"{script} UPDATE '{table}' SET "
+    return f'{script} UPDATE "{table}" SET '
 
 
 @lru_cache(maxsize=32)
@@ -43,19 +43,19 @@ def select(method: str, columns: tuple, table: str = None):
     return f"" \
            f"{method} "\
            f"{', '.join(str(col) for col in columns)} "\
-           f"FROM '{str(table)}' "
+           f'FROM "{str(table)}" '
 
 
 @lru_cache(maxsize=32)
 def drop(table: str, if_exist: bool = None):
     return f"DROP TABLE " \
            f"{'IF EXISTS' if if_exist else ''}" \
-           f" '{table}' "
+           f' "{table}" '
 
 
 @lru_cache(maxsize=32)
 def delete(table: str):
-    return f"DELETE FROM '{table}' "
+    return f'DELETE FROM "{table}" '
 
 
 @lru_cache(maxsize=32)
@@ -64,7 +64,7 @@ def create(temp: str, if_not_exist: bool, name: str, content: str, without_rowid
            f"{temp} " \
            f"TABLE " \
            f"{'IF NOT EXISTS' if if_not_exist else ''} " \
-           f"'{name}' " \
+           f'"{name}" ' \
            f" (\n{content}\n) " \
            f"{'WITHOUT ROWID' if without_rowid else ''};"
 

@@ -70,6 +70,11 @@ InsertingData = Union[
     Mapping
 ]
 
+InsertingManyData = Union[
+    List[InsertingData],
+    Tuple[InsertingData],
+]
+
 # Type for parameter of OR argument in INSERT method (?)
 OrOptionsType = Literal[
     "ABORT",
@@ -163,6 +168,12 @@ ScriptAndValues = Tuple[
     AnyStr, Tuple
 ]
 
+JoinType = Union[
+    AnyStr,
+    List[AnyStr],
+    List[List[AnyStr]]
+]
+
 
 __all__ = [
     # sql
@@ -176,6 +187,7 @@ __all__ = [
     'Number',
     'NumStr',
     'InsertingData',
+    'InsertingManyData',
     'OrOptionsType',
     'WithType',
     'WhereType',
@@ -196,4 +208,5 @@ __all__ = [
     'Generator',
     'Iterable',
     'Sized',
+    'JoinType',
 ]

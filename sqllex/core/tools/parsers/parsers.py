@@ -1,5 +1,5 @@
 from sqllex.types import *
-from sqllex.constants.sql import *
+from sqllex.constants import AS, INNER_JOIN, LEFT_JOIN, CROSS_JOIN
 from sqllex.core.entities.abc.sql_column import AbstractColumn
 from sqllex.core.entities.abc.sql_search_condition import SearchCondition
 from functools import wraps
@@ -111,8 +111,6 @@ def where_(placeholder: AnyStr = '?') -> callable:
 
     Parameters
     ----------
-    func : callable
-        SQLite3x method contains arg WHERE
     placeholder: str
         Symbol to use for placeholder
 

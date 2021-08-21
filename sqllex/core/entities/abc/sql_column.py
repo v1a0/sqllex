@@ -4,24 +4,26 @@ from sqllex.core.entities.abc.sql_search_condition import SearchCondition
 
 class AbstractColumn:
     """
-    Sub-class of AbstractTable, itself one column of table (AbstractTable)
-    Have same methods but without table name argument
+    Sub-class of AbstractTable, itself it's one abstract column inside of abstract table
+    Primary have the same methods but without table name argument
+
     Attributes
     ----------
     table : AbstractTable
         AbstractTable parent table object
     name : str
         Name of column
+    placeholder : str
+        Symbol used in scripts as placeholder
 
-    Existing for generating SearchCondition for WHERE, SET
-    and other parameters of parents classes
-
-    db['table_name']['column_name'] = x
-    db['table_name']['column_name'] > x
-    db['table_name']['column_name'] >= x
-    db['table_name']['column_name'] != x
-    ...
-    db['table_name']['column_name'] / x
+    This class existing for generating SearchConditions
+    in constructions like this:
+        db['table_name']['column_name'] = x
+        db['table_name']['column_name'] > x
+        db['table_name']['column_name'] >= x
+        db['table_name']['column_name'] != x
+        ...
+        db['table_name']['column_name'] / x
     """
 
     def __init__(self, table: str, name: AnyStr, placeholder='?'):
@@ -30,7 +32,7 @@ class AbstractColumn:
         self.placeholder = placeholder
 
     def __str__(self) -> AnyStr:
-        return f"'{self.table}'.'{self.name}'"
+        return f'"{self.table}"."{self.name}"'
 
     def _str_gen(self, value, operator: str) -> SearchCondition:
         if isinstance(value, SearchCondition):

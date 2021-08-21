@@ -12,6 +12,10 @@ __all__ = [
     # "AbstractColumn",             # lgtm [py/undefined-export]
     # "SQLite3xSearchCondition",    # lgtm [py/undefined-export]
 
+    # PostgreSQL
+    "PostgreSQLx",                  # lgtm [py/undefined-export]
+    # "PostgreSQLxTable",           # lgtm [py/undefined-export]
+
     # constants
     "TEXT",                         # lgtm [py/undefined-export]
     "NUMERIC",                      # lgtm [py/undefined-export]

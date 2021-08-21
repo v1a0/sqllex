@@ -11,6 +11,7 @@ __all__ = [
     'PathType',  # lgtm [py/undefined-export]
     'NumStr',  # lgtm [py/undefined-export]
     'InsertingData',  # lgtm [py/undefined-export]
+    'InsertingManyData',  # lgtm [py/undefined-export]
     'OrOptionsType',  # lgtm [py/undefined-export]
     'WithType',  # lgtm [py/undefined-export]
     'WhereType',  # lgtm [py/undefined-export]
@@ -32,4 +33,5 @@ __all__ = [
     'Iterable',  # lgtm [py/undefined-export]
     'Sized',  # lgtm [py/undefined-export]
     'Number',   # lgtm [py/undefined-export]
+    'JoinType',   # lgtm [py/undefined-export]
 ]
