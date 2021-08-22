@@ -1,9 +1,9 @@
 class TableInfoError(MemoryError):
     """
-    Table doesn't exist or have no columns
+    ABTable doesn't exist or have no columns
     """
     def __str__(self):
-        return "Table doesn't exist or have no columns"
+        return "ABTable doesn't exist or have no columns"
 
 
 __all__ = [

@@ -15,7 +15,7 @@ def insert_fast(table: str, placeholders: int, need_space: bool = None, placehol
            f"{' ' if need_space else ''}" \
            f'INTO "{str(table)}" ' \
            f"VALUES (" \
-           f"{', '.join(placeholder * placeholders)}) "
+           f"{', '.join((placeholder for _ in range(placeholders)))})"
 
 
 @lru_cache(maxsize=32)
@@ -30,7 +30,7 @@ def insert(table: str, columns: tuple, need_space: bool = None, placeholder='?')
            f'INTO "{str(table)}" (' \
            f"{', '.join(col for col in columns)}) " \
            f"VALUES (" \
-           f"{', '.join(placeholder * len(columns))}) "
+           f"{', '.join((placeholder for _ in range(len(columns))))})"
 
 
 @lru_cache(maxsize=32)

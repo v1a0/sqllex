@@ -41,7 +41,18 @@ Use databases without thinking about SQL. Let me show you how sqllex ORM makes
 your life easier. Imagine you need create some database, save some data
 into it and take it back. That's how your easy to code with sqllex.
 
+## Examples
+| DMS |  PostgreSQL | [SQLite3](#sqlite3) | Sqllex version|
+| :--- | :----: | :---:| :---: |
+| 1 | None | ["Zero level" example][awesome-example-0] | 0.2+|
+| 2 | - | ["Pre-Intermediate" example][awesome-example-1] | 0.2+ |
+| 3 | - | [Data Science (v0.1.8.4)][data-science-example] | 0.1.8.4, <0.2 |
+| 4 | - | [Project Showcase][project-showcase] | - |
 
+
+
+
+### SQLite3
 ```python
 from sqllex import *
 
@@ -98,7 +109,6 @@ users_33 = users.find(age=33)
 print(users_33)  # [['Sqllex', 33]]
 ```
 
-
 </details>
 
 ####  If you never used SQLite before read [this awesome example #0][awesome-example-0] instead
@@ -106,10 +116,10 @@ print(users_33)  # [['Sqllex', 33]]
 
 # Examples
 
- - [Awesome example #0][awesome-example-0]
- - [Awesome example #1][awesome-example-1]
- - [Sqllex for Data Science][data-science-example]
- - [Project Showcase][project-showcase] ⭐
+ - 
+ - 
+ - 
+ -  ⭐
 
 
 # Not enough? Read more in [Sqllex Documentation!][wiki-src]

@@ -20,17 +20,21 @@
 # print(type(connection))
 
 
-from sqllex import PostgreSQLx
+# from sqllex import PostgreSQLx
+#
+# db = PostgreSQLx(
+#     dbname="postgres",
+#     user="postgres",
+#     password="admin",
+#     host="127.0.0.1",
+#     port="5432"
+# )
+#
+# print(db.select("book", '*'))
+# print(db.select("book", '*', WHERE=db['book']['book_id'] == 1))
 
-db = PostgreSQLx(
-    dbname="postgres",
-    user="postgres",
-    password="admin",
-    host="127.0.0.1",
-    port="5432"
-)
 
-print(db.select("book", '*'))
-print(db.select("book", '*', WHERE=db['book']['book_id'] == 1))
+import sqllex.classes as cl
+print(dir(cl))
 
-
+print(cl.SQLite3x._insertmany_stmt.__doc__)

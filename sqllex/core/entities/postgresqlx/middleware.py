@@ -1,6 +1,7 @@
 from sqllex.types import Tuple, AnyStr, Mapping
 from sqllex.debug import logger
 from psycopg2.extensions import connection
+import psycopg2
 
 
 
@@ -9,19 +10,25 @@ def execute(script: AnyStr, values: Tuple, connection: connection):
         cur = conn.cursor()
 
         try:
+
             if values:
                 cur.execute(script, values)
             else:
                 cur.execute(script)
 
+            cur.commit()
+
             return cur.fetchall()
+
+        except psycopg2.ProgrammingError:
+            pass
 
         except Exception as error:
             raise error
 
 
     if script:  # it's necessary
-        script = script.strip()
+        script = f"{script.strip()};"
 
         logger.debug(f"\n {script}\n {values if values else ''}\n")
 
@@ -40,13 +47,18 @@ def executemany(script: AnyStr, values: Tuple, connection: connection):
 
         try:
             cur.executemany(script, values)
+            cur.commit()
+
             return cur.fetchall()
+
+        except psycopg2.ProgrammingError:
+            pass
 
         except Exception as error:
             raise error
 
     if script:  # it's necessary
-        script = script.strip()
+        script = f"{script.strip()};"
 
         logger.debug(f"\n {script}\n {values if values else ''}\n")
 
@@ -62,13 +74,18 @@ def executescript(script: AnyStr, connection: connection):
 
         try:
             cur.executescript(script)
+            cur.commit()
+
             return cur.fetchall()
+
+        except psycopg2.ProgrammingError:
+            pass
 
         except Exception as error:
             raise error
 
     if script:  # it's necessary
-        script = script.strip()
+        script = f"{script.strip()};"
 
         logger.debug(f"\n {script}\n")
 

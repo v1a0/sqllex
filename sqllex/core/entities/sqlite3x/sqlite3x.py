@@ -1,29 +1,21 @@
-from sqllex.core.entities.abc import AbstractDatabase, AbstractTable, AbstractColumn
+from sqllex.core.entities.abc import \
+    AbstractDatabase as ABDatabase, \
+    AbstractTable as ABTable, \
+    AbstractColumn as ABColumn
 import sqllex.core.tools.parsers.parsers as parse
 from sqllex.debug import logger
 from sqllex.exceptions import TableInfoError
 from sqllex.types.types import *
 import sqllex.core.entities.sqlite3x.middleware as middleware
 import sqlite3
+from sqllex.core.tools.docs_helpers import copy_docs
+import sqllex.core.entities.sqlite3x.script_gens as script_gen
 
 
-class SQLite3xTable(AbstractTable):
+class SQLite3xTable(ABTable):
     """
-    Sub-class of SQLite3x, itself one table of Database
+    Sub-class of SQLite3x, itself one table of SQLite3x
     Have same methods but without table name argument
-
-    Attributes
-    ----------
-    db : SQLite3x
-        SQLite3x database object
-    name : str
-        Name of table
-
-    columns = list
-        Generator of columns in table
-
-    columns_names = list
-        Generator of column's names in table
 
     """
 
@@ -38,29 +30,35 @@ class SQLite3xTable(AbstractTable):
 
         """
 
-#        __slots__ = ('__path', '__connection') # Memory optimisation !!!
+        #        __slots__ = ('__path', '__connection') # Memory optimisation !!!
 
         super(SQLite3xTable, self).__init__(db=db, name=name)
 
         if not isinstance(db, SQLite3x):
             raise TypeError(f"Argument db have oto be SQLite3x not {type(db)}")
+
         self.db: SQLite3x = db
         self.name: AnyStr = name
 
-    def __getitem__(self, key) -> AbstractColumn:
+    @copy_docs(ABTable.__getitem__)
+    def __getitem__(self, key) -> ABColumn:
         if key not in self.columns_names:
             raise KeyError(key, "No such column in table")
 
-        return AbstractColumn(table=self.name, name=key)
+        return ABColumn(table=self.name, name=key, placeholder=self.db.placeholder)
 
     @property
-    def columns(self) -> Generator[AbstractColumn, None, None]:
+    @copy_docs(ABTable.columns)
+    def columns(self) -> Generator[ABColumn, None, None]:
         for column in self.columns_names:
-            yield AbstractColumn(table=self.name, name=column)
+            yield ABColumn(table=self.name, name=column, placeholder=self.db.placeholder)
 
     @property
+    @copy_docs(ABTable.columns_names)
     def columns_names(self) -> Tuple:
         return self.get_columns_names()
+
+    # ============================ ADDITIONAL PUBLIC METHODS ===========================
 
     def info(self):
         """
@@ -76,22 +74,19 @@ class SQLite3xTable(AbstractTable):
         return self.db.pragma(f"table_info({self.name})")
 
 
-class SQLite3x(AbstractDatabase):
+class SQLite3x(ABDatabase):
     """
-    Main SQLite3x Database Class
+    Main class to interact with SQLite3 databases.
+    It's parent class for SQLite3xTable.
 
-    Attributes
-    ----------
-    __connection : Union[sqlite3.Connection, None]
-        SQLite connection
-    __path : PathType
-        Local __str__ to database (PathType)
-
+    (based on AbstractDatabase)
     """
 
     # ============================ MAGIC METHODS =================================
 
-    def __init__(self, path: PathType = "sql3x.db", template: DBTemplateType = None):
+    def __init__(self,
+                 path: PathType = "sql3x.db",
+                 template: DBTemplateType = None):
         """
         Initialization
 
@@ -104,25 +99,28 @@ class SQLite3x(AbstractDatabase):
 
         """
 
-#        __slots__ = ('__path', '__connection') # Memory optimisation !!!
+        #        __slots__ = ('__path', '__connection') # Memory optimisation !!!
 
         super(SQLite3x, self).__init__(placeholder='?')
 
         self.__path = path
-        self.__connection = None       # init connection
-        self.connect()                 # creating connection with db
+        self.__connection = None  # init connection
+
+        self.connect()  # creating connection with db
         self.journal_mode(mode="WAL")  # make db little bit faster
-        self.foreign_keys(mode="ON")   # turning on foreign keys
+        self.foreign_keys(mode="ON")  # turning on foreign keys
 
         if template:
             self.markup(template=template)
 
+    @copy_docs(ABTable.__str__)
     def __str__(self):
         return f"{{SQLite3x: '{self.path}'}}"
 
+    @copy_docs(ABTable.__bool__)
     def __bool__(self):
         try:
-            return bool(self.pragma("database_list"))
+            return bool(self.connection)
         except Exception as error:
             logger.error(error)
             return False
@@ -130,100 +128,47 @@ class SQLite3x(AbstractDatabase):
     # =============================== PROPERTIES ==================================
 
     @property
+    @copy_docs(ABDatabase.connection)
     def connection(self) -> Union[sqlite3.Connection, None]:
         return self.__connection
 
     @property
     def path(self) -> PathType:
+        """
+        Path to your local sqlite database
+        """
         return self.__path
 
     # ================================== STMT'S ====================================
 
-    def _pragma_stmt(self, *args: str, **kwargs):
-        """
+    @copy_docs(ABDatabase._create_stmt)
+    def _create_stmt(self, *args, **kwargs) -> ScriptAndValues:
+        return super(SQLite3x, self)._create_stmt(*args, **kwargs)
 
-        """
-        return super(SQLite3x, self)._pragma_stmt(
-            *args,
-            **kwargs
-        )
-
-    def _create_stmt(
-            self,
-            temp: AnyStr,
-            name: AnyStr,
-            columns: ColumnsType,
-            IF_NOT_EXIST: bool = None,
-            without_rowid: bool = None,
-    ) -> ScriptAndValues:
-        """
-
-        """
-        return super(SQLite3x, self)._create_stmt(
-            temp=temp,
-            name=name,
-            columns=columns,
-            IF_NOT_EXIST=IF_NOT_EXIST,
-            without_rowid=without_rowid
-        )
-
+    @parse.where_(placeholder='?')
     @parse.or_param_
     @parse.with_
     @parse.from_as_
     @parse.args_parser
-    def _insert_stmt(
-            self, *args: InsertingData, TABLE: AnyStr, script="", values=(), **kwargs: Any,
-    ) -> ScriptAndValues:
-        """
+    @copy_docs(ABDatabase._insert_stmt)
+    def _insert_stmt(self, *args, **kwargs: Any) -> ScriptAndValues:
+        return super(SQLite3x, self)._insert_stmt(*args, **kwargs)
 
-        """
-        return super(SQLite3x, self)._insert_stmt(
-            *args,
-            TABLE=TABLE,
-            script=script,
-            values=values,
-            **kwargs
-        )
-
+    @parse.where_(placeholder='?')
     @parse.or_param_
     @parse.with_
     @parse.from_as_
     @parse.args_parser
-    def _fast_insert_stmt(
-            self, *args, TABLE: AnyStr, script="", values=(), **kwargs: Any
-    ) -> ScriptAndValues:
-        """
+    @copy_docs(ABDatabase._fast_insert_stmt)
+    def _fast_insert_stmt(self, *args, **kwargs) -> ScriptAndValues:
+        return super(SQLite3x, self)._fast_insert_stmt(*args, **kwargs)
 
-        """
-        return super(SQLite3x, self)._fast_insert_stmt(
-            *args,
-            TABLE=TABLE,
-            script=script,
-            values=values,
-            **kwargs
-        )
-
+    @parse.where_(placeholder='?')
     @parse.or_param_
     @parse.from_as_
-    def _insertmany_stmt(
-            self,
-            *args: InsertingManyData,
-            TABLE: AnyStr,
-            script="",
-            values=(),
-            **kwargs: Any,
-    ) -> ScriptAndValues:
-        """
-
-        """
-        return super(SQLite3x, self)._insertmany_stmt(
-            *args,
-            TABLE=TABLE,
-            script=script,
-            values=values,
-            **kwargs
-        )
-
+    @copy_docs(ABDatabase._insertmany_stmt)
+    def _insertmany_stmt(self, *args, **kwargs) -> ScriptAndValues:
+        return super(SQLite3x, self)._insertmany_stmt(*args, **kwargs)
 
     @parse.offset_
     @parse.limit_
@@ -232,78 +177,46 @@ class SQLite3x(AbstractDatabase):
     @parse.join_
     @parse.with_
     @parse.from_as_
-    def _select_stmt(
-            self,
-            TABLE: Union[str, AbstractTable],
-            script="",
-            values=(),
-            method: AnyStr = "SELECT ",
-            SELECT: Union[
-                str, AbstractColumn, List[Union[str, AbstractColumn]], Tuple[Union[str, AbstractColumn]]] = None,
-            **kwargs,
-    ) -> ScriptAndValues:
-        """
-
-        """
-        return super(SQLite3x, self)._select_stmt(
-            TABLE=TABLE,
-            script=script,
-            values=values,
-            method=method,
-            SELECT=SELECT,
-            **kwargs
-        )
-
+    @copy_docs(ABDatabase._select_stmt)
+    def _select_stmt(self, *args, **kwargs) -> ScriptAndValues:
+        return super(SQLite3x, self)._select_stmt(*args, **kwargs)
 
     @parse.where_(placeholder='?')
     @parse.with_
-    def _delete_stmt(self, TABLE: str, script="", values=(), **kwargs) -> ScriptAndValues:
-        """
-
-        """
-        return super(SQLite3x, self)._delete_stmt(
-            TABLE=TABLE,
-            script=script,
-            values=values,
-            **kwargs
-        )
+    @copy_docs(ABDatabase._delete_stmt)
+    def _delete_stmt(self, *args, **kwargs) -> ScriptAndValues:
+        return super(SQLite3x, self)._delete_stmt(*args, **kwargs)
 
     @parse.where_(placeholder='?')
     @parse.or_param_
     @parse.with_
-    def _update_stmt(
-            self,
-            TABLE: AnyStr,
-            SET: Union[List, Tuple, Mapping] = None,
-            script="",
-            values=(),
-            **kwargs,
-    ) -> ScriptAndValues:
+    @copy_docs(ABDatabase._update_stmt)
+    def _update_stmt(self, *args, **kwargs) -> ScriptAndValues:
+        return super(SQLite3x, self)._update_stmt(*args, **kwargs)
+
+    # ========================= ADDITIONAL STMT'S ====================================
+
+    @staticmethod
+    def _pragma_stmt(*args: str, **kwargs):
+        """
+        Constructor of pragma statements
         """
 
-        """
-        return super(SQLite3x, self)._update_stmt(
-            TABLE=TABLE,
-            SET=SET,
-            script=script,
-            values=values,
-            **kwargs
-        )
+        if args:
+            parameter = args[0]
+            script = script_gen.pragma_args(parameter)
+        elif kwargs:
+            parameter, value = tuple(kwargs.items())[0]
+            script = script_gen.pragma_kwargs(parameter=parameter, value=value)
+        else:
+            raise ValueError(f"No data to execute, args: {args}, kwargs: {kwargs}")
+
+        return script
 
     # ============================= ABC PRIVATE METHODS ============================
 
+    @copy_docs(ABDatabase._executor)
     def _executor(self, script: AnyStr, values: Tuple = None, spec: Number = 0):
-        """
-        Execute scripts with values
-
-        Parameters
-        ----------
-        spec : Number
-            Id of execution case:
-                1. Regular Sqlite3.execute
-                2. Sqlite3.executemany
-                3. Sqlite3.executescript
-        """
         if spec == 1:
             return middleware.execute(script=script, values=values, connection=self.connection, path=self.path)
         elif spec == 2:
@@ -311,63 +224,34 @@ class SQLite3x(AbstractDatabase):
         elif spec == 3:
             return middleware.executescript(script=script, connection=self.connection, path=self.path)
 
+    @copy_docs(ABDatabase._get_table)
     def _get_table(self, name) -> SQLite3xTable:
-        super(SQLite3x, self)._get_table(name=name)
         return SQLite3xTable(db=self, name=name)
 
+    @copy_docs(ABDatabase._get_tables)
     def _get_tables(self) -> Generator[SQLite3xTable, None, None]:
-        """
-        Generator of tables as SQLite3xTable objects
-
-        Yield
-        ----------
-        SQLite3xTable
-            Tables list
-
-        """
-
         for tab_name in self.tables_names:
             yield self._get_table(tab_name)
 
-    def _get_tables_names(self) -> Tuple[str]:
-        """
-        Get list of tables names from database
-
-        Returns
-        ----------
-        List[str]
-            list of tables names
-
-        """
+    @copy_docs(ABDatabase._get_tables_names)
+    def _get_tables_names(self) -> Tuple:
         return tuple(map(lambda ret: ret[0], self.execute("SELECT name FROM sqlite_master WHERE type='table'")))
 
     # ============================== ABC PUBLIC METHODS ============================
 
+    @copy_docs(ABDatabase.connect)
     def connect(self):
         """
-        Create connection to database
-
-        Creating sqlite3.connect(__str__) connection to interact with database
-
+        Creating sqlite3.connect() connection to interact with database
         """
-
         if not self.connection:
             self.__connection = sqlite3.connect(self.path)
 
         else:
             logger.warning("Connection already exist")
 
-        # Not sure is this reasonable
-        # return self.connection
-
+    @copy_docs(ABDatabase.disconnect)
     def disconnect(self):
-        """
-        Drop connection to database
-
-        Commit changes and close connection
-
-        """
-
         if not self.connection:
             return
 
@@ -375,40 +259,102 @@ class SQLite3x(AbstractDatabase):
         self.connection.close()
         self.__connection = None
 
-    # ========================== ADDITIONAL PUBLIC METHODS =========================
-
+    @copy_docs(ABDatabase.get_columns_names)
     def get_columns_names(
             self,
             table: AnyStr
-    ) -> Tuple[str]:
-        """
-        Get list of names of table columns as strings
-
-        Parameters
-        ----------
-        table : AnyStr
-            Name of table
-
-        Returns
-        ----------
-        List[List]
-            Columns of table
-
-        """
+    ) -> Tuple:
 
         try:
-            columns_: Tuple[Tuple[str]] = self.execute(f"SELECT name FROM PRAGMA_TABLE_INFO('{table}')")
+            columns_: Tuple[Tuple] = self.execute(f"SELECT name FROM PRAGMA_TABLE_INFO('{table}')")
             columns: Tuple = tuple(map(lambda item: item[0], columns_))
 
         except sqlite3.OperationalError:
             # Fix for compatibility issues #19, by some reason it can't find PRAGMA_TABLE_INFO table
-            columns_: Tuple[Tuple[str]] = self.pragma(f"table_info('{table}')")
+            columns_: Tuple[Tuple] = self.pragma(f"table_info('{table}')")
             columns: Tuple = tuple(map(lambda item: item[1], columns_))
 
         if not columns:
-            raise TableInfoError
+            raise TableInfoError(f"No columns or table {table}")
 
         return columns
+
+    # ========================== ADDITIONAL PUBLIC METHODS =========================
+
+    def pragma(
+            self,
+            *args: str,
+            **kwargs: NumStr
+    ) -> Union[Tuple, None]:
+        """
+        Set PRAGMA parameter or send PRAGMA-request
+
+        Parameters
+        ----------
+        args : str
+            Might be used like this:
+            Example: db.pragma("database_list")
+        kwargs : NumStr
+            Might be used like this:
+            Example: db.pragma(foreign_keys="ON")
+
+        Returns
+        ----------
+        Union[Tuple, None]
+            ABDatabase answer if it has
+
+        """
+
+        script = self._pragma_stmt(*args, **kwargs)
+        return self.execute(script=script)
+
+    def foreign_keys(
+            self,
+            mode: Literal["ON", "OFF"]
+    ):
+        """
+        Turn on/off PRAGMA parameter FOREIGN KEYS
+
+        Parameters
+        ----------
+        mode : Literal["ON", "OFF"]
+            "ON" or "OFF" FOREIGN KEYS support
+
+        """
+
+        return self.pragma(foreign_keys=mode)
+
+    def journal_mode(
+            self,
+            mode: Literal["DELETE", "TRUNCATE", "PERSIST", "MEMORY", "WAL", "OFF"]
+    ):
+        """
+        Set PRAGMA param journal_mode
+
+        Parameters
+        ----------
+        mode : Literal["DELETE", "TRUNCATE", "PERSIST", "MEMORY", "WAL", "OFF"]
+            Journal mode
+
+        """
+
+        return self.pragma(journal_mode=mode)
+
+    def table_info(
+            self,
+            table_name: str
+    ):
+        """
+        Send table_info PRAGMA request
+
+        Parameters
+        ----------
+        table_name : str
+            Name of table
+
+        """
+
+        return self.pragma(f"table_info({table_name})")
 
 
 __all__ = [

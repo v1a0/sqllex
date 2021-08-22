@@ -17,7 +17,13 @@ DB_TEMPLATE: DBTemplateType = {
     }
 }
 
-db = SQLite3x(path=DB_NAME)
+db = PostgreSQLx(
+    dbname="postgres",
+    user="postgres",
+    password="admin",
+    host="127.0.0.1",
+    port="5432"
+)
 
 debug_mode(True, log_file='sqllex-test.log')
 
@@ -411,10 +417,6 @@ def has_add_remove_column_test():
 # Start time counting
 t = time()
 
-# Connection_
-db.connect()
-
-
 # Testes
 tables_test()
 insert_test()
@@ -426,9 +428,6 @@ replace_test()
 getitem_test()
 get_tables_test()
 # has_add_remove_column_test()   # workflow falling by no reason issue #
-
-# Disconnect
-db.disconnect()
 
 # Time counting
 t = time() - t

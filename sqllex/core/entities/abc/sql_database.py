@@ -6,30 +6,15 @@ import sqllex.core.entities.abc.script_gens as script_gen
 from sqllex.core.tools.convertors import crop
 import sqllex.core.tools.sorters as sort
 from sqllex.core.tools.parsers.parsers import args_parser
-import sqlite3
 from sqllex.core.entities.abc.sql_column import SearchCondition
-from sqllex.exceptions import TableInfoError
 from sqllex.core.entities.abc.sql_column import AbstractColumn
-
+from sqlite3 import OperationalError
 
 
 class AbstractTable(ABC):
     """
-    Sub-class of AbstractDatabase, itself one table of Database
+    Sub-class of AbstractDatabase, itself one table of ABDatabase
     Have same methods but without table name argument
-
-    Attributes
-    ----------
-    db : AbstractDatabase
-        AbstractDatabase database object
-    name : str
-        Name of table
-
-    columns = list
-        Generator of columns in table
-
-    columns_names = list
-        Generator of column's names in table
 
     """
 
@@ -49,12 +34,23 @@ class AbstractTable(ABC):
         self.name: AnyStr = name
 
     def __str__(self):
+        """
+        Convert database object to string
+        """
         return self.name
 
     def __bool__(self):
+        """
+         Convert database object to boolean
+        """
         return bool(self.get_columns_names())
 
     def __getitem__(self, key) -> AbstractColumn:
+        """
+        Get column from table
+            table['column_name']
+            db['table_name']['column_name']
+        """
         if key not in self.columns_names:
             raise KeyError(key, "No such column in table")
 
@@ -62,27 +58,18 @@ class AbstractTable(ABC):
 
     @property
     def columns(self) -> Generator[AbstractColumn, None, None]:
+        """
+        Get all columns of table
+        """
         for column in self.columns_names:
             yield AbstractColumn(table=self.name, name=column)
 
     @property
     def columns_names(self) -> Tuple:
+        """
+        Get names of table columns
+        """
         return self.get_columns_names()
-
-    @abstractmethod
-    def info(self):
-        """
-        Send PRAGMA request table_info(table_name)
-
-        Returns
-        ----------
-        list
-            All information about table
-
-        """
-
-        # return self.db.pragma(f"table_info({self.name})")
-        pass
 
     def add_column(self, column: ColumnsType) -> None:
         """
@@ -90,12 +77,8 @@ class AbstractTable(ABC):
 
         Parameters
         ----------
-        column : Dict
-            ColumnType name and SQL type e.g. {'value': TEXT}
-
-        Returns
-        ----------
-        None
+        column : ColumnsType
+            ColumnType tuple like {'second_name': [TEXT, UNIQUE]}
 
         """
 
@@ -109,10 +92,6 @@ class AbstractTable(ABC):
         ----------
         column : Union[AnyStr, AbstractColumn]
             Name of column or AbstractColumn object.
-
-        Returns
-        ----------
-        None
 
         """
 
@@ -148,11 +127,13 @@ class AbstractTable(ABC):
 
         Returns
         ----------
-        List[List]
+        Tuple[str]
             All table's columns
 
         """
         return self.db.get_columns_names(table=self.name)
+
+    # ======================== MAIN COMMON METHODS ========================
 
     def insert(
             self,
@@ -167,13 +148,10 @@ class AbstractTable(ABC):
         Parameters
         ----------
         OR : OrOptionsType
-            Optional parameter. If INSERT failed, type OrOptionsType
+            Action in case if inserting has failed. Optional parameter.
+            > OR='IGNORE'
         WITH : WithType
-            Optional parameter.
-
-        Returns
-        ----------
-            None or SQL-script in SQLStatement
+            disabled!
         """
 
         self.db.insert(
@@ -188,16 +166,6 @@ class AbstractTable(ABC):
     ) -> None:
         """
         REPLACE data into table
-
-        Parameters
-        ----------
-        WITH : WithType
-            Optional parameter.
-
-        Returns
-        ----------
-            None or SQL-script in SQLStatement
-
         """
 
         self.db.replace(self.name, *args, **kwargs, WITH=WITH)
@@ -216,14 +184,13 @@ class AbstractTable(ABC):
         ----------
         args : Union[List, Tuple]
             1'st way set values for insert
+            > ((1, 'Alex'), (2, 'Bob'))
         OR : OrOptionsType
-            Optional parameter. If INSERT failed, type OrOptionsType
+            Action in case if inserting has failed. Optional parameter.
+            > OR='IGNORE'
         kwargs : Any
-            An 2'st way set values for insert
-
-        Returns
-        ----------
-            None or SQL-script in SQLStatement
+            2'nd way set values for insert
+            id=(1, 2), name=('ALex', 'Bob')
 
         """
 
@@ -233,13 +200,12 @@ class AbstractTable(ABC):
             self,
             SELECT: Union[AnyStr, AbstractColumn, List[Union[AnyStr, AbstractColumn]]] = None,
             WHERE: WhereType = None,
-            WITH: WithType = None,
             ORDER_BY: OrderByType = None,
             LIMIT: LimitOffsetType = None,
             OFFSET: LimitOffsetType = None,
             JOIN: JoinType = None,
             **kwargs,
-    ) -> Union[Tuple[Tuple], List[List[Any]]]:
+    ) -> Tuple[Tuple]:
         """
         SELECT data from table
 
@@ -247,23 +213,29 @@ class AbstractTable(ABC):
         ----------
         SELECT : Union[str, List[str]]
             columns to select. Value '*' by default
+            > SELECT=['id', 'name']
         WHERE : WhereType
-            optional parameter for conditions, example: {'name': 'Alex', 'group': 2}
-        WITH : WithType
-            with_statement (don't really work well)
+            optional parameter for conditions
+            > db: AbstractDatabase
+            > ...
+            > WHERE=(db['table_name']['column_name'] == 'some_value')
         ORDER_BY : OrderByType
-            optional parameter for conditions, example: {'name': ['NULLS', 'LAST']}
+            optional parameter for conditions
+            > ORDER_BY=['age', 'DESC']
+            > ORDER_BY='age DESC'
         LIMIT: LimitOffsetType
-            optional parameter for conditions, example: 10
+            Set limit or selecting records
+            > LIMIT=10
         OFFSET : LimitOffsetType
-            optional parameter for conditions, example: 5
+            Set offset for selecting records
+            > OFFSET=5
         JOIN: Union[str, List[str], List[List[str]]]
             optional parameter for joining data from other tables ['groups'],
 
         Returns
         ----------
-        List[List]
-            selected data
+        Tuple[Tuple]
+            Selected records
 
         """
 
@@ -271,7 +243,6 @@ class AbstractTable(ABC):
             self.name,
             SELECT=SELECT,
             WHERE=WHERE,
-            WITH=WITH,
             ORDER_BY=ORDER_BY,
             LIMIT=LIMIT,
             OFFSET=OFFSET,
@@ -313,25 +284,32 @@ class AbstractTable(ABC):
             **kwargs,
     ) -> Tuple:
         """
-        SELECT data from table
+        SELECT ALL data from table
 
         Parameters
         ----------
         WHERE : WhereType
-            optional parameter for conditions, example: {'name': 'Alex', 'group': 2}
-        WITH : WithType
-            with_statement (don't really work well)
+            optional parameter for conditions
+            > db: AbstractDatabase
+            > ...
+            > WHERE=(db['table_name']['column_name'] == 'some_value')
         ORDER_BY : OrderByType
-            optional parameter for conditions, example: {'name': ['NULLS', 'LAST']}
+            optional parameter for conditions
+            > ORDER_BY=['age', 'DESC']
+            > ORDER_BY='age DESC'
         LIMIT: LimitOffsetType
-            optional parameter for conditions, example: 10
+            Set limit or selecting records
+            > LIMIT=10
         OFFSET : LimitOffsetType
-            optional parameter for conditions, example: 5
+            Set offset for selecting records
+            > OFFSET=5
+        JOIN: Union[str, List[str], List[List[str]]]
+            optional parameter for joining data from other tables ['groups'],
 
         Returns
         ----------
-        List[List]
-            selected data
+        Tuple[Tuple]
+            Selected records
 
         """
 
@@ -358,9 +336,10 @@ class AbstractTable(ABC):
         Parameters
         ----------
         WHERE : WhereType
-            optional parameter for conditions, example: {'name': 'Alex', 'group': 2}
-        WITH : WithType
-            with_statement (don't really work well)
+           optional parameter for conditions
+           > db: AbstractDatabase
+           > ...
+           > WHERE=(db['table_name']['column_name'] == 'some_value')
 
         """
 
@@ -384,11 +363,15 @@ class AbstractTable(ABC):
         SET : Union[List, Tuple, Mapping]
             ColumnType and value to set
         WHERE : WhereType
-            optional parameter for conditions, example: {'name': 'Alex', 'group': 2}
+            optional parameter for conditions
+            > db: AbstractDatabase
+            > ...
+            > WHERE=(db['table_name']['column_name'] == 'some_value')
         OR : OrOptionsType
-            Optional parameter. If INSERT failed, type OrOptionsType
+            Action in case if inserting has failed. Optional parameter.
+            > OR='IGNORE'
         WITH : WithType
-            with_statement (don't really work well)
+            disabled!
         """
 
         self.db.update(
@@ -438,17 +421,24 @@ class AbstractTable(ABC):
         Parameters
         ----------
         WHERE : WhereType
-            optional parameter for conditions, example: {'name': 'Alex', 'group': 2}
+           optional parameter for conditions
+           > db: AbstractDatabase
+           > ...
+           > WHERE=(db['table_name']['column_name'] == 'some_value')
         ORDER_BY : OrderByType
-            optional parameter for conditions, example: {'name': ['NULLS', 'LAST']}
-        LIMIT : LimitOffsetType
-            optional parameter for conditions, example: 10
+            optional parameter for conditions
+            > ORDER_BY=['age', 'DESC']
+            > ORDER_BY='age DESC'
+        LIMIT: LimitOffsetType
+            Set limit or selecting records
+            > LIMIT=10
+
         **kwargs :
 
         Returns
         ----------
         List[List]
-            selected data
+            Selected data
         """
         if not WHERE:
             WHERE = kwargs
@@ -481,7 +471,6 @@ class AbstractDatabase(ABC):
         axm/ _get_tables_names
 
     Statements Constructor (__s)
-        __s/ _pragma_stmt
         __s/ _create_stmt
         __s/ _insert_stmt
         __s/ _fast_insert_stmt
@@ -495,31 +484,27 @@ class AbstractDatabase(ABC):
         apm/ connect
         apm/ disconnect
         apm/ get_columns_names
-        _pm/ execute >>> _executor
-        _pm/ executemany >>> _executor
-        _pm/ executescript >>> _executor
-        _pm/ pragma >>> _pragma_stmt >>> execute
-        _pm/    foreign_keys >>> pragma
-        _pm/    journal_mode >>> pragma
-        _pm/    table_info   >>> pragma
-        _pm/ create_table >>> _create_stmt >>> execute
-        _pm/ create_temp_table >>> _create_stmt >>> execute
-        _pm/ create_temporary_table >>> _create_stmt >>> execute
-        _pm/ markup >>> create_table
-        _pm/ add_column >>> execute
-        _pm/ remove_column >>> execute
-        _pm/ get_table >>> _get_table >>> execute
-        _pm/ get_columns >>> execute
-        _pm/ insert >>> _fast_insert_stmt / _insert_stmt >>> execute
-        _pm/ replace >>> _fast_insert_stmt / _insert_stmt >>> execute
-        _pm/ insertmany >>> _insertmany_stmt >>> execute
-        _pm/ select >>> _select_stmt >>> execute
-        _pm/ select_distinct >>> select
-        _pm/ select_all >>> select
-        _pm/ delete >>> _delete_stmt >>> execute
-        _pm/ update >>> _update_stmt >>> execute
-        _pm/ updatemany >>> _insertmany_stmt >>> execute
-        _pm/ drop >>> _drop_stmt >>> execute
+        _pm/ execute > _executor
+        _pm/ executemany > _executor
+        _pm/ executescript > _executor
+        _pm/ create_table > _create_stmt > execute
+        _pm/ create_temp_table > _create_stmt > execute
+        _pm/ create_temporary_table > _create_stmt > execute
+        _pm/ markup > create_table
+        _pm/ add_column > execute
+        _pm/ remove_column > execute
+        _pm/ get_table > _get_table > execute
+        _pm/ get_columns > execute
+        _pm/ insert > _fast_insert_stmt / _insert_stmt > execute
+        _pm/ replace > _fast_insert_stmt / _insert_stmt > execute
+        _pm/ insertmany > _insertmany_stmt > execute
+        _pm/ select > _select_stmt > execute
+        _pm/ select_distinct > select
+        _pm/ select_all > select
+        _pm/ delete > _delete_stmt > execute
+        _pm/ update > _update_stmt > execute
+        _pm/ updatemany > _insertmany_stmt > execute
+        _pm/ drop > _drop_stmt > execute
 
     """
 
@@ -529,12 +514,12 @@ class AbstractDatabase(ABC):
         Init-ing database, connection, creating connection, setting parameters
         """
         self.__connection = None
-        self.placeholder = placeholder
+        self.__placeholder = placeholder
 
     @abstractmethod
     def __str__(self):
         """
-        Database as string
+        ABDatabase as string
         """
         pass
 
@@ -562,6 +547,7 @@ class AbstractDatabase(ABC):
         del self
 
     @property
+    @abstractmethod
     def connection(self):
         """
         Get connection as object
@@ -582,6 +568,13 @@ class AbstractDatabase(ABC):
         """
         return self._get_tables_names()
 
+    @property
+    def placeholder(self) -> Tuple[str]:
+        """
+        Placeholder symbol
+        """
+        return self.__placeholder
+
     # ============================== PRIVATE METHODS ==============================
 
     @abstractmethod
@@ -601,34 +594,31 @@ class AbstractDatabase(ABC):
 
     @abstractmethod
     def _get_table(self, name):
+        """
+        Get specific table as SQLite3xTable objects
+
+        """
         pass
 
     @abstractmethod
     def _get_tables(self) -> Generator[AbstractTable, None, None]:
+        # for tab_name in self.tables_names:
+        #     yield self._get_table(tab_name)
         pass
 
     @abstractmethod
     def _get_tables_names(self) -> Tuple[str]:
+        """
+        Generator of tables as SQLite3xTable objects
+
+        Returns
+        ----------
+        Tuple[str]
+            list of tables names
+        """
         pass
 
     # ================================ STMT'S =========================================
-
-    @staticmethod
-    def _pragma_stmt(*args: str, **kwargs):
-        """
-        Constructor of pragma statements
-        """
-
-        if args:
-            parameter = args[0]
-            script = script_gen.pragma_args(parameter)
-        elif kwargs:
-            parameter, value = tuple(kwargs.items())[0]
-            script = script_gen.pragma_kwargs(parameter=parameter, value=value)
-        else:
-            raise ValueError(f"No data to execute, args: {args}, kwargs: {kwargs}")
-
-        return script
 
     @staticmethod
     def _create_stmt(
@@ -679,10 +669,9 @@ class AbstractDatabase(ABC):
 
         return script, values
 
-
     @args_parser
     def _insert_stmt(
-            self, *args: Any, TABLE: AnyStr, script="", values=(), **kwargs: Any,
+            self, *args: Any, TABLE: Union[AnyStr, AbstractTable], script="", values=(), **kwargs: Any,
     ) -> ScriptAndValues:
         """
         Constructor of insert/replace statements
@@ -702,14 +691,14 @@ class AbstractDatabase(ABC):
         else:
             raise ValueError(f"No data to insert, args: {args}, kwargs: {kwargs}")
 
-        script = f"{script}{script_gen.insert(columns=_columns, table=TABLE, need_space=bool(script))}"
+        script = f"{script}{script_gen.insert(columns=_columns, table=TABLE, need_space=bool(script), placeholder=self.placeholder)}"
         values += insert_values
 
         return script, values
 
     @args_parser
     def _fast_insert_stmt(
-            self, *args, TABLE: AnyStr, script="", values=(), **kwargs: Any
+            self, *args, TABLE: Union[AnyStr, AbstractTable], script="", values=(), **kwargs: Any
     ) -> ScriptAndValues:
         """
         Constructor of fast insert/replace statements
@@ -717,9 +706,6 @@ class AbstractDatabase(ABC):
         Creating insert/replace stmt without columns names
         (without get_columns_names request, because it's slow)
         """
-
-        if not args:
-            raise sqlite3.OperationalError
 
         script = script_gen.insert_fast_with_prefix(
             script=script,
@@ -733,7 +719,7 @@ class AbstractDatabase(ABC):
     def _insertmany_stmt(
             self,
             *args: InsertingManyData,
-            TABLE: AnyStr,
+            TABLE: Union[AnyStr, AbstractTable],
             script="",
             values=(),
             **kwargs: Any,
@@ -753,16 +739,15 @@ class AbstractDatabase(ABC):
                 logger.warning("insertmany/updatemany failed, due to no values to insert/update")
                 return '', tuple()
 
-
             if isinstance(args[0], list):
                 args = tuple(
                     map(lambda arg: tuple(arg), args)
-                )   # converting lists in args to tuples ([1,2],) -> ((1,2),)
+                )  # converting lists in args to tuples ([1,2],) -> ((1,2),)
 
             max_arg_len = max(map(lambda arg: len(arg), args))  # max len of arg in values
             min_arg_len = min(map(lambda arg: len(arg), args))  # min len of arg in values
 
-            temp_ = tuple(0 for _ in range(max_arg_len))   # (1, 'Alex', 'Django')
+            temp_ = tuple(0 for _ in range(max_arg_len))  # (1, 'Alex', 'Django')
 
 
         elif kwargs:
@@ -773,10 +758,10 @@ class AbstractDatabase(ABC):
 
             columns = tuple(kwargs.keys())
 
-            max_arg_len = max(map(lambda arg: len(arg), args))     # max len of arg in values
-            min_arg_len = min(map(lambda arg: len(arg), args))     # min len of arg in values\\
+            max_arg_len = max(map(lambda arg: len(arg), args))  # max len of arg in values
+            min_arg_len = min(map(lambda arg: len(arg), args))  # min len of arg in values\\
 
-            temp_ = dict(zip(columns, (None,)*len(columns)))  # {'column_1': None, 'column_2': None, 'column_3': None}
+            temp_ = dict(zip(columns, (None,) * len(columns)))  # {'column_1': None, 'column_2': None, 'column_3': None}
 
         else:
             raise ValueError(f"No data to insert, args: {args}, kwargs: {kwargs}")
@@ -809,7 +794,7 @@ class AbstractDatabase(ABC):
 
     def _select_stmt(
             self,
-            TABLE: Union[str, AbstractTable],
+            TABLE: Union[AnyStr, AbstractTable],
             script="",
             values=(),
             method: AnyStr = "SELECT ",
@@ -822,7 +807,7 @@ class AbstractDatabase(ABC):
             **kwargs,
     ) -> ScriptAndValues:
         """
-       Constructor of select(-like) statements
+        Constructor of select(-like) statements
 
         """
         if not TABLE:
@@ -839,7 +824,7 @@ class AbstractDatabase(ABC):
         elif isinstance(SELECT, list):
             SELECT = (*SELECT,)
 
-        script += script_gen.select(method=method, columns=SELECT, table=TABLE)
+        script += script_gen.select(method=method, columns=SELECT, table=str(TABLE))
 
         return script, values
 
@@ -853,7 +838,7 @@ class AbstractDatabase(ABC):
 
     def _update_stmt(
             self,
-            TABLE: AnyStr,
+            TABLE: Union[AnyStr, AbstractTable],
             SET: Union[List, Tuple, Mapping] = None,
             script="",
             values=(),
@@ -905,7 +890,7 @@ class AbstractDatabase(ABC):
 
     @staticmethod
     def _drop_stmt(
-            TABLE: AnyStr,
+            TABLE: Union[AnyStr, AbstractTable],
             IF_EXIST: bool = True,
             script="",
             **kwargs
@@ -952,7 +937,7 @@ class AbstractDatabase(ABC):
         Returns
         ----------
         Union[Tuple, None]
-            Database answer if it has
+            ABDatabase answer if it has
 
         """
 
@@ -976,7 +961,7 @@ class AbstractDatabase(ABC):
         Returns
         ----------
         Union[Tuple, None]
-            Database answer if it has
+            ABDatabase answer if it has
 
         """
 
@@ -997,86 +982,11 @@ class AbstractDatabase(ABC):
         Returns
         ----------
         Union[Tuple, None]
-            Database answer if it has
+            ABDatabase answer if it has
 
         """
 
         return self._executor(script=script, spec=3)
-
-    def pragma(
-            self,
-            *args: str,
-            **kwargs: NumStr
-    ) -> Union[Tuple, None]:
-        """
-        Set PRAGMA parameter or send PRAGMA-request
-
-        Parameters
-        ----------
-        args : str
-            Might be used like this:
-            Example: db.pragma("database_list")
-        kwargs : NumStr
-            Might be used like this:
-            Example: db.pragma(foreign_keys="ON")
-
-        Returns
-        ----------
-        Union[Tuple, None]
-            Database answer if it has
-
-        """
-
-        script = self._pragma_stmt(*args, **kwargs)
-        return self.execute(script=script)
-
-    def foreign_keys(
-            self,
-            mode: Literal["ON", "OFF"]
-    ):
-        """
-        Turn on/off PRAGMA parameter FOREIGN KEYS
-
-        Parameters
-        ----------
-        mode : Literal["ON", "OFF"]
-            "ON" or "OFF" FOREIGN KEYS support
-
-        """
-
-        return self.pragma(foreign_keys=mode)
-
-    def journal_mode(
-            self,
-            mode: Literal["DELETE", "TRUNCATE", "PERSIST", "MEMORY", "WAL", "OFF"]
-    ):
-        """
-        Set PRAGMA param journal_mode
-
-        Parameters
-        ----------
-        mode : Literal["DELETE", "TRUNCATE", "PERSIST", "MEMORY", "WAL", "OFF"]
-            Journal mode
-
-        """
-
-        return self.pragma(journal_mode=mode)
-
-    def table_info(
-            self,
-            table_name: str
-    ):
-        """
-        Send table_info PRAGMA request
-
-        Parameters
-        ----------
-        table_name : str
-            Name of table
-
-        """
-
-        return self.pragma(f"table_info({table_name})")
 
     def create_table(
             self,
@@ -1282,7 +1192,7 @@ class AbstractDatabase(ABC):
             table: AnyStr
     ) -> Generator[AbstractColumn, None, None]:
         """
-        Get list of table columns like an SQLite3xColumn objects
+        Get columns of table as AbstractColumns objects
 
         Parameters
         ----------
@@ -1291,22 +1201,11 @@ class AbstractDatabase(ABC):
 
         Returns
         ----------
-        Generator[AbstractColumn]
-            Columns of table
+        Tuple
+            Columns of table as AbstractColumns objects
 
         """
-
-        try:
-            columns_: Tuple[Tuple] = self.execute(f"SELECT name FROM PRAGMA_TABLE_INFO('{table}')")
-            columns: Tuple = tuple(map(lambda item: item[0], columns_))
-
-        except sqlite3.OperationalError:
-            # Fix for compatibility issues #19, by some reason it can't find PRAGMA_TABLE_INFO table
-            columns_: Tuple[Tuple] = self.pragma(f"table_info('{table}')")
-            columns: Tuple = tuple(map(lambda item: item[1], columns_))
-
-        if not columns:
-            raise TableInfoError(f"No columns or table {table}")
+        columns = self.get_columns_names(table=table)
 
         for column in columns:
             yield AbstractColumn(table=table, name=column)
@@ -1315,7 +1214,7 @@ class AbstractDatabase(ABC):
     def get_columns_names(
             self,
             table: AnyStr
-    ) -> Tuple[str]:
+    ) -> Tuple:
         """
         Get list of names of table columns as strings
 
@@ -1334,7 +1233,7 @@ class AbstractDatabase(ABC):
 
     def insert(
             self,
-            TABLE: AnyStr,
+            TABLE: Union[AnyStr, AbstractTable],
             *args: InsertingData,
             OR: OrOptionsType = None,
             WITH: WithType = None,
@@ -1348,13 +1247,11 @@ class AbstractDatabase(ABC):
         TABLE : AnyStr
             Name of table
         OR : OrOptionsType
-            Optional parameter. If INSERT failed, type OrOptionsType
+            Action in case if inserting has failed. Optional parameter.
+            > OR='IGNORE'
         WITH : WithType
-            Optional parameter.
+            Disablesd!
 
-        Returns
-        ----------
-            None or SQL-script in SQLStatement
         """
 
         try:
@@ -1371,9 +1268,9 @@ class AbstractDatabase(ABC):
                 self.execute(script=script, values=values)
 
             else:
-                raise ValueError
+                raise ValueError("No arguments for fast insertion")
 
-        except (sqlite3.OperationalError, ValueError):
+        except (OperationalError, ValueError):
             script, values = self._insert_stmt(
                 *args,
                 script="INSERT",
@@ -1387,7 +1284,7 @@ class AbstractDatabase(ABC):
 
     def replace(
             self,
-            TABLE: AnyStr,
+            TABLE: Union[AnyStr, AbstractTable],
             *args: Any,
             WHERE: WhereType = None,
             **kwargs: Any,
@@ -1399,12 +1296,11 @@ class AbstractDatabase(ABC):
         ----------
         TABLE : AnyStr
             Name of table
-        WHERE : WHereType
-            Optional parameter.
-
-        Returns
-        ----------
-            None or SQL-script in SQLStatement
+        WHERE : WhereType
+            Optional parameter for conditions
+            > db: AbstractDatabase
+            > ...
+            > WHERE=(db['table_name']['column_name'] == 'some_value')
 
         """
 
@@ -1421,22 +1317,22 @@ class AbstractDatabase(ABC):
                 self.execute(script=script, values=values)
 
             else:
-                raise ValueError
+                raise ValueError("No arguments for fast insertion")
 
-        except (sqlite3.OperationalError, ValueError):
+        except (OperationalError, ValueError):
             script, values = self._insert_stmt(
                 *args,
                 script="REPLACE",
                 TABLE=TABLE,
+                WHERE=WHERE,
                 **kwargs,
-                WHERE=WHERE
             )
 
             self.execute(script=script, values=values)
 
     def insertmany(
             self,
-            TABLE: AnyStr,
+            TABLE: Union[AnyStr, AbstractTable],
             *args: Union[List[List], List[Tuple], Tuple[List], Tuple[Tuple], List, Tuple, Iterable],
             OR: OrOptionsType = None,
             **kwargs: Any,
@@ -1453,7 +1349,8 @@ class AbstractDatabase(ABC):
             1'st way set values for insert
             P.S: args also support numpy.array value
         OR : OrOptionsType
-            Optional parameter. If INSERT failed, type OrOptionsType
+            Action in case if inserting has failed. Optional parameter.
+            > OR='IGNORE'
         kwargs : Any
             An 2'st way set values for insert
 
@@ -1498,18 +1395,26 @@ class AbstractDatabase(ABC):
         ----------
         TABLE: Union[AnyStr, AbstractTable]
             Name of table
-        SELECT: Union[AnyStr, AbstractColumn, List, Tuple]
+        SELECT : Union[str, List[str]]
             columns to select. Value '*' by default
+            > SELECT=['id', 'name']
         WHERE : WhereType
-            optional parameter for conditions, example: {'name': 'Alex', 'group': 2}
+           optional parameter for conditions
+           > db: AbstractDatabase
+           > ...
+           > WHERE=(db['table_name']['column_name'] == 'some_value')
         WITH : WithType
-            with_statement (don't really work well)
+            disabled!
         ORDER_BY : OrderByType
-            optional parameter for conditions, example: {'name': ['NULLS', 'LAST']}
+            optional parameter for conditions
+            > ORDER_BY=['age', 'DESC']
+            > ORDER_BY='age DESC'
         LIMIT: LimitOffsetType
-            optional parameter for conditions, example: 10
+            Set limit or selecting records
+            > LIMIT=10
         OFFSET : LimitOffsetType
-            optional parameter for conditions, example: 5
+            Set offset for selecting records
+            > OFFSET=5
         FROM : str
             Name of table, same at TABLE
         JOIN: JoinType
@@ -1520,7 +1425,7 @@ class AbstractDatabase(ABC):
         Returns
         ----------
         Tuple[Tuple]
-            Tuple of selected data
+            Tuple of Selected data
 
         """
 
@@ -1554,7 +1459,7 @@ class AbstractDatabase(ABC):
 
     def select_distinct(
             self,
-            TABLE: Union[str, AbstractTable] = None,
+            TABLE: Union[AnyStr, AbstractTable] = None,
             SELECT: Union[str, AbstractColumn, Tuple, List] = None,
             WHERE: WhereType = None,
             WITH: WithType = None,
@@ -1574,25 +1479,36 @@ class AbstractDatabase(ABC):
             Name of table
         SELECT : Union[str, AbstractColumn, Tuple, List]
             columns to select. Value '*' by default
-        WHERE : WhereType
-            optional parameter for conditions, example: {'name': 'Alex', 'group': 2}
+         WHERE : WhereType
+            optional parameter for conditions
+            > db: AbstractDatabase
+            > ...
+            > WHERE=(db['table_name']['column_name'] == 'some_value')
         WITH : WithType
-            with_statement (don't really work well)
+            disabled!
         ORDER_BY : OrderByType
-            optional parameter for conditions, example: {'name': ['NULLS', 'LAST']}
+            optional parameter for conditions
+            > ORDER_BY=['age', 'DESC']
+            > ORDER_BY='age DESC'
+        ORDER_BY : OrderByType
+            optional parameter for conditions
+            > ORDER_BY=['age', 'DESC']
+            > ORDER_BY='age DESC'
         LIMIT: LimitOffsetType
-            optional parameter for conditions, example: 10
+            Set limit or selecting records
+            > LIMIT=10
         OFFSET : LimitOffsetType
-            optional parameter for conditions, example: 5
+            Set offset for selecting records
+            > OFFSET=5
+        JOIN: Union[str, List[str], List[List[str]]]
+            optional parameter for joining data from other tables ['groups'],
         FROM : str
             Name of table, same at TABLE
-        JOIN: JoinType
-            optional parameter for joining data from other tables ['groups'],
 
         Returns
         ----------
         Tuple[Tuple]
-            selected data
+            Selected data
 
         """
 
@@ -1612,7 +1528,7 @@ class AbstractDatabase(ABC):
 
     def select_all(
             self,
-            TABLE: Union[str, AbstractTable] = None,
+            TABLE: Union[AnyStr, AbstractTable] = None,
             SELECT: Union[str, AbstractColumn, List, Tuple] = None,
             WHERE: WhereType = None,
             WITH: WithType = None,
@@ -1632,25 +1548,36 @@ class AbstractDatabase(ABC):
             Name of table
         SELECT : Union[str, AbstractColumn, List, Tuple]
             columns to select. Value '*' by default
-        WHERE : WhereType
-            optional parameter for conditions, example: {'name': 'Alex', 'group': 2}
+         WHERE : WhereType
+            optional parameter for conditions
+            > db: AbstractDatabase
+            > ...
+            > WHERE=(db['table_name']['column_name'] == 'some_value')
         WITH : WithType
-            with_statement (don't really work well)
+            disabled!
         ORDER_BY : OrderByType
-            optional parameter for conditions, example: {'name': ['NULLS', 'LAST']}
+            optional parameter for conditions
+            > ORDER_BY=['age', 'DESC']
+            > ORDER_BY='age DESC'
+        ORDER_BY : OrderByType
+            optional parameter for conditions
+            > ORDER_BY=['age', 'DESC']
+            > ORDER_BY='age DESC'
         LIMIT: LimitOffsetType
-            optional parameter for conditions, example: 10
+            Set limit or selecting records
+            > LIMIT=10
         OFFSET : LimitOffsetType
-            optional parameter for conditions, example: 5
+            Set offset for selecting records
+            > OFFSET=5
+        JOIN: Union[str, List[str], List[List[str]]]
+            optional parameter for joining data from other tables ['groups'],
         FROM : Union[str, List[str], AbstractTable]
             Name of table, same at TABLE
-        JOIN: JoinType
-            optional parameter for joining data from other tables ['groups'],
 
         Returns
         ----------
         Tuple[Tuple]
-            selected data
+            Selected data
 
         """
 
@@ -1682,10 +1609,13 @@ class AbstractDatabase(ABC):
         ----------
         TABLE : AnyStr
             Name of table
-        WHERE : WhereType
-            optional parameter for conditions, example: {'name': 'Alex', 'group': 2}
+         WHERE : WhereType
+            optional parameter for conditions
+            > db: AbstractDatabase
+            > ...
+            > WHERE=(db['table_name']['column_name'] == 'some_value')
         WITH : WithType
-            with_statement (don't really work well)
+            disabled!
 
         """
 
@@ -1702,7 +1632,7 @@ class AbstractDatabase(ABC):
 
     def update(
             self,
-            TABLE: AnyStr,
+            TABLE: Union[AnyStr, AbstractTable],
             SET: Union[List, Tuple, Mapping],
             WHERE: WhereType = None,
             OR: OrOptionsType = None,
@@ -1719,11 +1649,15 @@ class AbstractDatabase(ABC):
         SET : Union[List, Tuple, Mapping]
             ColumnType and value to set
         WHERE : WhereType
-            optional parameter for conditions, example: {'name': 'Alex', 'group': 2}
+           optional parameter for conditions
+           > db: AbstractDatabase
+           > ...
+           > WHERE=(db['table_name']['column_name'] == 'some_value')
         OR : OrOptionsType
-            Optional parameter. If INSERT failed, type OrOptionsType
+            Action in case if inserting has failed. Optional parameter.
+            > OR='IGNORE'
         WITH : WithType
-            with_statement (don't really work well)
+            disabled!
         """
 
         if not WHERE:
@@ -1742,7 +1676,7 @@ class AbstractDatabase(ABC):
 
     def updatemany(
             self,
-            TABLE: AnyStr,
+            TABLE: Union[AnyStr, AbstractTable],
             SET: Union[List[List], List[Tuple], Tuple[List], Tuple[Tuple]] = None,
             **kwargs,
     ) -> None:
@@ -1781,7 +1715,7 @@ class AbstractDatabase(ABC):
 
     def drop(
             self,
-            TABLE: AnyStr,
+            TABLE: Union[AnyStr, AbstractTable],
             IF_EXIST: bool = True,
             **kwargs
     ) -> None:

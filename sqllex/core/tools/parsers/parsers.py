@@ -227,6 +227,7 @@ def where_(placeholder: AnyStr = '?') -> callable:
 
     return where_pre_wrapper
 
+
 def join_(func: callable) -> callable:
     """
     Decorator for catching JOIN argument in kwargs of method
@@ -454,24 +455,22 @@ def args_parser(func: callable):
     """
 
     def args_parser_wrapper(*args: Any, **kwargs: Any):
-        if not args:
-            return func(*args, **kwargs)
+        if args:
+            if len(args) == 2:
+                self = args[:1]
+                args = args[1:]
 
-        self = args[:1]
-        args = args[1:]
+                if isinstance(args[0], tuple):
+                    args = args[0]
+                elif isinstance(args[0], list):
+                    args = tuple(args[0])
+                elif isinstance(args[0], (str, int)):
+                    args = (args[0],)
+                elif isinstance(args[0], dict):
+                    kwargs.update(args[0])
+                    args = tuple()
 
-        if len(args) == 1:
-            if isinstance(args[0], list):
-                args = tuple(args[0])
-            elif isinstance(args[0], tuple):
-                args = args[0]
-            elif isinstance(args[0], (str, int)):
-                args = (args[0],)
-            elif isinstance(args[0], dict):
-                kwargs.update(args[0])
-                args = tuple()
-
-        args = self + args
+                args = self + args
 
         return func(*args, **kwargs)
 
