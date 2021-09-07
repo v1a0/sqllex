@@ -16,19 +16,20 @@ def execute(script: AnyStr, values: Tuple, connection: connection):
             else:
                 cur.execute(script)
 
-            cur.commit()
+            conn.commit()
 
-            return cur.fetchall()
+            try:
+                return cur.fetchall()
 
-        except psycopg2.ProgrammingError:
-            pass
+            except psycopg2.ProgrammingError:
+                pass
 
         except Exception as error:
             raise error
 
 
     if script:  # it's necessary
-        script = f"{script.strip()};"
+        script = script.strip()
 
         logger.debug(f"\n {script}\n {values if values else ''}\n")
 
@@ -49,16 +50,17 @@ def executemany(script: AnyStr, values: Tuple, connection: connection):
             cur.executemany(script, values)
             cur.commit()
 
-            return cur.fetchall()
+            try:
+                return cur.fetchall()
 
-        except psycopg2.ProgrammingError:
-            pass
+            except psycopg2.ProgrammingError:
+                pass
 
         except Exception as error:
             raise error
 
     if script:  # it's necessary
-        script = f"{script.strip()};"
+        script = script.strip()
 
         logger.debug(f"\n {script}\n {values if values else ''}\n")
 
@@ -76,16 +78,17 @@ def executescript(script: AnyStr, connection: connection):
             cur.executescript(script)
             cur.commit()
 
-            return cur.fetchall()
+            try:
+                return cur.fetchall()
 
-        except psycopg2.ProgrammingError:
-            pass
+            except psycopg2.ProgrammingError:
+                pass
 
         except Exception as error:
             raise error
 
     if script:  # it's necessary
-        script = f"{script.strip()};"
+        script = script.strip()
 
         logger.debug(f"\n {script}\n")
 

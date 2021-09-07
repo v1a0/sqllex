@@ -114,7 +114,7 @@ def insert_test():
 
     if not sel_all == [('asdf', 10.0, 1, 3.14, None, 2)] * 10:
         print(sel_all)
-        print([('asdf', 10.0, 1, 3.14, None, 2)] * 10)
+        print([('asdf', 10, 1, 3.14, None, 2)] * 10)
         raise MemoryError
 
 
@@ -199,9 +199,7 @@ def select_test():
     if not db.select(
             't2',
             'id',
-            JOIN=[
-                [CROSS_JOIN, 't1', AS, 't', ON, 't.num_t > t2.value']
-            ]
+            JOIN = (CROSS_JOIN, 't1', AS, 't', ON, 't.num_t > t2.value')
     ) == [
         (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,),
         (2,), (2,), (2,), (2,), (2,), (2,), (2,), (2,), (2,), (2,), (2,), (2,),

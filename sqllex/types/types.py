@@ -116,35 +116,18 @@ LimitOffsetType = Union[
 ]
 
 # Type for parameter of JOIN argument
-JoinType = Union[
-    Literal[
-        "INNER JOIN",
-        "LEFT JOIN",
-        "CROSS JOIN"
-    ],
+JoinMethod = Literal[
+    "INNER JOIN",
+    "LEFT JOIN",
+    "CROSS JOIN"
 ]
 
+
 JoinArgType = Union[
-    List[
-        List[
-            Union[
-                JoinType,
-                NumStr,
-                ConstantType,
-            ]
-        ]
-    ],
-    List[
-        Union[
-            JoinType,
-            NumStr,
-            ConstantType,
-        ]
-    ],
     Tuple[
         Tuple[
             Union[
-                JoinType,
+                JoinMethod,
                 NumStr,
                 ConstantType,
             ]
@@ -152,26 +135,17 @@ JoinArgType = Union[
     ],
     Tuple[
         Union[
-            JoinType,
+            JoinMethod,
             NumStr,
             ConstantType,
+            AnyStr
         ]
     ],
-    Union[
-        JoinType,
-        NumStr,
-        ConstantType,
-    ],
+    AnyStr
 ]
 
 ScriptAndValues = Tuple[
     AnyStr, Tuple
-]
-
-JoinType = Union[
-    AnyStr,
-    List[AnyStr],
-    List[List[AnyStr]]
 ]
 
 
@@ -193,7 +167,7 @@ __all__ = [
     'WhereType',
     'OrderByType',
     'LimitOffsetType',
-    'JoinType',
+    'JoinMethod',
     'JoinArgType',
 
     # typing
@@ -208,5 +182,5 @@ __all__ = [
     'Generator',
     'Iterable',
     'Sized',
-    'JoinType',
+    'JoinMethod',
 ]

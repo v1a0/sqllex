@@ -24,9 +24,9 @@ def insert_fast_with_prefix(script: str, table: str, placeholders: int, need_spa
 
 
 @lru_cache(maxsize=32)
-def insert(table: str, columns: tuple, need_space: bool = None, placeholder='?'):
+def insert(script: str, table: str, columns: tuple, placeholder='?'):
     return f"" \
-           f"{' ' if need_space else ''}" \
+           f"{script} " \
            f'INTO "{str(table)}" (' \
            f"{', '.join(col for col in columns)}) " \
            f"VALUES (" \
@@ -54,8 +54,8 @@ def drop(table: str, if_exist: bool = None):
 
 
 @lru_cache(maxsize=32)
-def delete(table: str):
-    return f'DELETE FROM "{table}" '
+def delete(script: str, table: str):
+    return f'{script} DELETE FROM "{table}" '
 
 
 @lru_cache(maxsize=32)

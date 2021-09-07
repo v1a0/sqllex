@@ -4,7 +4,6 @@ from sqllex.types import *
 from os import remove
 from time import sleep, time
 
-DB_NAME = "temp_table.db"
 
 DB_TEMPLATE: DBTemplateType = {
     "t1": {
@@ -12,8 +11,8 @@ DB_TEMPLATE: DBTemplateType = {
         "num_t": NUMERIC,
         "int_t": INTEGER,
         "real_t": REAL,
-        "none_t": NONE,
-        "blob_t": BLOB,
+        "none_t": INTEGER,
+        "blob_t": 'FLOAT',
     }
 }
 
@@ -22,7 +21,8 @@ db = PostgreSQLx(
     user="postgres",
     password="admin",
     host="127.0.0.1",
-    port="5432"
+    port="5432",
+    template=DB_TEMPLATE
 )
 
 debug_mode(True, log_file='sqllex-test.log')
@@ -35,7 +35,6 @@ def remove_db():
     logger.stop()
     print("Logger stopped")
 
-    remove(f"{DB_NAME}")
     print(f"{db} removed")
 
     remove("sqllex-test.log")
@@ -43,7 +42,14 @@ def remove_db():
 
 
 def tables_test():
-    db = SQLite3x(path=DB_NAME, template=DB_TEMPLATE)
+    db = PostgreSQLx(
+        dbname="postgres",
+        user="postgres",
+        password="admin",
+        host="127.0.0.1",
+        port="5432",
+        template=DB_TEMPLATE
+    )
 
     db.markup(
         {

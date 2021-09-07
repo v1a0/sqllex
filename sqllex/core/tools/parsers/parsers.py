@@ -1,8 +1,7 @@
 from sqllex.types import *
-from sqllex.constants import AS, INNER_JOIN, LEFT_JOIN, CROSS_JOIN
+from sqllex.constants import INNER_JOIN, LEFT_JOIN, CROSS_JOIN
 from sqllex.core.entities.abc.sql_column import AbstractColumn
 from sqllex.core.entities.abc.sql_search_condition import SearchCondition
-from functools import wraps
 
 
 def from_as_(func: callable):
@@ -22,11 +21,9 @@ def from_as_(func: callable):
     """
 
     def as_wrapper(*args, **kwargs):
-        if "TABLE" in kwargs.keys():
-
-            if isinstance(kwargs.get("TABLE"), (list, tuple)) and AS in kwargs.get("TABLE"):
-                TABLE = " ".join(t_arg for t_arg in kwargs.pop("TABLE"))
-                kwargs.update({"TABLE": TABLE})
+        if isinstance(kwargs.get("TABLE"), (list, tuple)):
+            TABLE = " ".join(t_arg for t_arg in kwargs.pop("TABLE"))
+            kwargs.update({"TABLE": TABLE})
 
         return func(*args, **kwargs)
 
@@ -57,7 +54,7 @@ def with_(func: callable) -> callable:
     """
 
     def with_wrapper(*args, **kwargs):
-        if "WITH" in kwargs.keys():
+        if kwargs.get("WITH"):
             with_dict: WithType = kwargs.pop("WITH")
         else:
             with_dict: None = None
@@ -120,11 +117,9 @@ def where_(placeholder: AnyStr = '?') -> callable:
         Decorated method with script contains where_statement and values contains values of where_statement
     """
     def where_pre_wrapper(func: callable):
-        @wraps(func)
         def where_wrapper(*args, **kwargs):
-            if "WHERE" in kwargs.keys():
+            if kwargs.get("WHERE"):
                 where_: WhereType = kwargs.pop("WHERE")
-
             else:
                 where_: None = None
 
@@ -132,27 +127,6 @@ def where_(placeholder: AnyStr = '?') -> callable:
 
             if where_:
                 __script = f"{__script} WHERE ("
-
-                # if isinstance(where_, tuple):  #
-                #     where_ = list(where_)
-                #
-                # if isinstance(where_, list):
-                #     # If WHERE is not List[List] (Just List[NotList])
-                #     if not isinstance(where_[0], list):
-                #         where_ = [where_]
-                #
-                #     new_where = {}
-                #
-                #     for wh in where_:
-                #
-                #         # List[List] -> Dict[val[0], val[1]]
-                #
-                #         if isinstance(wh[0], str) and len(wh) > 1:
-                #             new_where.update({wh[0]: wh[1:]})
-                #         else:
-                #             raise TypeError(f"Unexpected type of WHERE value")
-                #
-                #     where_ = new_where
 
                 if isinstance(where_, SearchCondition):
                     __script = f"{__script}{where_.script}"
@@ -173,7 +147,7 @@ def where_(placeholder: AnyStr = '?') -> callable:
                             "<", "<<", "<=",
                             ">=", ">>", ">",
                             "=", "==", "!=",
-                            "<>",
+                            "<>", 'LIKE',
                         ]:
                             operator = values.pop(0)
 
@@ -248,7 +222,28 @@ def join_(func: callable) -> callable:
     """
 
     def join_wrapper(*args, **kwargs):
-        if "JOIN" in kwargs.keys():
+        def add_join_to_script(joins: tuple, base_script: str) -> str:
+            if isinstance(joins, (list, tuple)):
+
+                # if JOIN is not List[List] make it so
+                if not isinstance(joins[0], (list, tuple)):
+                    joins = (joins,)
+
+                for _join in joins:
+                    # If first element is JOIN type
+                    if _join[0] in [INNER_JOIN, LEFT_JOIN, CROSS_JOIN]:
+                        join_method = _join[0]
+                        _join = _join[1:]
+                    else:
+                        join_method = INNER_JOIN
+
+                    # Adding JOIN to script
+                    base_script += (
+                        f"{join_method} {' '.join(j_arg for j_arg in _join)} "
+                    )
+            return base_script
+
+        if "JOIN" in kwargs:
             JOIN: JoinArgType = kwargs.pop("JOIN")
         else:
             JOIN: None = None
@@ -257,26 +252,9 @@ def join_(func: callable) -> callable:
 
         if JOIN:
             if isinstance(JOIN, (list, tuple)):
-
-                # if JOIN is not List[List] make it so
-                if not isinstance(JOIN[0], (list, tuple)):
-                    JOIN = (JOIN,)
-
-                for join_ in JOIN:
-                    # If first element is JOIN type
-                    if join_[0] in [INNER_JOIN, LEFT_JOIN, CROSS_JOIN]:
-                        join_method = join_[0]
-                        join_ = join_[1:]
-
-                    else:
-                        join_method = INNER_JOIN
-
-                    # Adding JOIN to script
-                    __script += (
-                        f"{join_method} {' '.join(j_arg for j_arg in join_)} "
-                    )
+                __script = add_join_to_script(joins=JOIN, base_script=__script)
             else:
-                raise TypeError("Incorrect JOIN extension type")
+                raise TypeError(f"Incorrect JOIN extension type, got {type(JOIN)}, expected list or tuple")
 
         return __script, __values
 
@@ -303,13 +281,23 @@ def or_param_(func: callable) -> callable:
     """
 
     def or_wrapper(*args, **kwargs):
-        if "OR" in kwargs.keys():
+        def add_or_arg_to_script(or_argument: str, base_script: str) -> str:
+            return f"{base_script} OR {or_argument}"
+
+        if kwargs.get("OR"):
             or_arg: OrOptionsType = kwargs.pop("OR")
         else:
             or_arg: None = None
 
         if or_arg:
-            kwargs.update({"script": f"{kwargs.get('script')} OR {or_arg}"})
+            kwargs.update(
+                {
+                    "script": add_or_arg_to_script(
+                        or_argument=or_arg,
+                        base_script=kwargs.get('script')
+                    )
+                }
+            )
 
         return func(*args, **kwargs)
 
@@ -334,6 +322,7 @@ def order_by_(func: callable) -> callable:
     """
 
     def order_by_wrapper(*args, **kwargs):
+
         if "ORDER_BY" in kwargs.keys():
             order_by: OrderByType = kwargs.pop("ORDER_BY")
         else:
@@ -431,48 +420,24 @@ def offset_(func: callable) -> callable:
 
 def args_parser(func: callable):
     """
-    Decorator for parsing argument method.
+    Decorator for parsing arguments
     If func got only one argument which contains args for function it'll unwrap it
 
-    if args is dict :
-        return args = None, kwargs = args[0]
-
-    if args is list :
-        return args = tuple(args[0]), kwargs = kwargs
-
-    if args is tuple :
-        return args = args[0], kwargs = kwargs
-
-    Parameters
-    ----------
-    func : callable
-        SQLite3x method contains args
-
-    Returns
-    ----------
-    callable
-        Decorated method with parsed args
     """
 
-    def args_parser_wrapper(*args: Any, **kwargs: Any):
-        if args:
-            if len(args) == 2:
-                self = args[:1]
-                args = args[1:]
+    def args_parser_wrapper(self, *args: Any, **kwargs: Any):
 
-                if isinstance(args[0], tuple):
-                    args = args[0]
-                elif isinstance(args[0], list):
-                    args = tuple(args[0])
-                elif isinstance(args[0], (str, int)):
-                    args = (args[0],)
-                elif isinstance(args[0], dict):
-                    kwargs.update(args[0])
-                    args = tuple()
+        if args and len(args) == 1:
 
-                args = self + args
+            args = args[0]
 
-        return func(*args, **kwargs)
+            if isinstance(args, (str, int)):
+                return func(self, args, **kwargs)
+            elif isinstance(args, dict):
+                kwargs.update(args)
+                return func(self, **kwargs)
+
+        return func(self, *args, **kwargs)
 
     return args_parser_wrapper
 

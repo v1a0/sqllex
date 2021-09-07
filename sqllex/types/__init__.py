@@ -17,7 +17,7 @@ __all__ = [
     'WhereType',  # lgtm [py/undefined-export]
     'OrderByType',  # lgtm [py/undefined-export]
     'LimitOffsetType',  # lgtm [py/undefined-export]
-    'JoinType',  # lgtm [py/undefined-export]
+    'JoinMethod',  # lgtm [py/undefined-export]
     'JoinArgType',  # lgtm [py/undefined-export]
 
     # typing
@@ -33,5 +33,5 @@ __all__ = [
     'Iterable',  # lgtm [py/undefined-export]
     'Sized',  # lgtm [py/undefined-export]
     'Number',   # lgtm [py/undefined-export]
-    'JoinType',   # lgtm [py/undefined-export]
+    'JoinMethod',   # lgtm [py/undefined-export]
 ]

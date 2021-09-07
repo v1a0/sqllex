@@ -25,9 +25,9 @@ ON: ConstantType = "ON"
 
 
 # Options for JOIN-ing
-INNER_JOIN: JoinType = "INNER JOIN"
-LEFT_JOIN: JoinType = "LEFT JOIN"
-CROSS_JOIN: JoinType = "CROSS JOIN"
+INNER_JOIN: JoinMethod = "INNER JOIN"
+LEFT_JOIN: JoinMethod = "LEFT JOIN"
+CROSS_JOIN: JoinMethod = "CROSS JOIN"
 
 
 # Options for "OR" argument

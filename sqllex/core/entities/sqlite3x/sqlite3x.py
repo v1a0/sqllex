@@ -149,7 +149,6 @@ class SQLite3x(ABDatabase):
     @parse.or_param_
     @parse.with_
     @parse.from_as_
-    @parse.args_parser
     @copy_docs(ABDatabase._insert_stmt)
     def _insert_stmt(self, *args, **kwargs: Any) -> ScriptAndValues:
         return super(SQLite3x, self)._insert_stmt(*args, **kwargs)
@@ -158,7 +157,6 @@ class SQLite3x(ABDatabase):
     @parse.or_param_
     @parse.with_
     @parse.from_as_
-    @parse.args_parser
     @copy_docs(ABDatabase._fast_insert_stmt)
     def _fast_insert_stmt(self, *args, **kwargs) -> ScriptAndValues:
         return super(SQLite3x, self)._fast_insert_stmt(*args, **kwargs)

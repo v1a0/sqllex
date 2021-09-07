@@ -163,7 +163,7 @@ class PostgreSQLx(ABDatabase):
     def _create_stmt(self, *args, **kwargs) -> ScriptAndValues:
         return super(PostgreSQLx, self)._create_stmt(*args, **kwargs)
 
-    @parse.where_(placeholder='?')
+    @parse.where_(placeholder='%s')
     @parse.or_param_
     @parse.with_
     @parse.from_as_
@@ -172,7 +172,7 @@ class PostgreSQLx(ABDatabase):
     def _insert_stmt(self, *args, **kwargs: Any) -> ScriptAndValues:
         return super(PostgreSQLx, self)._insert_stmt(*args, **kwargs)
 
-    @parse.where_(placeholder='?')
+    @parse.where_(placeholder='%s')
     @parse.or_param_
     @parse.with_
     @parse.from_as_
@@ -181,7 +181,7 @@ class PostgreSQLx(ABDatabase):
     def _fast_insert_stmt(self, *args, **kwargs) -> ScriptAndValues:
         return super(PostgreSQLx, self)._fast_insert_stmt(*args, **kwargs)
 
-    @parse.where_(placeholder='?')
+    @parse.where_(placeholder='%s')
     @parse.or_param_
     @parse.from_as_
     @copy_docs(ABDatabase._insertmany_stmt)
@@ -191,7 +191,7 @@ class PostgreSQLx(ABDatabase):
     @parse.offset_
     @parse.limit_
     @parse.order_by_
-    @parse.where_(placeholder='?')
+    @parse.where_(placeholder='%s')
     @parse.join_
     @parse.with_
     @parse.from_as_
@@ -199,13 +199,13 @@ class PostgreSQLx(ABDatabase):
     def _select_stmt(self, *args, **kwargs) -> ScriptAndValues:
         return super(PostgreSQLx, self)._select_stmt(*args, **kwargs)
 
-    @parse.where_(placeholder='?')
+    @parse.where_(placeholder='%s')
     @parse.with_
     @copy_docs(ABDatabase._delete_stmt)
     def _delete_stmt(self, *args, **kwargs) -> ScriptAndValues:
         return super(PostgreSQLx, self)._delete_stmt(*args, **kwargs)
 
-    @parse.where_(placeholder='?')
+    @parse.where_(placeholder='%s')
     @parse.or_param_
     @parse.with_
     @copy_docs(ABDatabase._update_stmt)

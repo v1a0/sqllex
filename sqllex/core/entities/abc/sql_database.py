@@ -203,7 +203,7 @@ class AbstractTable(ABC):
             ORDER_BY: OrderByType = None,
             LIMIT: LimitOffsetType = None,
             OFFSET: LimitOffsetType = None,
-            JOIN: JoinType = None,
+            JOIN: JoinArgType = None,
             **kwargs,
     ) -> Tuple[Tuple]:
         """
@@ -632,32 +632,63 @@ class AbstractDatabase(ABC):
         Constructor of create-like statements
         """
 
+        def content_gen(parameters, column=None) -> str:
+
+            if isinstance(parameters, str):
+                """
+                {
+                    'col': "INTEGER",
+                }
+                """
+                return script_gen.column(name=column, params=(parameters,))
+
+            elif isinstance(parameters, list):
+                """
+                {
+                    'col': ["INTEGER", "NOT NULL"],
+                }
+                """
+                parameters = sorted(parameters, key=lambda par: sort.column_types(par))
+                return script_gen.column(name=column, params=tuple(parameters))
+
+            elif isinstance(parameters, tuple):
+                """
+                {
+                    'col': ("INTEGER", "NOT NULL"),
+                }
+                """
+                parameters = sorted(list(parameters), key=lambda par: sort.column_types(par))
+                return script_gen.column(name=column, params=tuple(parameters))
+
+            elif isinstance(parameters, dict):
+                """
+                {
+                    FOREIGN_KEY: {
+                        "group_id": ["groups", "group_id"]
+                    }
+                }
+                """
+                if column != FOREIGN_KEY:
+                    raise TypeError(f'Incorrect column "{column}" initialisation: {parameters}')
+
+                res = ""
+                for (key, refs) in parameters.items():
+                    if isinstance(refs, (list, tuple)):
+                        res += script_gen.column_with_foreign_key(key=key, table=refs[0], column=refs[1])
+                    if isinstance(refs, AbstractColumn):
+                        res += script_gen.column_with_foreign_key(key=key, table=refs.table, column=refs.name)
+
+                return res[:-1]
+
+            else:
+                raise TypeError(f'Incorrect column "{column}" initialisation, parameters type {type(parameters)}, '
+                                f'expected tuple, list or str')
+
         content = ""
         values = ()
 
         for (col, params) in columns.items():
-
-            # For {'col': 'params'} -> {'col': ['params']}
-            if isinstance(params, str):
-                params = [f"{params} "]
-
-            if isinstance(params, tuple):
-                params = list(params)
-
-            # For {'col': [param2, param1]} -> {'col': [param1, param2]}
-            if isinstance(params, list):
-                params = sorted(params, key=lambda par: sort.column_types(par))
-                content += script_gen.column(name=col, params=tuple(params))
-
-            # For {'col': {FK: {a: b}}}
-            elif isinstance(params, dict) and col == FOREIGN_KEY:
-                res = ""
-                for (key, refs) in params.items():
-                    res += script_gen.column_with_foreign_key(key=key, table=refs[0], column=refs[1])
-                content += res[:-1]
-
-            else:
-                raise TypeError(f'Incorrect column "{col}" initialisation')
+            content += content_gen(params, column=col)
 
         script = script_gen.create(
             temp=temp,
@@ -669,9 +700,9 @@ class AbstractDatabase(ABC):
 
         return script, values
 
-    @args_parser
     def _insert_stmt(
-            self, *args: Any, TABLE: Union[AnyStr, AbstractTable], script="", values=(), **kwargs: Any,
+            self, data: Union[Tuple, List, Mapping], TABLE: Union[AnyStr, AbstractTable], script="", values=(),
+            OR: OrOptionsType = None, WITH: WithType = None, WHERE: WhereType = None
     ) -> ScriptAndValues:
         """
         Constructor of insert/replace statements
@@ -679,26 +710,26 @@ class AbstractDatabase(ABC):
         Creating insert/replace stmt with specified columns names
         """
 
-        if args:
+        if isinstance(data, (tuple, list)):
             _columns = self.get_columns_names(table=TABLE)
-            _columns, args = crop(_columns, args)
-            insert_values = args
+            _columns, insert_values = crop(_columns, tuple(data))
 
-        elif kwargs:
-            _columns = tuple(kwargs.keys())
-            insert_values = tuple(kwargs.values())
+        elif isinstance(data, dict):
+            _columns = tuple(data.keys())
+            insert_values = tuple(data.values())
 
         else:
-            raise ValueError(f"No data to insert, args: {args}, kwargs: {kwargs}")
+            raise ValueError(f"No data to insert, data: {data}")
 
-        script = f"{script}{script_gen.insert(columns=_columns, table=TABLE, need_space=bool(script), placeholder=self.placeholder)}"
+        script = script_gen.insert(script=script, columns=_columns, table=TABLE, placeholder=self.placeholder)
         values += insert_values
 
         return script, values
 
-    @args_parser
+
     def _fast_insert_stmt(
-            self, *args, TABLE: Union[AnyStr, AbstractTable], script="", values=(), **kwargs: Any
+            self, data: Union[Tuple, List], TABLE: Union[AnyStr, AbstractTable], script="", values=(),
+            OR=None, WITH=None, WHERE: WhereType = None
     ) -> ScriptAndValues:
         """
         Constructor of fast insert/replace statements
@@ -709,9 +740,9 @@ class AbstractDatabase(ABC):
 
         script = script_gen.insert_fast_with_prefix(
             script=script,
-            table=TABLE, placeholders=len(args), need_space=bool(script)
+            table=TABLE, placeholders=len(data), need_space=bool(script)
         )
-        values += args
+        values += tuple(data)
 
         return script, values
 
@@ -722,6 +753,7 @@ class AbstractDatabase(ABC):
             TABLE: Union[AnyStr, AbstractTable],
             script="",
             values=(),
+            OR=None,
             **kwargs: Any,
     ) -> ScriptAndValues:
         """
@@ -766,7 +798,7 @@ class AbstractDatabase(ABC):
         else:
             raise ValueError(f"No data to insert, args: {args}, kwargs: {kwargs}")
 
-        script, expected_values = self._insert_stmt(temp_, script=script, TABLE=TABLE)  # getting stmt for maxsize value
+        script, expected_values = self._insert_stmt(data=temp_, script=script, TABLE=TABLE)  # getting stmt for maxsize value
 
         possible_len = len(expected_values)  # len of max supported val list
 
@@ -833,7 +865,7 @@ class AbstractDatabase(ABC):
         Constructor of delete statements
         """
 
-        script = f"{script}{script_gen.delete(table=TABLE)}"
+        script = script_gen.delete(script=script, table=TABLE)
         return script, values
 
     def _update_stmt(
@@ -1254,14 +1286,23 @@ class AbstractDatabase(ABC):
 
         """
 
+        if args:
+            if isinstance(args[0], (tuple, list, dict)):
+                data = args[0]
+            else:
+                data = args
+        elif kwargs:
+            data = kwargs
+        else:
+            raise ValueError("No data to insert")
+
         try:
-            if args:
+            if isinstance(data, (tuple, list)):
                 script, values = self._fast_insert_stmt(
-                    *args,
+                    data=data,
+                    TABLE=TABLE,
                     script="INSERT",
                     OR=OR,
-                    TABLE=TABLE,
-                    **kwargs,
                     WITH=WITH,
                 )
 
@@ -1272,11 +1313,10 @@ class AbstractDatabase(ABC):
 
         except (OperationalError, ValueError):
             script, values = self._insert_stmt(
-                *args,
+                data=data,
+                TABLE=TABLE,
                 script="INSERT",
                 OR=OR,
-                TABLE=TABLE,
-                **kwargs,
                 WITH=WITH,
             )
 
@@ -1304,14 +1344,23 @@ class AbstractDatabase(ABC):
 
         """
 
+        if args:
+            if isinstance(args[0], (tuple, list, dict)):
+                data = args[0]
+            else:
+                data = args
+        elif kwargs:
+            data = kwargs
+        else:
+            raise ValueError("No data to insert")
+
         try:
             if args:
                 script, values = self._fast_insert_stmt(
-                    *args,
+                    data=data,
                     script="REPLACE",
                     TABLE=TABLE,
                     WHERE=WHERE,
-                    **kwargs,
                 )
 
                 self.execute(script=script, values=values)
@@ -1321,11 +1370,10 @@ class AbstractDatabase(ABC):
 
         except (OperationalError, ValueError):
             script, values = self._insert_stmt(
-                *args,
+                data=data,
                 script="REPLACE",
                 TABLE=TABLE,
                 WHERE=WHERE,
-                **kwargs,
             )
 
             self.execute(script=script, values=values)
@@ -1384,7 +1432,7 @@ class AbstractDatabase(ABC):
             LIMIT: LimitOffsetType = None,
             OFFSET: LimitOffsetType = None,
             FROM: Union[AnyStr, AbstractTable] = None,
-            JOIN: JoinType = None,
+            JOIN: JoinArgType = None,
             _method="SELECT",
             **kwargs,
     ) -> Tuple:
@@ -1417,7 +1465,7 @@ class AbstractDatabase(ABC):
             > OFFSET=5
         FROM : str
             Name of table, same at TABLE
-        JOIN: JoinType
+        JOIN: JoinArgType
             optional parameter for joining data from other tables ['groups'],
         _method: str
             DON'T CHANGE IT! special argument for unite select_all, select_distinct into select()
@@ -1467,7 +1515,7 @@ class AbstractDatabase(ABC):
             LIMIT: LimitOffsetType = None,
             OFFSET: LimitOffsetType = None,
             FROM: Union[str, List[str], Tuple[str], AbstractTable] = None,
-            JOIN: JoinType = None,
+            JOIN: JoinArgType = None,
             **kwargs,
     ) -> Tuple:
         """
@@ -1536,7 +1584,7 @@ class AbstractDatabase(ABC):
             LIMIT: LimitOffsetType = None,
             OFFSET: LimitOffsetType = None,
             FROM: Union[str, List[str], AbstractTable] = None,
-            JOIN: JoinType = None,
+            JOIN: JoinArgType = None,
             **kwargs,
     ) -> Tuple:
         """
