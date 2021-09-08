@@ -42,13 +42,13 @@ your life easier. Imagine you need create some database, save some data
 into it and take it back. That's how your easy to code with sqllex.
 
 ## Examples
-| DMS |  PostgreSQL | [SQLite3](#sqlite3) | Sqllex version|
-| :--- | :----: | :---:| :---: |
-| 1 | None | ["Zero level" example][awesome-example-0] | 0.2+|
-| 2 | - | ["Pre-Intermediate" example][awesome-example-1] | 0.2+ |
-| 3 | - | [Data Science (v0.1.8.4)][data-science-example] | 0.1.8.4, <0.2 |
-| 4 | - | [Project Showcase][project-showcase] | - |
-
+|  DMS | Example |
+| :----: | :---:|
+| [SQLite3](#sqlite3) | ["Zero level"][awesome-example-0] (v0.2+)| |
+| [SQLite3](#sqlite3) | ["Pre-Intermediate"][awesome-example-1] (v0.2+) |
+| [SQLite3](#sqlite3) | [Data Science][data-science-example] (v0.1.8.4) |
+| [SQLite3](#sqlite3) | [Project Showcase][project-showcase]|
+| PostgreSQL | - |
 
 
 

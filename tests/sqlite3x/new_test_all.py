@@ -70,6 +70,7 @@ def tables_test():
     for x in db.tables_names:
         if not (x in ('t1', 'groups', 'users', 'remove_me', 'sqlite_sequence')):
             print(db.tables_names)
+            print('t1', 'groups', 'users', 'remove_me', 'sqlite_sequence')
             raise MemoryError
 
     db.drop('remove_me')

@@ -107,6 +107,13 @@ class PostgreSQLx(ABDatabase):
 
         self.connect(password=password)     # creating connection with db
 
+        DEC2FLOAT = psycopg2.extensions.new_type(
+            psycopg2.extensions.DECIMAL.values,
+            'DEC2FLOAT',
+            lambda value, curs: float(value) if value is not None else None)
+
+        psycopg2.extensions.register_type(DEC2FLOAT)
+
         if template:
             self.markup(template=template)
 

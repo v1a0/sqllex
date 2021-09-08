@@ -12,9 +12,9 @@ def executemany(
     Parameters
     ----------
     script : AnyStr
-        single or multiple SQLite script(s), might contains placeholders
+        single or multiple SQLite script(s), might contains ph_amount
     values : Tuple[Tuple]
-        Values for placeholders if script contains it
+        Values for ph_amount if script contains it
     request : SQLRequest
         Instead of script and values might execute full request
     Returns

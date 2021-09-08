@@ -11,7 +11,7 @@ def executescript(
     Parameters
     ----------
     script : AnyStr
-        single SQLite script, might contains placeholders
+        single SQLite script, might contains ph_amount
     request : SQLRequest
         Instead of script and values might execute full statement
     Returns

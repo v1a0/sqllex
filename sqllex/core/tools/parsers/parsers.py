@@ -54,7 +54,7 @@ def with_(func: callable) -> callable:
     """
 
     def with_wrapper(*args, **kwargs):
-        if kwargs.get("WITH"):
+        if "WITH" in kwargs:
             with_dict: WithType = kwargs.pop("WITH")
         else:
             with_dict: None = None
@@ -118,7 +118,7 @@ def where_(placeholder: AnyStr = '?') -> callable:
     """
     def where_pre_wrapper(func: callable):
         def where_wrapper(*args, **kwargs):
-            if kwargs.get("WHERE"):
+            if "WHERE" in kwargs:
                 where_: WhereType = kwargs.pop("WHERE")
             else:
                 where_: None = None
@@ -284,7 +284,7 @@ def or_param_(func: callable) -> callable:
         def add_or_arg_to_script(or_argument: str, base_script: str) -> str:
             return f"{base_script} OR {or_argument}"
 
-        if kwargs.get("OR"):
+        if "OR" in kwargs:
             or_arg: OrOptionsType = kwargs.pop("OR")
         else:
             or_arg: None = None
@@ -323,7 +323,7 @@ def order_by_(func: callable) -> callable:
 
     def order_by_wrapper(*args, **kwargs):
 
-        if "ORDER_BY" in kwargs.keys():
+        if "ORDER_BY" in kwargs:
             order_by: OrderByType = kwargs.pop("ORDER_BY")
         else:
             order_by: None = None
@@ -365,7 +365,7 @@ def limit_(func: callable) -> callable:
     """
 
     def limit_wrapper(*args, **kwargs):
-        if "LIMIT" in kwargs.keys():
+        if "LIMIT" in kwargs:
             limit: LimitOffsetType = kwargs.pop("LIMIT")
         else:
             limit: None = None
@@ -401,7 +401,7 @@ def offset_(func: callable) -> callable:
     """
 
     def offset_wrapper(*args, **kwargs):
-        if "OFFSET" in kwargs.keys():
+        if "OFFSET" in kwargs:
             offset: LimitOffsetType = kwargs.pop("OFFSET")
         else:
             offset: bool = False

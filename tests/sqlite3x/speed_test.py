@@ -8,87 +8,83 @@ sqllex.debug.debug_mode(False)
 COMPLEXITY = 10_000
 
 
-def bench_sqllex_connect():
+def time_rec(func: callable):
+    def wrapper_time_rec(*args, **kwargs):
+        print(f"\n{func.__name__}, result=", end='\r')
+        beg = time.time()
+        func(*args, **kwargs)
+        end = time.time()
+        print(f"{func.__name__}, result={end - beg:.3}s")
+
+    return wrapper_time_rec
+
+
+@time_rec
+def bench_sqllex_default():
     db = sqllex.SQLite3x('db-1.db')
     db.connect()
     db.create_table("numbers", {"value": [sqllex.INTEGER]}, IF_NOT_EXIST=True)
     for i in range(COMPLEXITY):
-        # t = time.time()
         db.insert("numbers", i)
-        # if time.time() - t > 0: print(time.time() - t, i) # 0.0020232200622558594 974
     db.disconnect()
 
-# def bench_sqllex_without_connect():
-#     db = sqllex.SQLite3x('db-2.db')
-#     db.create_table("numbers", {"value": [sqllex.INTEGER]}, IF_NOT_EXIST=True)
-#     for i in range(COMPLEXITY):
-#         db.insert("numbers", i)
+
+@time_rec
+def bench_sqllex_without_connect():
+    db = sqllex.SQLite3x('db-2.db')
+    db.disconnect()
+    db.create_table("numbers", {"value": [sqllex.INTEGER]}, IF_NOT_EXIST=True)
+    for i in range(COMPLEXITY):
+        db.insert("numbers", i)
 
 
-def bench_sqlite3():
+@time_rec
+def bench_raw_sqlite3():
     with sqlite3.connect('db-3.db') as db:
         db.execute("CREATE TABLE numbers (value INTEGER)")
         for i in range(COMPLEXITY):
-            # t = time.time()
             db.execute("INSERT INTO numbers (value) VALUES (?)", (i,))
-            # if time.time() - t > 0: print(time.time()-t, i)
 
 
-
+@time_rec
 def branch_fast_insert_sqllex():
     db = sqllex.SQLite3x('db-4.db')
     db.create_table("numbers", {"value": [sqllex.INTEGER]}, IF_NOT_EXIST=True)
-
-    # t = time.time()
     db.insertmany("numbers", ((i,) for i in range(COMPLEXITY)))
-    # if time.time() - t > 0: print(time.time() - t, i) #
 
 
-def branch_fast_insert_sqlite():
+
+@time_rec
+def branch_fast_insert_raw_sqlite():
     with sqlite3.connect('db-5.db') as db:
         db.execute("CREATE TABLE numbers (value INTEGER)")
-        # t = time.time()
         db.executemany("INSERT INTO numbers (value) VALUES (?)", ((i,) for i in range(COMPLEXITY)))
-        # if time.time() - t > 0: print(time.time()-t, i)
 
 
+if __name__ == '__main__':
+    bench_sqllex_default()
+    # v0.1.10.3b = 0.445s
+    # v0.1.10.4 = 0.123s
+    # v0.2.0.0-rc4 = 0.108s (4.12x faster than 0.1.10.3b)
+
+    bench_raw_sqlite3()
+    # sqlite3 = 0.0303s
 
 
-print("\nRunning sqllex_connect")
-beg = time.time()
-bench_sqllex_connect()
-end = time.time()
-print(f"sqllex_connect\t{end - beg:.3}s")   # sqllex_connect (v0.1.10.4 = 0.123s) vs (v0.1.10.3b = 0.445 sec) (3.3969x)
+    print('\n', '-\t'*10)
 
-# print("\nRunning sqllex_without_connect")
-# beg = time.time()
-# bench_sqllex_without_connect()
-# end = time.time()
-# print(f"sqllex_without_connect\t{end - beg:.3}s")    # sqllex_without_connect (v0.1.10.4 = 45.4s) vs (.3b = 0.461 sec)
 
-print("\nRunning sqlite3")
-beg = time.time()
-bench_sqlite3()
-end = time.time()
-print(f"sqlite3\t{end - beg:.3}s")  # sqlite3	0.0308s
+    branch_fast_insert_sqllex()
+    # v0.1.10.3b = 0.145 sec
+    # v0.1.10.4 = 0.0266s
+    # v0.2.0.0-rc4 = 0.0264s (5.49x faster than 0.1.10.3b)
 
-# ======================================
+    branch_fast_insert_raw_sqlite()
+    # sqlite3	0.0179s
 
-print("\nRunning branch_fast_insert_sqllex")
-beg = time.time()
-branch_fast_insert_sqllex()
-end = time.time()
-print(f"branch_fast_insert_sqllex\t{end - beg:.3}s")   # sqllex_connect (v0.1.10.4 = 0.0266s) vs (v0.1.10.3b = 0.145 sec) (3.3969x)
+    print('\n', '-\t'*10)
 
-# print("\nRunning sqllex_without_connect")
-# beg = time.time()
-# bench_sqllex_without_connect()
-# end = time.time()
-# print(f"sqllex_without_connect\t{end - beg:.3}s")    # sqllex_without_connect (v0.1.10.4 = 45.4s) vs (.3b = 0.461 sec)
-
-print("\nRunning branch_fast_insert_sqlite")
-beg = time.time()
-branch_fast_insert_sqlite()
-end = time.time()
-print(f"branch_fast_insert_sqlite\t{end - beg:.3}s")  # sqlite3	0.0308s
-
+    # bench_sqllex_without_connect()
+    # v0.1.10.3b = 46.1s
+    # v0.1.10.4 = 45.4s
+    # v0.2.0.0-rc4 = 46.7s

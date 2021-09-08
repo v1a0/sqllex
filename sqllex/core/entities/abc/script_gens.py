@@ -1,6 +1,5 @@
 from functools import lru_cache
 
-
 """
 Functions to generate string scripts, like:
 "INSERT INTO table_name VALUES (?, ?, ?)"
@@ -10,17 +9,17 @@ All functions caching in memory to make it works faster
 
 
 @lru_cache(maxsize=32)
-def insert_fast(table: str, placeholders: int, need_space: bool = None, placeholder='?'):
+def insert_fast(table: str, ph_amount: int, need_space: bool = None, placeholder='?'):
     return f"" \
            f"{' ' if need_space else ''}" \
            f'INTO "{str(table)}" ' \
            f"VALUES (" \
-           f"{', '.join((placeholder for _ in range(placeholders)))})"
+           f"{', '.join((placeholder for _ in range(ph_amount)))})"
 
 
 @lru_cache(maxsize=32)
-def insert_fast_with_prefix(script: str, table: str, placeholders: int, need_space: bool = None):
-    return f"{script} {insert_fast(table=table, placeholders=placeholders, need_space=need_space)}"
+def insert_fast_with_prefix(script: str, table: str, ph_amount: int, placeholder: str = '?', need_space: bool = None):
+    return f"{script} {insert_fast(table=table, placeholder=placeholder, ph_amount=ph_amount, need_space=need_space)}"
 
 
 @lru_cache(maxsize=32)
@@ -71,7 +70,7 @@ def create(temp: str, if_not_exist: bool, name: str, content: str, without_rowid
 
 @lru_cache(maxsize=32)
 def column(name: str, params: tuple):
-    return f"{name} {' '.join(str(param) for param in params)},\n"
+    return f""""{name}" {' '.join(str(param) for param in params)},\n"""
 
 
 @lru_cache(maxsize=32)

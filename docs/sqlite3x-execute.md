@@ -12,9 +12,9 @@ def execute(
     Parameters
     ----------
     script : AnyStr
-        single SQLite script, might contains placeholders
+        single SQLite script, might contains ph_amount
     values : Tuple
-        Values for placeholders if script contains it
+        Values for ph_amount if script contains it
     request : SQLRequest
         Instead of script and values might execute full statement
     Returns

@@ -48,7 +48,6 @@ def executemany(script: AnyStr, values: Tuple, connection: connection):
 
         try:
             cur.executemany(script, values)
-            cur.commit()
 
             try:
                 return cur.fetchall()
@@ -58,6 +57,8 @@ def executemany(script: AnyStr, values: Tuple, connection: connection):
 
         except Exception as error:
             raise error
+
+        conn.commit()
 
     if script:  # it's necessary
         script = script.strip()
@@ -76,7 +77,6 @@ def executescript(script: AnyStr, connection: connection):
 
         try:
             cur.executescript(script)
-            cur.commit()
 
             try:
                 return cur.fetchall()
@@ -86,6 +86,8 @@ def executescript(script: AnyStr, connection: connection):
 
         except Exception as error:
             raise error
+
+        conn.commit()
 
     if script:  # it's necessary
         script = script.strip()

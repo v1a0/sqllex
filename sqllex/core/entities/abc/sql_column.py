@@ -38,16 +38,19 @@ class AbstractColumn:
         if isinstance(value, SearchCondition):
             return SearchCondition(
                 f"({self}{operator}({value.script})",
-                values=(value.values,)
+                values=(value.values,),
+                placeholder=self.placeholder
             )
         elif isinstance(value, AbstractColumn):
             return SearchCondition(
                 f"({self}{operator}{value}",
+                placeholder=self.placeholder
             )
         else:
             return SearchCondition(
                 f"({self}{operator}{self.placeholder})",
-                values=(value,)
+                values=(value,),
+                placeholder=self.placeholder
             )
 
     def __lt__(self, value) -> SearchCondition:

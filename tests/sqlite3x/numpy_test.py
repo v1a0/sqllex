@@ -24,6 +24,8 @@ vaccine_db.create_table(
     IF_NOT_EXIST=True
 )
 
+print(-1, data)
+
 vaccine_db.updatemany('Total', data)
 
 vaccine_db.updatemany('Total', array([[],[]]))

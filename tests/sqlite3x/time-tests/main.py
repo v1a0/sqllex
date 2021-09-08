@@ -78,16 +78,16 @@ if __name__ == '__main__':
     db.connect()
 
     with cProfile.Profile() as pr:
-        #                       # total runtime/(records), speedup 0.1.10.5c vs 0.2.0.0-rc3
-        #                       # all == 0.674 sec
-        crete_table(db)       # 0.00333 sec/(1    table), 1x
-        insert_fats(db)       # 0.20000 sec/(10_000 rec), 1x
-        insert_slow(db)       # 0.69250 sec/(10_000 rec), 1x
-        insert_many_fast(db)  # 0.03473 sec/(10_000 rec), 1x
-        insert_many_slow(db)  # 0.03330 sec/(10_000 rec), 1.1x
-        select_all(db)        # 0.00995 sec/(10_000 rec), 1.1x
-        select_where_1(db)    # 0.00665 sec/(10_000 rec), 1.1x
-        select_where_2(db)    # 0.00699 sec/(10_000 rec), 1.22x
+        #                     # total runtime/(records) 0.2.0.0-rc4
+        #                     # all == 0.651 sec (1.03x)
+        crete_table(db)       # 0.00333 sec/(1    table),
+        insert_fats(db)       # 0.194000 sec/(10_000 rec),
+        insert_slow(db)       # 0.68840 sec/(10_000 rec),
+        insert_many_fast(db)  # 0.03620 sec/(10_000 rec),
+        insert_many_slow(db)  # 0.03409 sec/(10_000 rec),
+        select_all(db)        # 0.01042 sec/(10_000 rec),
+        select_where_1(db)    # 0.00680 sec/(10_000 rec),
+        select_where_2(db)    # 0.00706 sec/(10_000 rec),
         pass
 
     db.disconnect()

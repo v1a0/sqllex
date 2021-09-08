@@ -168,7 +168,7 @@ class AbstractTable(ABC):
         REPLACE data into table
         """
 
-        self.db.replace(self.name, *args, **kwargs, WITH=WITH)
+        self.db.replace(self.name, *args, **kwargs)
 
     def insertmany(
             self,
@@ -569,7 +569,7 @@ class AbstractDatabase(ABC):
         return self._get_tables_names()
 
     @property
-    def placeholder(self) -> Tuple[str]:
+    def placeholder(self) -> str:
         """
         Placeholder symbol
         """
@@ -729,7 +729,7 @@ class AbstractDatabase(ABC):
 
     def _fast_insert_stmt(
             self, data: Union[Tuple, List], TABLE: Union[AnyStr, AbstractTable], script="", values=(),
-            OR=None, WITH=None, WHERE: WhereType = None
+            OR: OrOptionsType = None, WITH: WithType = None, WHERE: WhereType = None
     ) -> ScriptAndValues:
         """
         Constructor of fast insert/replace statements
@@ -740,13 +740,12 @@ class AbstractDatabase(ABC):
 
         script = script_gen.insert_fast_with_prefix(
             script=script,
-            table=TABLE, placeholders=len(data), need_space=bool(script)
+            table=TABLE, ph_amount=len(data), need_space=bool(script), placeholder=self.placeholder
         )
         values += tuple(data)
 
         return script, values
 
-    @args_parser
     def _insertmany_stmt(
             self,
             *args: InsertingManyData,
@@ -905,9 +904,9 @@ class AbstractDatabase(ABC):
 
         for (key, val) in SET.items():
             if issubclass(type(key), AbstractColumn):
-                script += f"'{key.name}'="
+                script += f'"{key.name}"='
             else:
-                script += f"'{key}'="
+                script += f'"{key}"='
 
             if isinstance(val, SearchCondition):
                 script += f"{val}, "
@@ -962,9 +961,9 @@ class AbstractDatabase(ABC):
         Parameters
         ----------
         script : AnyStr
-            single SQLite script, might contains placeholders
+            single SQLite script, might contains ph_amount
         values : Tuple
-            Values for placeholders if script contains it
+            Values for ph_amount if script contains it
 
         Returns
         ----------
@@ -986,9 +985,9 @@ class AbstractDatabase(ABC):
         Parameters
         ----------
         script : AnyStr
-            single or multiple SQLite script(s), might contains placeholders
+            single or multiple SQLite script(s), might contains ph_amount
         values : Tuple[Tuple]
-            Values for placeholders if script contains it
+            Values for ph_amount if script contains it
 
         Returns
         ----------
@@ -1009,7 +1008,7 @@ class AbstractDatabase(ABC):
         Parameters
         ----------
         script : AnyStr
-            single SQLite script, might contains placeholders
+            single SQLite script, might contains ph_amount
 
         Returns
         ----------
@@ -1409,16 +1408,24 @@ class AbstractDatabase(ABC):
         """
 
         if len(args) > 1:
-            args = [args]
+            script, values = self._insertmany_stmt(
+                args,
+                TABLE=TABLE,
+                OR=OR,
+                script="INSERT",
+                values=(),
+                **kwargs
+            )
 
-        script, values = self._insertmany_stmt(
-            args,
-            TABLE=TABLE,
-            OR=OR,
-            script="INSERT",
-            values=(),
-            **kwargs
-        )
+        else:
+            script, values = self._insertmany_stmt(
+                *args,
+                TABLE=TABLE,
+                OR=OR,
+                script="INSERT",
+                values=(),
+                **kwargs
+            )
 
         self.executemany(script=script, values=values)
 
