@@ -1,3 +1,6 @@
+"""
+PostgreSQLx
+"""
 from sqllex.core.entities.postgresqlx.postgresqlx import *
 
 __all__ = [

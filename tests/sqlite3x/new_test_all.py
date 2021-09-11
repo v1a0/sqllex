@@ -364,8 +364,8 @@ def getitem_test():
         WHERE=t7_id == 1
     )
 
-    if t7.select([t7_name, 'id'], WHERE=(t7_id == 2) | (t7_id == 1) & 1) != [('XXXX', 1), ('Blex', 2)]:
-        raise MemoryError
+    assert t7.select([t7_name, 'id'], WHERE=(t7_id == 2) | (t7_id == 1) & 1) == [('XXXX', 1), ('Blex', 2)], (
+           t7.select([t7_name, 'id'], WHERE=(t7_id == 2) | (t7_id == 1) & 1))
 
     t7.update(
         {
@@ -374,9 +374,9 @@ def getitem_test():
         WHERE=(t7_name == 'XXXX')
     )
 
-    if t7.select([t7_name, t7_id], WHERE=(t7_id == 3)) != [('XXXX', 3)]:
-        print(t7.select([t7_name, t7_id], WHERE=(t7_id == 3)))
-        raise MemoryError
+    assert t7.select([t7_name, t7_id], WHERE=(t7_id == 3)) == [('XXXX', 3)], (
+           t7.select([t7_name, t7_id], WHERE=(t7_id == 3)))
+
 
 
 def has_add_remove_column_test():
@@ -391,20 +391,41 @@ def has_add_remove_column_test():
     t8.add_column({"col1": [TEXT, DEFAULT, '123']})
     t8.add_column({"col2": TEXT})
 
-    if t8.columns_names != ['id', 'test', 'col1', 'col2']:
-        print(t8.columns_names)
-        raise MemoryError
+    assert t8.columns_names == ['id', 'test', 'col1', 'col2'], (
+           t8.columns_names)
 
     col2 = t8['col2']
     t8.remove_column(col2)
     t8.remove_column("col1")
 
-
-    if t8.columns_names != ['id', 'test']:
-        raise MemoryError
+    assert t8.columns_names == ['id', 'test'], (
+           t8.columns_names)
     
     if not t8.has_column("id") and not t8.has_column("test") and t8.has_column("col1") and t8.has_column("col2"):
         raise MemoryError
+
+
+def like_test():
+    db.create_table(
+        't9',
+        {
+            'id': INTEGER,
+            'test': TEXT
+        }
+    )
+    t9 = db["t9"]
+
+    t9.insertmany(
+        (
+            (1, "Data1"),
+            (2, "Data2"),
+            (3, "Asdf3"),
+            (4, "Data4"),
+        )
+    )
+
+    assert t9.select(ALL, WHERE=(t9['test'] | LIKE | "%Data%")) == [(1, 'Data1'), (2, 'Data2'), (4, 'Data4')], (
+           t9.select(ALL, WHERE=(t9['test'] | LIKE | "%Data%")))
 
 
 # Start time counting
@@ -424,6 +445,7 @@ delete_test()
 replace_test()
 getitem_test()
 get_tables_test()
+like_test()
 # has_add_remove_column_test()   # workflow falling by no reason issue #
 
 # Disconnect
@@ -438,3 +460,5 @@ print(t)
 
 # Remove db
 remove_db()
+
+

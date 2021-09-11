@@ -17,3 +17,8 @@ def copy_docs(parent_func: callable, sep='\n'):
             pass
         return func
     return docs_wrapper
+
+
+__all__ = [
+    'copy_docs'
+]

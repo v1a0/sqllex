@@ -1,3 +1,6 @@
+"""
+column_types used for lambda function to get priority for element in list
+"""
 from sqllex.types import AnyStr, ColumnDataType, Union
 from sqllex.constants import CONST_PRIORITY
 

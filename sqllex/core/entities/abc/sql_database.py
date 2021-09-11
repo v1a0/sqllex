@@ -1,3 +1,6 @@
+"""
+AbstractTable and AbstractDatabase
+"""
 from abc import ABC, abstractmethod
 from sqllex.debug import logger
 from sqllex.types.types import *
@@ -5,7 +8,6 @@ from sqllex.constants import FOREIGN_KEY, ALL, REPLACE
 import sqllex.core.entities.abc.script_gens as script_gen
 from sqllex.core.tools.convertors import crop
 import sqllex.core.tools.sorters as sort
-from sqllex.core.tools.parsers.parsers import args_parser
 from sqllex.core.entities.abc.sql_column import SearchCondition
 from sqllex.core.entities.abc.sql_column import AbstractColumn
 from sqlite3 import OperationalError
@@ -13,7 +15,7 @@ from sqlite3 import OperationalError
 
 class AbstractTable(ABC):
     """
-    Sub-class of AbstractDatabase, itself one table of ABDatabase
+    Sub-class of AbstractDatabase, itself one table inside ABDatabase
     Have same methods but without table name argument
 
     """
@@ -26,8 +28,8 @@ class AbstractTable(ABC):
             AbstractDatabase database object
         name : str
             Name of table
-
         """
+        
         if not isinstance(db, AbstractDatabase):
             raise TypeError(f"Argument db have oto be AbstractDatabase not {type(db)}")
         self.db: AbstractDatabase = db
@@ -79,9 +81,7 @@ class AbstractTable(ABC):
         ----------
         column : ColumnsType
             ColumnType tuple like {'second_name': [TEXT, UNIQUE]}
-
         """
-
         self.db.add_column(table=self.name, column=column)
 
     def remove_column(self, column: Union[AnyStr, AbstractColumn]) -> None:
@@ -91,10 +91,9 @@ class AbstractTable(ABC):
         Parameters
         ----------
         column : Union[AnyStr, AbstractColumn]
-            Name of column or AbstractColumn object.
-
+            Name of column or column-object to remove
         """
-
+        
         self.db.remove_column(self.name, column)
 
     def has_column(self, column: Union[AnyStr, AbstractColumn]) -> bool:
@@ -104,7 +103,7 @@ class AbstractTable(ABC):
         Parameters
         ----------
         column : Union[AnyStr, AbstractColumn]
-            Name of column or AbstractColumn object.
+            Name of column or column-object.
 
         Returns
         ----------
@@ -147,11 +146,13 @@ class AbstractTable(ABC):
 
         Parameters
         ----------
+        args : InsertingData
+            Inserting data-set
         OR : OrOptionsType
             Action in case if inserting has failed. Optional parameter.
             > OR='IGNORE'
         WITH : WithType
-            disabled!
+            Disabled!
         """
 
         self.db.insert(
@@ -183,13 +184,13 @@ class AbstractTable(ABC):
         Parameters
         ----------
         args : Union[List, Tuple]
-            1'st way set values for insert
+            1'st way set values for insertion
             > ((1, 'Alex'), (2, 'Bob'))
         OR : OrOptionsType
             Action in case if inserting has failed. Optional parameter.
             > OR='IGNORE'
         kwargs : Any
-            2'nd way set values for insert
+            2'nd way set values for insertion
             id=(1, 2), name=('ALex', 'Bob')
 
         """
@@ -331,14 +332,12 @@ class AbstractTable(ABC):
             **kwargs,
     ) -> None:
         """
-        DELETE FROM table WHERE {something}
+        DELETE FROM table
 
         Parameters
         ----------
         WHERE : WhereType
            optional parameter for conditions
-           > db: AbstractDatabase
-           > ...
            > WHERE=(db['table_name']['column_name'] == 'some_value')
 
         """
@@ -364,14 +363,12 @@ class AbstractTable(ABC):
             ColumnType and value to set
         WHERE : WhereType
             optional parameter for conditions
-            > db: AbstractDatabase
-            > ...
             > WHERE=(db['table_name']['column_name'] == 'some_value')
         OR : OrOptionsType
             Action in case if inserting has failed. Optional parameter.
             > OR='IGNORE'
         WITH : WithType
-            disabled!
+            Disabled!
         """
 
         self.db.update(
@@ -422,8 +419,6 @@ class AbstractTable(ABC):
         ----------
         WHERE : WhereType
            optional parameter for conditions
-           > db: AbstractDatabase
-           > ...
            > WHERE=(db['table_name']['column_name'] == 'some_value')
         ORDER_BY : OrderByType
             optional parameter for conditions
@@ -433,7 +428,9 @@ class AbstractTable(ABC):
             Set limit or selecting records
             > LIMIT=10
 
-        **kwargs :
+        **kwargs : Any
+            You can also set where condition by kwargs
+            > name="MyName", age=42 
 
         Returns
         ----------
@@ -596,7 +593,6 @@ class AbstractDatabase(ABC):
     def _get_table(self, name):
         """
         Get specific table as SQLite3xTable objects
-
         """
         pass
 
@@ -778,7 +774,7 @@ class AbstractDatabase(ABC):
             max_arg_len = max(map(lambda arg: len(arg), args))  # max len of arg in values
             min_arg_len = min(map(lambda arg: len(arg), args))  # min len of arg in values
 
-            temp_ = tuple(0 for _ in range(max_arg_len))  # (1, 'Alex', 'Django')
+            temp_ = tuple(0 for _ in range(max_arg_len))
 
 
         elif kwargs:
@@ -839,8 +835,8 @@ class AbstractDatabase(ABC):
     ) -> ScriptAndValues:
         """
         Constructor of select(-like) statements
-
         """
+        
         if not TABLE:
             raise ValueError("Argument TABLE unset and have not default value")
 
@@ -1281,7 +1277,7 @@ class AbstractDatabase(ABC):
             Action in case if inserting has failed. Optional parameter.
             > OR='IGNORE'
         WITH : WithType
-            Disablesd!
+            Disabled!
 
         """
 
@@ -1337,8 +1333,6 @@ class AbstractDatabase(ABC):
             Name of table
         WHERE : WhereType
             Optional parameter for conditions
-            > db: AbstractDatabase
-            > ...
             > WHERE=(db['table_name']['column_name'] == 'some_value')
 
         """
@@ -1455,11 +1449,9 @@ class AbstractDatabase(ABC):
             > SELECT=['id', 'name']
         WHERE : WhereType
            optional parameter for conditions
-           > db: AbstractDatabase
-           > ...
            > WHERE=(db['table_name']['column_name'] == 'some_value')
         WITH : WithType
-            disabled!
+            Disabled!
         ORDER_BY : OrderByType
             optional parameter for conditions
             > ORDER_BY=['age', 'DESC']
@@ -1536,11 +1528,9 @@ class AbstractDatabase(ABC):
             columns to select. Value '*' by default
          WHERE : WhereType
             optional parameter for conditions
-            > db: AbstractDatabase
-            > ...
             > WHERE=(db['table_name']['column_name'] == 'some_value')
         WITH : WithType
-            disabled!
+            Disabled!
         ORDER_BY : OrderByType
             optional parameter for conditions
             > ORDER_BY=['age', 'DESC']
@@ -1605,11 +1595,9 @@ class AbstractDatabase(ABC):
             columns to select. Value '*' by default
          WHERE : WhereType
             optional parameter for conditions
-            > db: AbstractDatabase
-            > ...
             > WHERE=(db['table_name']['column_name'] == 'some_value')
         WITH : WithType
-            disabled!
+            Disabled!
         ORDER_BY : OrderByType
             optional parameter for conditions
             > ORDER_BY=['age', 'DESC']
@@ -1670,7 +1658,7 @@ class AbstractDatabase(ABC):
             > ...
             > WHERE=(db['table_name']['column_name'] == 'some_value')
         WITH : WithType
-            disabled!
+            Disabled!
 
         """
 
@@ -1712,7 +1700,7 @@ class AbstractDatabase(ABC):
             Action in case if inserting has failed. Optional parameter.
             > OR='IGNORE'
         WITH : WithType
-            disabled!
+            Disabled!
         """
 
         if not WHERE:

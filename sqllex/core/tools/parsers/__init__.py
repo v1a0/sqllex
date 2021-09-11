@@ -1,3 +1,6 @@
+"""
+
+"""
 from sqllex.core.tools.parsers.parsers import *
 
 __all__ = [
@@ -9,6 +12,4 @@ __all__ = [
     'order_by_',  # lgtm [py/undefined-export]
     'limit_',  # lgtm [py/undefined-export]
     'offset_',  # lgtm [py/undefined-export]
-
-    'args_parser',  # lgtm [py/undefined-export]
 ]

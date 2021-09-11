@@ -1,5 +1,9 @@
+"""
+SqllexLogger for logging
+"""
 from loguru import logger as __logger
 from sys import stderr
+
 
 class SqllexLogger:
     """
@@ -36,20 +40,6 @@ class SqllexLogger:
 
     def stop(self):
         self.logger.stop()
-#
-#
-# class LogFilter:
-#     """
-#     Class to filter logging
-#
-#     """
-#     def __init__(self, level):
-#         self.level = level
-#
-#     def __call__(self, record):
-#         levelno = __logger.level(self.level).no
-#         return record["level"].no >= levelno
-
 
 
 def debug_mode(switch: bool = False, log_file: str = "sqllex.log", mode: str = ''):
@@ -64,24 +54,13 @@ def debug_mode(switch: bool = False, log_file: str = "sqllex.log", mode: str = '
         Advanced mode options
     """
 
-    # if not mode:
-    #     if switch:
-    #         mode = "DEBUG"
-    #     else:
-    #         mode = "INFO"
-    #
-    # if log_file:
-    #     logger.add(log_file, filter=LogFilter(mode), level=0, rotation="10Mb", compression="zip")
-    #
-    # logger.add(sys.stderr, filter=LogFilter(mode), level=0)
-
     if mode == "DEBUG":
         logger.level(0)
     elif mode == "INFO":
         logger.level(1)
-    elif mode == "WARNING":
-        logger.level(2)
     elif mode == "?":
+        logger.level(2)
+    elif mode == "WARNING":
         logger.level(3)
     elif mode == "ERROR":
         logger.level(4)

@@ -1,40 +1,19 @@
-# import psycopg2
-# from psycopg2 import Error
-# from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
-#
-# connection = psycopg2.connect(
-#     dbname="postgres",
-#     user="postgres",
-#     password="admin",
-#     host="127.0.0.1",
-#     port="5432"
-# )
-#
-# cursor = connection.cursor()
-# cursor.execute("""
-# SELECT * FROM book
-# """)
-#
-#
-# print(cursor.fetchall())
-# print(type(connection))
+from sqllex import SQLite3x, TEXT, NOT_NULL, INTEGER
 
+db = SQLite3x(                              
+    path='my_database.db',                      
+    template={                              
+        "users": {                          
+            "username": [TEXT, NOT_NULL],   
+            "age": INTEGER,                 
+        }                                   
+    }                                       
+)
 
-# from sqllex import PostgreSQLx
-#
-# db = PostgreSQLx(
-#     dbname="postgres",
-#     user="postgres",
-#     password="admin",
-#     host="127.0.0.1",
-#     port="5432"
-# )
-#
-# print(db.select("book", '*'))
-# print(db.select("book", '*', WHERE=db['book']['book_id'] == 1))
+users = db["users"]
 
+users.insert('Sqllex', 33)
 
-import sqllex.classes as cl
-print(dir(cl))
+users_33 = users.find(age=33)
 
-print(cl.SQLite3x._insertmany_stmt.__doc__)
+print(users_33)  # [('Sqllex', 33)]

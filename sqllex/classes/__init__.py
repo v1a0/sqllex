@@ -1,6 +1,11 @@
+"""
+All sqllex (public) classes
+"""
+
 from sqllex.core.entities.sqlite3x import *
 from sqllex.core.entities.postgresqlx import *
 from sqllex.core.entities.abc import SearchCondition, AbstractTable, AbstractDatabase, AbstractColumn
+
 
 __all__ = [
     # ABCs

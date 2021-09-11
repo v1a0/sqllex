@@ -1,3 +1,6 @@
+"""
+Listers
+"""
 from sqllex.types import Any, List
 
 
@@ -59,11 +62,10 @@ def return2list(func: callable) -> callable:
     def t2l_wrapper(*args, **kwargs):
         ret = func(*args, **kwargs)
 
-        if not issubclass(ret.__class__, SQLStatement):
-            ret = lister(ret)
+        ret = lister(ret)
 
-            if not isinstance(ret, list):
-                ret = [ret]
+        if not isinstance(ret, list):
+            ret = [ret]
 
         return ret
 

@@ -1,10 +1,13 @@
+"""
+PostgreSQLxTable and PostgreSQLx
+"""
 from sqllex.core.entities.abc import \
     AbstractDatabase as ABDatabase, \
     AbstractTable as ABTable, \
     AbstractColumn as ABColumn
 import sqllex.core.tools.parsers.parsers as parse
 from sqllex.debug import logger
-from sqllex.exceptions import TableInfoError
+from sqllex.exceptions import TableNotExist
 from sqllex.types.types import *
 import sqllex.core.entities.postgresqlx.middleware as middleware
 import psycopg2
@@ -174,7 +177,6 @@ class PostgreSQLx(ABDatabase):
     @parse.or_param_
     @parse.with_
     @parse.from_as_
-    @parse.args_parser
     @copy_docs(ABDatabase._insert_stmt)
     def _insert_stmt(self, *args, **kwargs: Any) -> ScriptAndValues:
         return super(PostgreSQLx, self)._insert_stmt(*args, **kwargs)
@@ -183,7 +185,6 @@ class PostgreSQLx(ABDatabase):
     @parse.or_param_
     @parse.with_
     @parse.from_as_
-    @parse.args_parser
     @copy_docs(ABDatabase._fast_insert_stmt)
     def _fast_insert_stmt(self, *args, **kwargs) -> ScriptAndValues:
         return super(PostgreSQLx, self)._fast_insert_stmt(*args, **kwargs)
@@ -291,7 +292,7 @@ class PostgreSQLx(ABDatabase):
         columns: Tuple = tuple(map(lambda item: item[0], columns_))
 
         if not columns:
-            raise TableInfoError(f"No columns or table {table}")
+            raise TableNotExist(f"No columns or table {table}")
 
         return columns
 

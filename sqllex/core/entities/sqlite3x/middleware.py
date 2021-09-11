@@ -1,3 +1,6 @@
+"""
+Middleware for SQLite3x
+"""
 from sqllex.types import Tuple, AnyStr
 from sqllex.debug import logger
 import sqlite3

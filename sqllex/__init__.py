@@ -1,8 +1,11 @@
+"""
+Sqllex package
+"""
 from sqllex.classes import *
 from sqllex.constants import *
 from sqllex.debug import logger
 
-__version__ = '0.1.10.4'
+__version__ = '0.2.0.0'
 
 __all__ = [
     # classes
@@ -43,6 +46,7 @@ __all__ = [
     "INNER_JOIN",                   # lgtm [py/undefined-export]
     "LEFT_JOIN",                    # lgtm [py/undefined-export]
     "CROSS_JOIN",                   # lgtm [py/undefined-export]
+    "LIKE",                         # lgtm [py/undefined-export]
 
     # debug tools
     "logger",                       # lgtm [py/undefined-export]

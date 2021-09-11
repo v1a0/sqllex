@@ -3,7 +3,7 @@
 
 <img src="./pics/sqllex-logo.svg" width="300px" alt="sqllex logo">
 
-# SQLLEX v0.1.10 📚
+# SQLLEX v0.2.0.0 📚
 
 ![python-3-9]
 [![lgtm-quality-img]][lgtm-quality-src]
@@ -25,15 +25,14 @@ Better than <b>sqlite3</b>. Seriously, try it out<br>
 pip install sqllex
 ```
 
-If you need most stable version install **sqllex==0.1.10.3**
+If you need most stable version install **sqllex==0.2.0.0**
 
 
 | Version |  Status | Tests, and actions |
 | :--------: | :----------------------------: | :---: |
-| `0.1.10.4`    | ✔️ stable (testing)  <br> ✔️ supported      | [![code-ql-img]][code-ql-src] <br> [![sqlite3x-test-img]][sqlite3x-test-src] <br> [![pypi-upload-img]][pypi-upload-img] |
-| `0.1.10.3`    | ✔️ stable            <br> ✔️ supported      | ✔️All passed |
-| `<=0.1.9.10`  | ✔️ stable            <br> ❌️ outdated       |  ✔️Mostly passing |
-| `<= 0.1.8.x`  | ⚠️ unstable          <br> ❌️ outdated       |  ~ |
+| `0.2.0.0`    | ✔️ supported         <br> ✔️ stable         | [![code-ql-img]][code-ql-src] <br> [![sqlite3x-test-img]][sqlite3x-test-src] <br> [![pypi-upload-img]][pypi-upload-img] |
+| `0.1.10.5`    | ⚠️ outdated         <br> ✔️ stable         | ⚠️ Mostly passing |
+| `<=0.1.10.4`  | ❌️ outdated       | ~ |
 
 
 ## About
@@ -72,7 +71,7 @@ users.insert('Sqllex', 33)
 
 users_33 = users.find(age=33)
 
-print(users_33)  # [['Sqllex', 33]]
+print(users_33)  # [('Sqllex', 33)]
 ```
 
 <br>
@@ -87,9 +86,9 @@ from sqllex import *
 db = SQLite3x(                              # create database 
     path='my_data.db',                      # path to your database, or where you would like it locate
     template={                              # schema for tables inside your database                              
-        "users": {                          # name for the 1'st table
-            "username": [TEXT, NOT_NULL],   # 1'st column of table, named "username", contains text-data, can't be NULL
-            "age": INTEGER,                 # 2'nd column of table, named "age", contains integer value
+        "users": {                              # name for the 1'st table
+            "username": [TEXT, NOT_NULL],       # 1'st column of table, named "username", contains text-data, can't be NULL
+            "age": INTEGER,                     # 2'nd column of table, named "age", contains integer value
         }                                   # end of table
     }                                       # end of schema (template)
 )
@@ -106,21 +105,12 @@ users.insert('Sqllex', 33)
 users_33 = users.find(age=33)
 
 # Print results
-print(users_33)  # [['Sqllex', 33]]
+print(users_33)  # [('Sqllex', 33)]
 ```
 
 </details>
 
 ####  If you never used SQLite before read [this awesome example #0][awesome-example-0] instead
-
-
-# Examples
-
- - 
- - 
- - 
- -  ⭐
-
 
 # Not enough? Read more in [Sqllex Documentation!][wiki-src]
 

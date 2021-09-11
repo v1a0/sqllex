@@ -1,5 +1,5 @@
 from sqllex.types import *
-from sqllex.constants import INNER_JOIN, LEFT_JOIN, CROSS_JOIN
+from sqllex.constants import INNER_JOIN, LEFT_JOIN, CROSS_JOIN, LIKE
 from sqllex.core.entities.abc.sql_column import AbstractColumn
 from sqllex.core.entities.abc.sql_search_condition import SearchCondition
 
@@ -147,7 +147,7 @@ def where_(placeholder: AnyStr = '?') -> callable:
                             "<", "<<", "<=",
                             ">=", ">>", ">",
                             "=", "==", "!=",
-                            "<>", 'LIKE',
+                            "<>", LIKE,
                         ]:
                             operator = values.pop(0)
 
@@ -418,31 +418,6 @@ def offset_(func: callable) -> callable:
     return offset_wrapper
 
 
-def args_parser(func: callable):
-    """
-    Decorator for parsing arguments
-    If func got only one argument which contains args for function it'll unwrap it
-
-    """
-
-    def args_parser_wrapper(self, *args: Any, **kwargs: Any):
-
-        if args and len(args) == 1:
-
-            args = args[0]
-
-            if isinstance(args, (str, int)):
-                return func(self, args, **kwargs)
-            elif isinstance(args, dict):
-                kwargs.update(args)
-                return func(self, **kwargs)
-
-        return func(self, *args, **kwargs)
-
-    return args_parser_wrapper
-
-
-
 __all__ = [
     'from_as_',
     'with_',
@@ -452,6 +427,4 @@ __all__ = [
     'order_by_',
     'limit_',
     'offset_',
-
-    'args_parser',
 ]

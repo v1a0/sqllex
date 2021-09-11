@@ -1,4 +1,8 @@
+"""
+AbstractColumn
+"""
 from sqllex.types import AnyStr
+from sqllex.constants import LIKE
 from sqllex.core.entities.abc.sql_search_condition import SearchCondition
 
 
@@ -6,15 +10,6 @@ class AbstractColumn:
     """
     Sub-class of AbstractTable, itself it's one abstract column inside of abstract table
     Primary have the same methods but without table name argument
-
-    Attributes
-    ----------
-    table : AbstractTable
-        AbstractTable parent table object
-    name : str
-        Name of column
-    placeholder : str
-        Symbol used in scripts as placeholder
 
     This class existing for generating SearchConditions
     in constructions like this:
@@ -24,9 +19,23 @@ class AbstractColumn:
         db['table_name']['column_name'] != x
         ...
         db['table_name']['column_name'] / x
+
+        AND SPECIAL: column-like-reg_ex
+        db['table_name']['column_name'] |LIKE| '%find_me%'
     """
 
     def __init__(self, table: str, name: AnyStr, placeholder='?'):
+        """
+        Attributes
+        ----------
+        table : AbstractTable
+            Parent table object
+        name : str
+            Name of column
+        placeholder : str
+            Symbol used in scripts as placeholder
+
+        """
         self.table = table
         self.name = name
         self.placeholder = placeholder
@@ -86,9 +95,24 @@ class AbstractColumn:
     def __divmod__(self, value) -> SearchCondition:
         return self._str_gen(value, '%')
 
-    # def __list__(self) -> List[Any]:
-    #     return self.table.select_all(self.name)
+    def __or__(self, value):
+        """
+        column-like-reg_ex
+        column |LIKE| '%find_me%'
+        """
+        assert value is LIKE, \
+            "Column object does not support '|' operator by itself. " \
+            "Supports only construction with LIKE (as syntax sugar): " \
+            """db['column'] |LIKE| '%find_me%' """
+        return SearchCondition(
+                script=f"({self} LIKE {self.placeholder})",
+                placeholder=self.placeholder,
+                liked=True
+            )
 
     def __hash__(self):
         return hash(f"'{self.name}'.'{self.table}'")
 
+    # never used
+    # def __list__(self) -> List[Any]:
+    #     return self.table.select_all(self.name)

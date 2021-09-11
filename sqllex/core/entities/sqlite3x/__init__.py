@@ -1,3 +1,6 @@
+"""
+SQLite3x
+"""
 from sqllex.core.entities.sqlite3x.sqlite3x import *
 
 __all__ = [

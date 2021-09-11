@@ -1,3 +1,6 @@
+"""
+All sqllex types
+"""
 from sqllex.types.types import *
 
 __all__ = [

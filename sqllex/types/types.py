@@ -30,7 +30,8 @@ ConstantType = Union[
         "OR",
         "NULL",
         "AS",
-        "ON"
+        "ON",
+        "LIKE"
     ],
     ForeignKey
 ]
@@ -73,6 +74,7 @@ InsertingData = Union[
 InsertingManyData = Union[
     List[InsertingData],
     Tuple[InsertingData],
+    List, Tuple
 ]
 
 # Type for parameter of OR argument in INSERT method (?)

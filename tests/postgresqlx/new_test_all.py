@@ -269,6 +269,7 @@ def insertmany_test():
         raise MemoryError
 """
 
+
 def update_test():
     db.create_table(
         't4',

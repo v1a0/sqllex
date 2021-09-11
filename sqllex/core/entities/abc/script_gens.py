@@ -1,11 +1,11 @@
-from functools import lru_cache
-
 """
 Functions to generate string scripts, like:
 "INSERT INTO table_name VALUES (?, ?, ?)"
 
 All functions caching in memory to make it works faster
 """
+from functools import lru_cache
+
 
 
 @lru_cache(maxsize=32)

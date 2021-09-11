@@ -1,4 +1,7 @@
-from sqllex.types import Tuple, AnyStr, Mapping
+"""
+Middleware for PostgreSQLx
+"""
+from sqllex.types import Tuple, AnyStr
 from sqllex.debug import logger
 from psycopg2.extensions import connection
 import psycopg2

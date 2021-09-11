@@ -1,3 +1,6 @@
+"""
+All sqllex entities
+"""
 from sqllex.core.entities.sqlite3x import *
 from sqllex.core.entities.postgresqlx import *
 

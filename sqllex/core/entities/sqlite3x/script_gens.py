@@ -1,11 +1,13 @@
-from functools import lru_cache
-
 """
+Specific script_gens for sqlite3
+(pragma requests)
+
 Functions to generate string scripts, like:
 "INSERT INTO table_name VALUES (?, ?, ?)"
 
 All functions caching in memory to make it works faster
 """
+from functools import lru_cache
 
 
 @lru_cache(maxsize=32)
