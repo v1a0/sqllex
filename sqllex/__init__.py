@@ -5,7 +5,7 @@ from sqllex.classes import *
 from sqllex.constants import *
 from sqllex.debug import logger
 
-__version__ = '0.2.0.0'
+__version__ = '0.2.0.0a'
 
 __all__ = [
     # classes
