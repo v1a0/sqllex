@@ -17,7 +17,7 @@ from sqllex.core.tools.docs_helpers import copy_docs
 
 class PostgreSQLxTable(ABTable):
     """
-    Sub-class of SQLite3x, itself one table of ABDatabase
+    Sub-class of SQLite3x, itself one table of ABTable
     Have same methods but without table name argument
 
     """
@@ -146,12 +146,6 @@ class PostgreSQLx(ABDatabase):
         """
         return self.__dbname
 
-    @property
-    def user(self) -> AnyStr:
-        """
-        Username to login, "postgres" by default
-        """
-        return self.__user
 
     @property
     def host(self) -> AnyStr:
@@ -166,6 +160,13 @@ class PostgreSQLx(ABDatabase):
         Port of postgres server, 5432 by default
         """
         return self.__port
+
+    @property
+    def user(self) -> AnyStr:
+        """
+        Username to login, "postgres" by default
+        """
+        return self.__user
 
     # ================================== STMT'S ====================================
 

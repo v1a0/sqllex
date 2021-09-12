@@ -1,68 +1,73 @@
-# SQLite3x.select
+# AbstractDatabase.select
 
 
 ```python
 def select(
         self,
-        TABLE: Union[str, List[str], SQLite3xTable] = None,
-        SELECT: Union[str, SQLite3xColumn, List[Union[str, SQLite3xColumn]]] = None,
+        TABLE: Union[AnyStr, AbstractTable] = None,
+        SELECT: Union[AnyStr, AbstractColumn, List, Tuple] = None,
         WHERE: WhereType = None,
         WITH: WithType = None,
         ORDER_BY: OrderByType = None,
         LIMIT: LimitOffsetType = None,
         OFFSET: LimitOffsetType = None,
-        FROM: Union[str, List[str], SQLite3xTable] = None,
-        JOIN: Union[str, List[str], List[List[str]]] = None,
+        FROM: Union[AnyStr, AbstractTable] = None,
+        JOIN: JoinArgType = None,
         _method="SELECT",
         **kwargs,
-) -> Union[SQLStatement, List[Any]]:
+) -> Tuple:
     """
     SELECT data from table
-
+    
     Parameters
     ----------
-    TABLE : AnyStr
+    TABLE: Union[AnyStr, AbstractTable]
         Name of table
     SELECT : Union[str, List[str]]
         columns to select. Value '*' by default
+        > SELECT=['id', 'name']
     WHERE : WhereType
-        optional parameter for conditions, example: {'name': 'Alex', 'group': 2}
+       optional parameter for conditions
+       > WHERE=(db['table_name']['column_name'] == 'some_value')
     WITH : WithType
-        with_statement (don't really work well)
+        Disabled!
     ORDER_BY : OrderByType
-        optional parameter for conditions, example: {'name': ['NULLS', 'LAST']}
+        optional parameter for conditions
+        > ORDER_BY=['age', 'DESC']
+        > ORDER_BY='age DESC'
     LIMIT: LimitOffsetType
-        optional parameter for conditions, example: 10
+        Set limit or selecting records
+        > LIMIT=10
     OFFSET : LimitOffsetType
-        optional parameter for conditions, example: 5
+        Set offset for selecting records
+        > OFFSET=5
     FROM : str
         Name of table, same at TABLE
-    JOIN: Union[str, List[str], List[List[str]]]
+    JOIN: JoinArgType
         optional parameter for joining data from other tables ['groups'],
     _method: str
         DON'T CHANGE IT! special argument for unite select_all, select_distinct into select()
-
+    
     Returns
     ----------
-    List[List]
-        selected data
-
+    List[Tuple]
+        Tuple of Selected data
     """
 ```
 
 ## Examples
 
 ```python
+from sqllex.classes import AbstractDatabase
+from sqllex.constants import INTEGER, TEXT, NOT_NULL, ALL, AS, ON, CROSS_JOIN
 
-from sqllex import *
-
-db = SQLite3x(path='database.db')
+db: AbstractDatabase = ...
 
 db.create_table(
     'users',
     {
-        'id': [INTEGER, PRIMARY_KEY, UNIQUE],
-        'name': [TEXT, NOT_NULL, DEFAULT, 'Unknown'],
+        'id': [INTEGER],
+        'name': [TEXT, NOT_NULL],
         'age': [INTEGER],
     }
 )

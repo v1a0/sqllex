@@ -1,26 +1,25 @@
-# SQLite3x.executemany
+# AbstractDatabase.executemany
 
 ```python
 def executemany(
         self,
         script: AnyStr = None,
         values: Tuple[Tuple] = None,
-        request: SQLRequest = None
-) -> Union[List, None]:
+) -> Union[Tuple, None]:
     """
-    Execute any SQL-script for many values sets, or execute SQLRequest
+    Execute any SQL-script for many values sets
+    
     Parameters
     ----------
     script : AnyStr
         single or multiple SQLite script(s), might contains ph_amount
     values : Tuple[Tuple]
         Values for ph_amount if script contains it
-    request : SQLRequest
-        Instead of script and values might execute full request
+    
     Returns
     ----------
-    Union[List, None]
-        Database answer if it has
+    Union[Tuple, None]
+        ABDatabase answer if it has
     """
 ```
 
@@ -28,10 +27,9 @@ def executemany(
 ## Examples
 
 ```python
+from sqllex.classes import AbstractDatabase
 
-from sqllex import *
-
-db = SQLite3x(path='database.db')
+db: AbstractDatabase = ...
 
 db.execute(
     script="""

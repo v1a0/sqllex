@@ -40,6 +40,7 @@ ConstantType = Union[
 ColumnType = Union[
     Tuple[ColumnDataType, ConstantType, AnyStr, Number],
     List[Union[ColumnDataType, ConstantType, AnyStr, Number]],
+    ColumnDataType,
     ConstantType,
     AnyStr
 ]

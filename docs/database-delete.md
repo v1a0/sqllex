@@ -1,4 +1,4 @@
-# SQLite3x.delete
+# AbstractDatabase.delete
 
 
 ```python
@@ -11,14 +11,18 @@ def delete(
 ) -> None:
     """
     DELETE FROM table WHERE {something}
+    
     Parameters
     ----------
     TABLE : AnyStr
         Name of table
     WHERE : WhereType
-        optional parameter for conditions, example: {'name': 'Alex', 'group': 2}
+       optional parameter for conditions
+       > db: AbstractDatabase
+       > ...
+       > WHERE=(db['table_name']['column_name'] == 'some_value')
     WITH : WithType
-        with_statement (don't really work well)
+        Disabled!
     """
 ```
 
@@ -26,16 +30,16 @@ def delete(
 ## Examples
 
 ```python
+from sqllex.classes import AbstractDatabase
+from sqllex.constants import INTEGER, NOT_NULL, TEXT
 
-from sqllex import *
-
-db = SQLite3x(path='database.db')
+db: AbstractDatabase = ...
 
 db.create_table(
     'users',
     {
-        'id': [INTEGER, PRIMARY_KEY, UNIQUE],
-        'name': [TEXT, NOT_NULL, DEFAULT, 'Unknown']
+        'id': [INTEGER],
+        'name': [TEXT, NOT_NULL]
     }
 )
 

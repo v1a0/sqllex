@@ -1,10 +1,10 @@
-# SQLite3x.update
+# AbstractDatabase.update
 
 
 ```python
 def update(
         self,
-        TABLE: AnyStr,
+        TABLE: Union[AnyStr, AbstractTable],
         SET: Union[List, Tuple, Mapping],
         WHERE: WhereType = None,
         OR: OrOptionsType = None,
@@ -13,7 +13,7 @@ def update(
 ) -> None:
     """
     UPDATE, SET column_name=something WHERE x=y and more complex requests
-
+    
     Parameters
     ----------
     TABLE : AnyStr
@@ -21,27 +21,31 @@ def update(
     SET : Union[List, Tuple, Mapping]
         ColumnType and value to set
     WHERE : WhereType
-        optional parameter for conditions, example: {'name': 'Alex', 'group': 2}
+       optional parameter for conditions
+       > db: AbstractDatabase
+       > ...
+       > WHERE=(db['table_name']['column_name'] == 'some_value')
     OR : OrOptionsType
-        Optional parameter. If INSERT failed, type OrOptionsType
+        Action in case if inserting has failed. Optional parameter.
+        > OR='IGNORE'
     WITH : WithType
-        with_statement (don't really work well)
+        Disabled!
     """
 ```
 
 ## Examples
 
 ```python
+from sqllex.classes import AbstractDatabase
+from sqllex.constants import INTEGER, TEXT, NOT_NULL, IGNORE
 
-from sqllex import *
-
-db = SQLite3x(path='database.db')
+db: AbstractDatabase = ...
 
 db.create_table(
     'users',
     {
-        'id': [INTEGER, PRIMARY_KEY, UNIQUE],
-        'name': [TEXT, NOT_NULL, DEFAULT, 'Unknown']
+        'id': [INTEGER],
+        'name': [TEXT, NOT_NULL]
     }
 )
 

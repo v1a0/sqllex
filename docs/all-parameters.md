@@ -1,5 +1,41 @@
-# Common Parameters
+## How to use this document
 
+Here you can find all possible parameter for sqllex databases methods.
+
+```markdown
+## TABLE <-- parameter
+
+TABLE: Union[str, List[str], SQLite3xTable]  <-- expected data types
+
+Table name or table object SQLite3xTable.  <-- description
+
+<-- examples -->
+TABLE = "my_table",  # string
+...
+<-- the end -->
+```
+
+### Usage
+```python
+from sqllex.classes import AbstractDatabase
+from sqllex.constants import TEXT, INTEGER
+
+db: AbstractDatabase = ...
+
+db.insert(
+    "my_table", # <--- HERE !!! (TABLE is the fires parameter)
+    (1, 'User'),
+)
+
+db.select(
+    TABLE="my_table", # <--- HERE !!!
+    SELECT=('name', 'age')
+)
+```
+
+---
+
+# All Parameters
 
 ## TABLE
 ```python
@@ -12,9 +48,11 @@ Table name or table object SQLite3xTable.
 TABLE = "my_table",  # string
 
 TABLE = db['users'],  # SQLite3xTable
+
+TABLE = ["my_awesome_table", "mat"],   # use alias "mat" in code instead of "my_awesome_table"
 ```
 
-
+---
 
 ## SELECT
 ```python
@@ -25,20 +63,25 @@ Parameter of select-like methods to specify selecting columns. Can be string or 
 or list of this types.
 
 ```python
-SELLCT = "id",
+from sqllex.constants import ALL
 
-SELECT = ["id", "username"],  # List
+SELLCT = ALL,   # same as SELLCT = '*'
 
-SELECT = ("id", "username"),  # Tuple
+SELLCT = "id",  # select only id column
 
-SELECT = db['users']['id']    # AbstractColumn
+SELECT = ["id", "username"],  # List, select id and username columns
 
-SELECT = [db['users']['id'],  db['users']['username']]   # List[AbstractColumn]
+SELECT = ("id", "username"),  # Tuple, select id and username columns
 
-SELECT = (db['users']['id'],  db['users']['username'])   # Tuple[AbstractColumn]
+SELECT = db['users']['id'],   # AbstractColumn, select only id column
+
+SELECT = [db['users']['id'],  db['users']['username']],   # List[AbstractColumn], select id and username columns
+
+SELECT = (db['users']['id'],  db['users']['username']),   # Tuple[AbstractColumn], select id and username columns
+
 ```
 
-
+---
 
 ## WHERE
 ```python
@@ -48,18 +91,26 @@ WHERE: WhereType
 parameter for highlighting the cells of the method action, in accordance with the specified pattern.
 
 ```python
-WHERE="id=1", 
+from sqllex.classes import AbstractDatabase
+from sqllex.constants import LIKE
+
+db: AbstractDatabase = ...
+
+# id == 1
+
+WHERE="id=1",
 
 WHERE=( db['users']['id'] == 1 ),
 
 WHERE=['id', 1],
 
-WHERE=('id', 1)
+WHERE=('id', 1),
 
 WHERE= {
     'id': 1
-}
+},
 
+# id > 1
 
 WHERE=( db['users']['id'] > 1 ),
 
@@ -67,19 +118,28 @@ WHERE=['id', '>', 1],
 
 WHERE= {
     'id': ['>', 1]
-}
+},
 
+# id > 1 AND id < 5
 
 WHERE=(
     (db['users']['id'] > 1) & (db['users']['id'] < 5)
 ),
 
+# id == 1 OR id == 5
 
 WHERE=(
     (db['users']['id'] == 1) | (db['users']['id'] == 5)
 ),
+
+# users.name contains "foo"
+
+WHERE=(
+    (db['users']['name'] |LIKE| "%foo%"
+),
 ```
 
+---
 
 ## SET
 ```python
@@ -104,7 +164,7 @@ SET = {
 },
 ```
 
-
+---
 
 ## OR
 ```python
@@ -126,27 +186,33 @@ OR = ABORT,
 OR = FAIL,
 
 OR = ROLLBACK,
+
+OR = 'IGNORE',
 ```
 
+---
 
-
-## WITH
+## ~~WITH~~
 ```python
 WITH: WithType
 ```
 
 Temporary disabled
 
-
+---
 
 ## ORDER_BY
 ```python
-ORDER_BY: OrderByType
+ORDER_BY: Union[str, int, AbstractColumn, List[int, str, AbstractColumn], List[List[int, str, AbstractColumn]]]
 ```
 
 An optional parameter to set ordering of selected elements. Awaiting column or lost of columns with ordering parameter
 
 ```python
+from sqllex.classes import AbstractDatabase
+
+db: AbstractDatabase = ...
+
 ORDERD_BY = "id",
 
 ORDERD_BY = "ASC",
@@ -172,10 +238,11 @@ ORDERD_BY = [db['users']['id'], "ASC"],
 # ORDERD_BY = ASC,
 ```
 
+---
 
 ## LIMIT
 ```python
-LIMIT: LimitOffsetType
+LIMIT: Union[int, str]
 ```
 
 Parameter setting limit of how many columns select from a table.
@@ -186,10 +253,11 @@ LIMIT = 42,
 LIMIT = '42',
 ```
 
+---
 
 ## OFFSET
 ```python
-OFFSET: LimitOffsetType
+OFFSET: Union[int, str]
 ```
 
 Parameter to set how many first records skip from the first one.
@@ -200,15 +268,16 @@ OFFSET = 42,
 OFFSET = '42',
 ```
 
+---
 
-## FROM 
+## ~~FROM~~
 ```python
-FROM: Union[str, List[str], SQLite3xTable]
+FROM: Union[str, List[str], AbstractTable]
 ```
 
 Shadow name for [TABLE parameter](#table)
 
-
+---
 
 ## JOIN
 ```python
@@ -218,22 +287,25 @@ JOIN: Union[str, List[str], List[List[str]]]
 SQL JOIN-ing.
 
 ```python
+from sqllex.classes import AbstractDatabase, AbstractTable
+from sqllex.constants import AS, ON, CROSS_JOIN, INNER_JOIN
+
+db: AbstractDatabase = ...
+users: AbstractTable = db['users']
+
 db.select(
-    'users',
+    TABLE='users',
     SELECT=['username', 'group_name', 'description'],                        
     JOIN=[                                                                   
         ['groups', AS, 'gr', ON, 'users.group_id == gr.group_id'],            # INNER JOIN by default     
         [CROSS_JOIN, 'about', 'ab', ON, 'ab.group_id == gr.group_id']        
     ],
-    WHERE= (users['username'] != 'user_1') & (users['username'] != 'user_2'),
-    ORDER_BY='age DESC',                                                     
-    LIMIT=50,                                                                
-    OFFSET=20                                                                
+    WHERE= (users['username'] != 'user_1') & (users['username'] != 'user_2')                                                               
 )
 
 
 JOIN=[                                                                   
-        [INNER JOIN, 'groups', AS, 'gr', ON, 'users.group_id == gr.group_id'],         
+        [INNER_JOIN, 'groups', AS, 'gr', ON, 'users.group_id == gr.group_id'],         
         [CROSS_JOIN, 'about', 'ab', ON, 'ab.group_id == gr.group_id']        
     ],
 
@@ -251,5 +323,7 @@ JOIN=[
         ['groups', ON, 'users.group_id == groups.group_id'],       # INNER JOIN by default    
     ],
 ```
+
+---
 
 ### [Back to home](README.md)

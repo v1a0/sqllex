@@ -1,16 +1,16 @@
-# SQLite3x.drop
+# AbstractDatabase.drop
 
 
 ```python
 def drop(
         self,
-        TABLE: AnyStr,
+        TABLE: Union[AnyStr, AbstractTable],
         IF_EXIST: bool = True,
         **kwargs
 ) -> None:
     """
     DROP TABLE (IF EXIST)
-
+    
     Parameters
     ----------
     TABLE : AnyStr
@@ -24,22 +24,19 @@ def drop(
 ## Examples
 
 ```python
+from sqllex.classes import AbstractDatabase
+from sqllex.constants import INTEGER
 
-from sqllex import *
+db: AbstractDatabase = ...
 
-db = SQLite3x(
-    path='database.db',
-    template={
-        'table1': {'id': INTEGER},
-        'table2': {'id': INTEGER},
-        'table3': {'id': INTEGER},
-    }
-)
+db.create_table('table1', {'id': INTEGER})
+db.create_table('table2', {'id': INTEGER})
+db.create_table('table3', {'id': INTEGER})
 
 db.drop('table1')
 db.drop(TABLE='table2')
 db.drop(TABLE='table3', IF_EXIST=True)
-
+db.drop(TABLE='table4', IF_EXIST=True)
 ```
 
 

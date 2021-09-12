@@ -1,4 +1,4 @@
-# SQLite3x.create_table
+# AbstractDatabase.create_table
 
 
 ```python
@@ -29,10 +29,10 @@ def create_table(
 ## Examples
 
 ```python
+from sqllex.classes import AbstractDatabase
+from sqllex.constants import INTEGER, TEXT, NOT_NULL, FOREIGN_KEY
 
-from sqllex import *
-
-db = SQLite3x(path='database.db')
+db: AbstractDatabase = ...
 
 db.create_table(
     'table',  # here is name of table
@@ -61,8 +61,8 @@ db.create_table(
 db.create_table(
     name='books',
     columns={
-        'id': [INTEGER, PRIMARY_KEY, UNIQUE],
-        'name': [TEXT, NOT_NULL, DEFAULT, 'Unknown']
+        'id': [INTEGER],
+        'name': [TEXT, NOT_NULL]
     } 
 )
 
@@ -80,8 +80,8 @@ db.create_table(
 db.create_table(
     name='descriptions',
     columns={
-        'book_id': [INTEGER, PRIMARY_KEY, UNIQUE],
-        'about': [TEXT, NOT_NULL, DEFAULT, 'Unknown'],
+        'book_id': [INTEGER],
+        'about': [TEXT, NOT_NULL],
         FOREIGN_KEY: {
             'book_id': ['books', 'id']
         }

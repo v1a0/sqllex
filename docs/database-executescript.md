@@ -1,23 +1,22 @@
-# SQLite3x.executescript
+# AbstractDatabase.executescript
 
 ```python
 def executescript(
         self,
         script: AnyStr = None,
-        request: SQLRequest = None
-) -> Union[List, None]:
+) -> Union[Tuple, None]:
     """
     Execute many SQL-scripts whit (or without) values
+    
     Parameters
     ----------
     script : AnyStr
         single SQLite script, might contains ph_amount
-    request : SQLRequest
-        Instead of script and values might execute full statement
+        
     Returns
     ----------
-    Union[List, None]
-        Database answer if it has
+    Union[Tuple, None]
+        ABDatabase answer if it has
     """
 ```
 

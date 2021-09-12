@@ -1,10 +1,10 @@
-# SQLite3x.remove_column
+# AbstractDatabase.remove_column
 
 ```python
-def remove_column(
-    self,
-    table: AnyStr,
-    column: Union[AnyStr, SQLite3xColumn]
+def remove_column(  # !!!
+        self,
+        table: AnyStr,
+        column: Union[AnyStr, AbstractColumn]
 ):
     """
     Removes column from the table
@@ -15,24 +15,23 @@ def remove_column(
         Name of table
     column : Union[AnyStr, AbstractColumn]
         Name of column or AbstractColumn object.
-    Returns
-    ----------
-    None
+
     """
 ```
 
 # Examples
 
 ```python
-from sqllex import *
+from sqllex.classes import AbstractDatabase
+from sqllex.constants import INTEGER, TEXT, NOT_NULL
 
-db = SQLite3x(path='database.db')
+db: AbstractDatabase = ...
 
 db.create_table(
     'users',
     {
-        'id': [INTEGER, PRIMARY_KEY, UNIQUE],
-        'name': [TEXT, NOT_NULL, DEFAULT, 'Unknown'],
+        'id': [INTEGER],
+        'name': [TEXT, NOT_NULL],
         'group': [INTEGER, NOT_NULL]
     }
 )

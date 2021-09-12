@@ -1,4 +1,4 @@
-# SQLite3x.markup
+# AbstractDatabase.markup
 
 
 ```python
@@ -8,6 +8,7 @@ def markup(
 ):
     """
     Mark up table structure from template
+    
     Parameters
     ----------
     template : DBTemplateType
@@ -18,10 +19,10 @@ def markup(
 ## Examples
 
 ```python
+from sqllex.classes import AbstractDatabase
+from sqllex.constants import INTEGER, TEXT, NOT_NULL, FOREIGN_KEY
 
-from sqllex import *
-
-db = SQLite3x(path='database.db')
+db: AbstractDatabase = ...
 
 db.markup(
     template={
@@ -42,8 +43,8 @@ db.markup(
 db.markup(
     template={
         'books': {
-            'id': [INTEGER, PRIMARY_KEY, UNIQUE],
-            'name': [TEXT, NOT_NULL, DEFAULT, 'Unknown']
+            'id': [INTEGER],
+            'name': [TEXT, NOT_NULL]
         } 
     }
 )
@@ -62,8 +63,8 @@ db.markup(
 db.markup(
     template={
         'descriptions': {
-            'book_id': [INTEGER, PRIMARY_KEY, UNIQUE],
-            'about': [TEXT, NOT_NULL, DEFAULT, 'Unknown'],
+            'book_id': [INTEGER],
+            'about': [TEXT, NOT_NULL],
             FOREIGN_KEY: {
                 'book_id': ['books', 'id']
             }
@@ -89,14 +90,14 @@ db.markup(
 db.markup(
     template={
         'table_1': {
-            'c1': [INTEGER, PRIMARY_KEY],
-            'c2': [TEXT, NOT_NULL, DEFAULT, 'Unknown'],
+            'c1': [INTEGER],
+            'c2': [TEXT, NOT_NULL],
         },
         'table_2': {
-            'c1': [INTEGER, PRIMARY_KEY],
+            'c1': [INTEGER],
         },
         'table_3': {
-            'c1': [INTEGER, PRIMARY_KEY],
+            'c1': [INTEGER],
         },
     }
 )

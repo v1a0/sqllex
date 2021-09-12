@@ -1,19 +1,8 @@
-from sqllex import SQLite3x, TEXT, NOT_NULL, INTEGER
+from sqllex.classes import PostgreSQLx
 
-db = SQLite3x(                              
-    path='my_database.db',                      
-    template={                              
-        "users": {                          
-            "username": [TEXT, NOT_NULL],   
-            "age": INTEGER,                 
-        }                                   
-    }                                       
-)
+di_ = dir(PostgreSQLx)
 
-users = db["users"]
+di_.sort()
 
-users.insert('Sqllex', 33)
-
-users_33 = users.find(age=33)
-
-print(users_33)  # [('Sqllex', 33)]
+for d in di_:
+    print(d)

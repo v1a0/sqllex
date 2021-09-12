@@ -1,45 +1,43 @@
-# SQLite3x.insert
+# AbstractDatabase.insert
 
 
 ```python
 def insert(
         self,
-        TABLE: AnyStr,
-        *args: InsertData,
+        TABLE: Union[AnyStr, AbstractTable],
+        *args: InsertingData,
         OR: OrOptionsType = None,
         WITH: WithType = None,
         **kwargs: Any,
 ) -> None:
     """
     INSERT data into table
-
+    
     Parameters
     ----------
     TABLE : AnyStr
         Name of table
     OR : OrOptionsType
-        Optional parameter. If INSERT failed, type OrOptionsType
+        Action in case if inserting has failed. Optional parameter.
+        > OR='IGNORE'
     WITH : WithType
-        Optional parameter.
-
-    Returns
-    ----------
-        None
+        Disabled!
     """
 ```
 
 ## Examples
 
 ```python
-from sqllex import *
+from sqllex.classes import AbstractDatabase
+from sqllex.constants import INTEGER, TEXT, NOT_NULL, IGNORE, REPLACE, ABORT
 
-db = SQLite3x(path='database.db')
+db: AbstractDatabase = ...
 
 db.create_table(
     'users',
     {
-        'id': [INTEGER, PRIMARY_KEY, UNIQUE],
-        'name': [TEXT, NOT_NULL, DEFAULT, 'Unknown']
+        'id': [INTEGER],
+        'name': [TEXT, NOT_NULL]
     }
 )
 

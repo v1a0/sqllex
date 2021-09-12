@@ -17,7 +17,9 @@ class TestFailed(Exception):
 def is_exist(file: str = ''):
     return file in next(walk(getcwd()))[2]
 
+
 debug_mode(False)
+
 
 DB_NAME = "test_table.db"
 

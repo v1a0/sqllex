@@ -1,13 +1,15 @@
-# SQLite3xTable.has_column
+# AbstractTable.has_column
 
 ```python
-def has_column(self, column: Union[AnyStr, SQLite3xColumn]) -> bool:
+def has_column(self, column: Union[AnyStr, AbstractTable]) -> bool:
     """
     Checks if column exists in the table
+    
     Parameters
     ----------
     column : Union[AnyStr, AbstractColumn]
         Name of column or AbstractColumn object.
+    
     Returns
     ----------
     bool
@@ -18,9 +20,10 @@ def has_column(self, column: Union[AnyStr, SQLite3xColumn]) -> bool:
 # Examples
 
 ```python
-from sqllex import *
+from sqllex.classes import AbstractDatabase, AbstractTable
+from sqllex.constants import *
 
-db = SQLite3x(path='database.db')
+db: AbstractDatabase = ...
 
 db.create_table(
     'users',
@@ -31,7 +34,7 @@ db.create_table(
     }
 )
 
-users = db['users'] # <--- HERE WE GOT SQLite3xTable
+users: AbstractTable = db['users'] # <--- HERE WE GOT AbstractTable
 
 users.has_column('id')  # True
 users.has_column('name')  # True

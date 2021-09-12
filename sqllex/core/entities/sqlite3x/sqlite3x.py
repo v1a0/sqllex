@@ -17,7 +17,7 @@ import sqllex.core.entities.sqlite3x.script_gens as script_gen
 
 class SQLite3xTable(ABTable):
     """
-    Sub-class of SQLite3x, itself one table of SQLite3x
+    Sub-class of SQLite3x, itself one table of ABTable
     Have same methods but without table name argument
 
     """

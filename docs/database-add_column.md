@@ -1,13 +1,14 @@
-# SQLite3x.add_column
+# AbstractDatabase.add_column
 
 ```python
 def add_column(
-    self,
-    table: AnyStr,
-    column: ColumnDataType
+        self,
+        table: AnyStr,
+        column: ColumnsType
 ) -> None:
     """
     Adds column to the table
+
     Parameters
     ----------
     table : AnyStr
@@ -15,6 +16,7 @@ def add_column(
     column : ColumnType
         Columns of table (ColumnsType-like)
         ColumnType name and SQL type e.g. {'value': INTEGER}
+
     Returns
     ----------
     None

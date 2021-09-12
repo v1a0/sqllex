@@ -199,14 +199,14 @@ class AbstractTable(ABC):
 
     def select(
             self,
-            SELECT: Union[AnyStr, AbstractColumn, List[Union[AnyStr, AbstractColumn]]] = None,
+            SELECT: Union[AnyStr, AbstractColumn, ConstantType, List[Union[AnyStr, AbstractColumn]]] = None,
             WHERE: WhereType = None,
             ORDER_BY: OrderByType = None,
             LIMIT: LimitOffsetType = None,
             OFFSET: LimitOffsetType = None,
             JOIN: JoinArgType = None,
             **kwargs,
-    ) -> Tuple[Tuple]:
+    ) -> List[Tuple]:
         """
         SELECT data from table
 
@@ -253,7 +253,7 @@ class AbstractTable(ABC):
 
     def select_distinct(
             self,
-            SELECT: Union[str, AbstractColumn, List[Union[str, AbstractColumn]]] = None,
+            SELECT: Union[str, AbstractColumn, ConstantType, List[Union[str, AbstractColumn]]] = None,
             WHERE: WhereType = None,
             WITH: WithType = None,
             ORDER_BY: OrderByType = None,
@@ -261,7 +261,7 @@ class AbstractTable(ABC):
             OFFSET: LimitOffsetType = None,
             JOIN: Union[str, List[str], List[List[str]]] = None,
             **kwargs,
-    ) -> Tuple[Any]:
+    ) -> List[Tuple]:
         return self.db.select_distinct(
             self.name,
             SELECT=SELECT,
@@ -283,7 +283,7 @@ class AbstractTable(ABC):
             OFFSET: LimitOffsetType = None,
             JOIN: Union[str, List[str], List[List[str]]] = None,
             **kwargs,
-    ) -> Tuple:
+    ) -> List[Tuple]:
         """
         SELECT ALL data from table
 
@@ -411,7 +411,7 @@ class AbstractTable(ABC):
             ORDER_BY: OrderByType = None,
             LIMIT: LimitOffsetType = None,
             **kwargs,
-    ) -> Tuple:
+    ) -> List[Tuple]:
         """
         Find all records in table where_
 
@@ -827,7 +827,7 @@ class AbstractDatabase(ABC):
             method: AnyStr = "SELECT ",
             SELECT: Union[
                 AnyStr,
-                AbstractColumn,
+                AbstractColumn, ConstantType,
                 List[Union[AnyStr, AbstractColumn]],
                 Tuple[Union[AnyStr, AbstractColumn]]
             ] = None,
@@ -950,7 +950,7 @@ class AbstractDatabase(ABC):
             self,
             script: AnyStr = None,
             values: Tuple = None,
-    ) -> Union[Tuple, None]:
+    ) -> Union[Tuple, List, None]:
         """
         Execute any SQL-script whit (or without) values
 
@@ -974,7 +974,7 @@ class AbstractDatabase(ABC):
             self,
             script: AnyStr = None,
             values: Tuple[Tuple] = None,
-    ) -> Union[Tuple, None]:
+    ) -> Union[Tuple, List, None]:
         """
         Execute any SQL-script for many values sets
 
@@ -997,7 +997,7 @@ class AbstractDatabase(ABC):
     def executescript(
             self,
             script: AnyStr = None,
-    ) -> Union[Tuple, None]:
+    ) -> Union[Tuple, List, None]:
         """
         Execute many SQL-scripts whit (or without) values
 
@@ -1176,9 +1176,6 @@ class AbstractDatabase(ABC):
         column : Union[AnyStr, AbstractColumn]
             Name of column or AbstractColumn object.
 
-        Returns
-        ----------
-        None
         """
 
         column_name = column
@@ -1426,7 +1423,7 @@ class AbstractDatabase(ABC):
     def select(
             self,
             TABLE: Union[AnyStr, AbstractTable] = None,
-            SELECT: Union[AnyStr, AbstractColumn, List, Tuple] = None,
+            SELECT: Union[AnyStr, AbstractColumn, ConstantType, List, Tuple] = None,
             WHERE: WhereType = None,
             WITH: WithType = None,
             ORDER_BY: OrderByType = None,
@@ -1436,7 +1433,7 @@ class AbstractDatabase(ABC):
             JOIN: JoinArgType = None,
             _method="SELECT",
             **kwargs,
-    ) -> Tuple:
+    ) -> List[Tuple]:
         """
         SELECT data from table
 
@@ -1507,7 +1504,7 @@ class AbstractDatabase(ABC):
     def select_distinct(
             self,
             TABLE: Union[AnyStr, AbstractTable] = None,
-            SELECT: Union[str, AbstractColumn, Tuple, List] = None,
+            SELECT: Union[str, AbstractColumn, ConstantType, Tuple, List] = None,
             WHERE: WhereType = None,
             WITH: WithType = None,
             ORDER_BY: OrderByType = None,
@@ -1516,7 +1513,7 @@ class AbstractDatabase(ABC):
             FROM: Union[str, List[str], Tuple[str], AbstractTable] = None,
             JOIN: JoinArgType = None,
             **kwargs,
-    ) -> Tuple:
+    ) -> List[Tuple]:
         """
         SELECT distinct from table
 
@@ -1574,7 +1571,7 @@ class AbstractDatabase(ABC):
     def select_all(
             self,
             TABLE: Union[AnyStr, AbstractTable] = None,
-            SELECT: Union[str, AbstractColumn, List, Tuple] = None,
+            SELECT: Union[str, AbstractColumn, ConstantType, List, Tuple] = None,
             WHERE: WhereType = None,
             WITH: WithType = None,
             ORDER_BY: OrderByType = None,
@@ -1583,7 +1580,7 @@ class AbstractDatabase(ABC):
             FROM: Union[str, List[str], AbstractTable] = None,
             JOIN: JoinArgType = None,
             **kwargs,
-    ) -> Tuple:
+    ) -> List[Tuple]:
         """
         SELECT all data from table
 

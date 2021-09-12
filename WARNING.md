@@ -1,3 +1,23 @@
+# Sqllex v0.2.0.0
+
+### Changed returning data type 
+
+```python
+db.select(...) -> [(1, 'Data1'), (2, 'Data2')]
+```
+
+By now all select-like methods returns `List[Tuple]` instead of `List[List]`
+
+```python
+# OLD
+db.select(...) -> [[1, 'Data1'], [2, 'Data2']]
+
+# NEW
+db.select(...) -> [(1, 'Data1'), (2, 'Data2')]
+```
+
+---
+
 # Sqllex v0.1.10.0
 
 ## SELECT structure changed !!!

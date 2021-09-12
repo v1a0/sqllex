@@ -66,4 +66,4 @@ SQLLEX v0.2 have major changes that may breaks your old code!
 Please, read https://github.com/v1a0/sqllex/blob/main/UPDATES.md#0200
 if you are moving from v0.1.10.5 to v0.2+, and open an issue if you have any bugs.
 \033[0m\33[93m
-Thanks for you support and feedback! \033[0m""")
+Thanks for you support and feedback! 🥳\033[0m""")

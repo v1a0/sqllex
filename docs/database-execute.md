@@ -1,26 +1,25 @@
-# SQLite3x.execute
+# AbstractDatabase.execute
 
 ```python
 def execute(
         self,
         script: AnyStr = None,
         values: Tuple = None,
-        request: SQLRequest = None
-) -> Union[List, None]:
+) -> Union[Tuple, None]:
     """
-    Execute any SQL-script whit (or without) values, or execute SQLRequest
+    Execute any SQL-script whit (or without) values
+    
     Parameters
     ----------
     script : AnyStr
         single SQLite script, might contains ph_amount
     values : Tuple
         Values for ph_amount if script contains it
-    request : SQLRequest
-        Instead of script and values might execute full statement
+    
     Returns
     ----------
-    Union[List, None]
-        Database answer if it has
+    Union[Tuple, None]
+        ABDatabase answer if it has
     """
 ```
 
@@ -28,10 +27,9 @@ def execute(
 ## Examples
 
 ```python
+from sqllex.classes import AbstractDatabase
 
-from sqllex import *
-
-db = SQLite3x(path='database.db')
+db: AbstractDatabase = ...
 
 db.execute(
     script="""

@@ -2,9 +2,160 @@
 
 ## All you need to know about sqllex 0.2
 
-### 1. 
+### Changed returning data type 
+
+```python
+db.select(...) -> [(1, 'Data1'), (2, 'Data2')]
+```
+
+By now all select-like methods returns `List[Tuple]` instead of `List[List]`
+
+```python
+# OLD
+db.select(...) -> [[1, 'Data1'], [2, 'Data2']]
+
+# NEW
+db.select(...) -> [(1, 'Data1'), (2, 'Data2')]
+```
+
+---
+
+### PostgreSQL support
+In sqllex v0.2 added basic PostgreSQL support, it's not fully functional now, but it's
+in developing progress. It's based on the same structure as SQLite3x and work at the same logic.
+If some constants or operator was not added yet, try to enter it as string: 
+
+```python
+from sqllex import PostgreSQLx, UNIQUE
+from sqllex.constants.postgresql import INT8, SERIAL
+
+db = PostgreSQLx(
+    dbname="sqllextests",
+    user="postgres",
+    password="admin",
+    host="127.0.0.1",
+    port="5432"
+)
+
+# with inline constants
+db.create_table(
+    name='table1',
+    columns={
+        'id': SERIAL,
+        'value': [INT8, UNIQUE]
+    },
+    IF_NOT_EXIST=True
+)
+
+# w/o inline constants
+db.create_table(
+    name='table2',
+    columns={
+        'id': "SERIAL",
+        'value': "VARCHAR(32) UNIQUE"
+    },
+    IF_NOT_EXIST=True
+)
+
+print(db.tables_names) # ('table1', 'table2')
+```
+
+---
+
+### LIKE support + some syntax sugar
+
+Added LIKE support, and some syntax sugar I called "column-like-regex"
+```python
+from sqllex import SQLite3x, AbstractTable, AbstractColumn, LIKE
+
+db: SQLite3x = ...
+cats: AbstractTable = db['cats']
+cats_color: AbstractColumn = cats['color']
+
+dark_cats = cats.select(
+    SELECT=('id', 'color'),
+    WHERE=(cats_color |LIKE| "%dark%")
+)
+
+print(dark_cats)  # [(14, "dark-grey"), (42, "dark-red")]
 
 
+# another way (issue #39)
+dark_cats = cats.select(
+    SELECT=('id', 'color'),
+    WHERE={
+        'color': [LIKE, "%dark%"]
+    }
+)
+
+print(dark_cats)  # [(14, "dark-grey"), (42, "dark-red")]
+```
+
+#### Release candidates chronology
+
+##### v0.2.0.0
+
+- Docs/wiki updates for v0.2.0.0
+- Fixed `[LIKE, regex]` for a dict init-ing issue #
+- UPDATES.md upd
+
+
+##### v0.2.0.0-rc5
+
+- Added "column-like-reg_ex" (` WHERE=( column |LIKE| reg_ex ) `)
+- Also added LIKE support (issue #39)
+- Constants upd (added psql things)
+- TableInfoError renamed to TableNotExist
+- tuple2list, return2list, lister moved to sqllex.old
+- args_parser removed (finally!!!!)
+- README upd
+- Preparing for release v0.2
+
+##### v0.2.0.0-rc4
+
+- SearchCondition placeholder bugfix
+- AbstractTable.replace bugfix
+- " ' " -> " " "
+- psql.midleware fix
+- DEC2FLOAT, float convertion added for psql
+- speed-tests remastering
+
+##### v0.2.0.0-rc3
+
+- JoinType renamed to JoinMethod, added JoinArgType
+- script_gens got minor update
+- postgresqlx.middleware remastering
+- postgresqlx placeholder bug fixed
+- crop_size remastered (now it's faster)
+- functools.wraps removed
+- from_as_ remastered (in progress)
+- types fix
+- JOIN logic changed a little
+- content_gen remastered
+- args_parser removed from inserting stmts
+- other minor fixes. Now it's a little faster and less glitchy
+
+##### v0.2.0.0-rc2
+
+- Placeholders fixed
+- Docstrings remastered for SQLite3x and PostgreSQLx
+- Pragma methods and generators remover from ABDatabase and moved to sqlite3x dir
+- Auto copy docs decorator added
+- refactoring args_parser_wrapper
+- tests fixed/updated
+- preparing psqlx for release
+
+##### v0.2.0.0-rc1
+
+- Added beta PostgreSQL support (new class PostgreSQLx)
+- Updated docs-strings for many SQLite3x methods
+- Imports optimisation
+- Changed border symbol for tables and columns names in scripts from <'> to <"> (due to postgres support)
+- New requirement "psycopg2"
+
+
+---
+---
 ---
 
 # 0.1.10

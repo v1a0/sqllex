@@ -1,9 +1,9 @@
-# SQLite3x.updatemany
+# AbstractDatabase.updatemany
 
 ```python
 def updatemany(
         self,
-        TABLE: AnyStr,
+        TABLE: Union[AnyStr, AbstractTable],
         SET: Union[List[List], List[Tuple], Tuple[List], Tuple[Tuple]] = None,
         **kwargs,
 ) -> None:
@@ -24,15 +24,16 @@ def updatemany(
 # Examples
 
 ```python
-db = SQLite3x(path='test.db')
+from sqllex.classes import AbstractDatabase
+from sqllex.constants import INTEGER, TEXT, REPLACE
 
-db.connect()
+db: AbstractDatabase = ...
 
 db.create_table(
     't6',
     {
-        'id': [INTEGER, UNIQUE, NOT_NULL],
-        'val': [TEXT, DEFAULT, 'def_val']
+        'id': INTEGER,
+        'val': TEXT
     },
     IF_NOT_EXIST=True
 )

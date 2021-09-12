@@ -1,17 +1,17 @@
-# SQLite3x.insertmany
+# AbstractDatabase.insertmany
 
 ```python
 def insertmany(
         self,
-        TABLE: AnyStr,
-        *args: Union[List[List], List[Tuple], Tuple[List], Tuple[Tuple], List, Tuple],
+        TABLE: Union[AnyStr, AbstractTable],
+        *args: Union[List[List], List[Tuple], Tuple[List], Tuple[Tuple], List, Tuple, Iterable],
         OR: OrOptionsType = None,
         **kwargs: Any,
 ) -> None:
     """
     INSERT many data into table.
     The same as regular insert but for lists of inserting values
-
+    
     Parameters
     ----------
     TABLE : AnyStr
@@ -20,13 +20,14 @@ def insertmany(
         1'st way set values for insert
         P.S: args also support numpy.array value
     OR : OrOptionsType
-        Optional parameter. If INSERT failed, type OrOptionsType
+        Action in case if inserting has failed. Optional parameter.
+        > OR='IGNORE'
     kwargs : Any
         An 2'st way set values for insert
-
+    
     Returns
     ----------
-        None
+        None or SQL-script in SQLStatement
     """
 ```
 
@@ -34,16 +35,17 @@ def insertmany(
 ## Examples
 
 ```python
+from sqllex.classes import AbstractDatabase
+from sqllex.constants import INTEGER, TEXT, NOT_NULL, IGNORE
 
-from sqllex import *
+db: AbstractDatabase = ...
 
-db = SQLite3x(path='database.db')
 
 db.create_table(
     'users',
     {
-        'id': [INTEGER, PRIMARY_KEY, UNIQUE],
-        'name': [TEXT, NOT_NULL, DEFAULT, 'Unknown']
+        'id': [INTEGER],
+        'name': [TEXT, NOT_NULL]
     }
 )
 

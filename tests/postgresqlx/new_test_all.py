@@ -16,7 +16,7 @@ DB_TEMPLATE: DBTemplateType = {
 }
 
 db = PostgreSQLx(
-    dbname="sqllextests",
+    dbname="test1",
     user="postgres",
     password="admin",
     host="127.0.0.1",
@@ -70,8 +70,8 @@ def tables_test():
     )
 
     for x in db.tables_names:
-        if not (x in ('t1', 'groups', 'users', 'remove_me')):
-            print(db.tables_names)
+        if not (x in ('table1', 'table3', 'remove_me', 'table2', 't1', 'groups', 'users')):
+            print(db.tables_names, x)
             raise MemoryError
 
     db.drop('remove_me')

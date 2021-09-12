@@ -158,7 +158,7 @@ def where_(placeholder: AnyStr = '?') -> callable:
                         else:
                             operator = "="
 
-                        __script += f"({f'{operator}{placeholder} OR '.join(key for _ in values)}{operator}{placeholder} OR "
+                        __script += f"({f' {operator} {placeholder} OR '.join(key for _ in values)} {operator} {placeholder} OR "   # spaaces need for [LIKE, regexp]
                         __script = f"{__script[:-3].strip()}) " + "AND "
 
                         if __values:

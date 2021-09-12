@@ -1,21 +1,23 @@
-# SQLite3x.get_tables
+# AbstractDatabase.get_tables
 
 ```python
 def get_table(
         self,
         name: AnyStr
-) -> SQLite3xTable:
+) -> AbstractTable:
     """
     Shadow method for __getitem__, that used as like: database['table_name']
-    Get table object (SQLite3xTable instance)
+    Get table object (AbstractTable instance)
+    
     Parameters
     ----------
     name : AnyStr
         Name of table
+        
     Returns
     ----------
-    SQLite3xTable
-        Instance of SQLite3xTable, table of database
+    AbstractTable
+        Instance of AbstractTable, table of database
     """
 ```
 
@@ -23,15 +25,16 @@ Same as `db['table_name']`
 
 
 ```python
-from sqllex import *
+from sqllex.classes import AbstractDatabase
+from sqllex.constants import INTEGER, TEXT, NOT_NULL
 
-db = SQLite3x(path='database.db')
+db: AbstractDatabase = ...
 
 db.create_table(
     'users',
     {
-        'id': [INTEGER, PRIMARY_KEY, UNIQUE],
-        'name': [TEXT, NOT_NULL, DEFAULT, 'Unknown']
+        'id': [INTEGER],
+        'name': [TEXT, NOT_NULL]
     }
 )
 
