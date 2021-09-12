@@ -16,7 +16,7 @@ setup(
 
         'sqllex.core.entities',
         'sqllex.core.entities.abc',
-        'sqllex.core.entities.postgresqlx'
+        'sqllex.core.entities.postgresqlx',
         'sqllex.core.entities.sqlite3x',
 
         'sqllex.core.tools',
