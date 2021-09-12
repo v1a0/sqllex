@@ -14,7 +14,7 @@ if you are moving from v0.1.10.5 to v0.2+, and open an issue if you have any bug
 \033[0m\33[93m
 Thanks for you support and feedback!\033[0m""")
 
-__version__ = '0.2.0.1a'
+__version__ = '0.2.0.1'
 
 __all__ = [
     # classes
