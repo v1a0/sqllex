@@ -1,4 +1,4 @@
-class TableInfoError(MemoryError):
+class TableNotExist(MemoryError):
     """
     Table doesn't exist or have no columns
     """
@@ -7,5 +7,5 @@ class TableInfoError(MemoryError):
 
 
 __all__ = [
-    "TableInfoError",
+    "TableNotExist",
 ]

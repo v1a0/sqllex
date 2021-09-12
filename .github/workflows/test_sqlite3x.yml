@@ -35,7 +35,7 @@ jobs:
 
     - name: Moving tests to current dir
       run: |
-        mv ./tests/* ./
+        mv ./tests/sqlite3x/* ./
 
     - name: Main test - tests/new_test_all.py
       run: |
@@ -60,7 +60,7 @@ jobs:
 
     - name: Moving tests to current dir
       run: |
-        mv ./tests/* ./
+        mv ./tests/sqlite3x/* ./
 
     - name: Main test - tests/new_test_all.py
       run: |

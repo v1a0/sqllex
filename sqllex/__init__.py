@@ -1,16 +1,23 @@
+"""
+Sqllex package
+"""
 from sqllex.classes import *
 from sqllex.constants import *
 from sqllex.debug import logger
 
-__version__ = '0.1.10.5'
+__version__ = '0.2.0.0'
 
 __all__ = [
     # classes
     # SQLite3x
     "SQLite3x",                     # lgtm [py/undefined-export]
     # "SQLite3xTable",              # lgtm [py/undefined-export]
-    # "SQLite3xColumn",             # lgtm [py/undefined-export]
+    # "AbstractColumn",             # lgtm [py/undefined-export]
     # "SQLite3xSearchCondition",    # lgtm [py/undefined-export]
+
+    # PostgreSQL
+    "PostgreSQLx",                  # lgtm [py/undefined-export]
+    # "PostgreSQLxTable",           # lgtm [py/undefined-export]
 
     # constants
     "TEXT",                         # lgtm [py/undefined-export]
@@ -39,6 +46,7 @@ __all__ = [
     "INNER_JOIN",                   # lgtm [py/undefined-export]
     "LEFT_JOIN",                    # lgtm [py/undefined-export]
     "CROSS_JOIN",                   # lgtm [py/undefined-export]
+    "LIKE",                         # lgtm [py/undefined-export]
 
     # debug tools
     "logger",                       # lgtm [py/undefined-export]

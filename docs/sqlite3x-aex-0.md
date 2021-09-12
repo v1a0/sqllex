@@ -18,7 +18,8 @@ pip install sqllex
 ### And type some code into it
 
 ```python
-from sqllex import *
+from sqllex.classes import SQLite3x
+from sqllex.constants.sqlite import *
 
 db = SQLite3x()
 ```
@@ -96,13 +97,13 @@ So `select` ALL (by default) form TABLE named `'users'`, save it into var `users
 ```python
 users = table_users.select_all()
 
-print(users)    # [1, 'Alex']
+print(users)    # [(1, 'Alex')]
 ```
 
 Run it. It returns:
 
 ```python
-[1, 'Alex']
+[(1, 'Alex')]
 ```
 Great! Now let's add more users.
 
@@ -112,15 +113,19 @@ Great! Now let's add more users.
 
 ### Insert many data
 
-It's kind of the same as just `insert` one record, but only use `insertmany` method if you want make it for lists (or tuples) of data. In this example we have 2 lists: 1'st one is lists of ids and 2'nd of usernames. Time to save it
+It's kind of the same as just `insert` one record, but only use `insertmany` method if you want make it for lists of data.
+In this example we have list of 4 new users that we want insert into a database (id, username).
 
 ```python
-users_ids = [2, 3, 4, 5]
-users_names = ['User2', 'User3', 'User4', 'User5']
 
-table_users.insertmany(
-    id=users_ids, username=users_names
-)
+new_users = [
+    (2, 'User2'),
+    (3, 'User3'),
+    (4, 'User4'),
+    (5, 'User5'),
+]
+
+table_users.insertmany(new_users)
 ```
 
 <img src="https://github.com/v1a0/imgs/blob/main/sqllex/examples/1/db_4.png?raw=true">
@@ -135,7 +140,7 @@ print(users)
 
 Returns: 
 ```python
-[[1, 'Alex'], [2, 'User2'], [3, 'User3'], [4, 'User4'], [5, 'User5']]
+[(1, 'Alex'), (2, 'User2'), (3, 'User3'), (4, 'User4'), (5, 'User5')]
 ```
 
 Perfect!
@@ -153,7 +158,7 @@ Lets select all records from table `'users'` records satisfying the condition `i
 
 ```python
 user2 = table_users.select(
-    WHERE=['id', 2]
+    WHERE='id=2',
 )
 
 print(user2)
@@ -161,14 +166,14 @@ print(user2)
 
 returns:
 ```python
-[2, 'User2']
+([2, 'User2'])
 ```
 
-Well done. How about get records `WHERE` `id == 2`:
+Well done. How about get records `WHERE` `id != 2`:
 
 ```python
 users_345 = table_users.select(
-    WHERE=['id', '>', 2]
+    WHERE=(table_users['id'] != 2)
 )
 
 print(users_345)
@@ -177,7 +182,7 @@ print(users_345)
 We got:
 
 ```python
-[[3, 'User3'], [4, 'User4'], [5, 'User5']]
+[(3, 'User3'), (4, 'User4'), (5, 'User5')]
 ```
 
 If you need get only `usernames` of records satisfying the condition, set `SELECT` value.
@@ -185,7 +190,7 @@ If you need get only `usernames` of records satisfying the condition, set `SELEC
 ```python
 users_names = table_users.select(
     SELECT='username',
-    WHERE=['id', '>', 2]
+    WHERE=(table_users['id'] > 2)
 )
 
 print(users_names)
@@ -194,7 +199,7 @@ print(users_names)
 We got:
 
 ```python
-['User3', 'User4', 'User5']
+[('User3',), ('User4',), ('User5',)]
 ```
 
 Good job!
@@ -212,7 +217,7 @@ print(users_345)
 ```
 
 ```python
-[[3, 'User3'], [4, 'User4'], [5, 'User5']]
+[(3, 'User3'), (4, 'User4'), (5, 'User5')]
 ```
 
 Now create one more table but by `mark up` method. And insert users_345 into it
@@ -231,7 +236,7 @@ new_table = db['new_table']
 
 new_table.insertmany(users_345)
 
-print(db.tables_str)
+print(db.tables_names)
 ```
 
 returns:

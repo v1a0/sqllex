@@ -3,34 +3,31 @@
 ```python
 def replace(
         self,
-        TABLE: AnyStr,
+        TABLE: Union[AnyStr, AbstractTable],
         *args: Any,
-        WITH: WithType = None,
+        WHERE: WhereType = None,
         **kwargs: Any,
 ) -> None:
     """
-    REPLACE data into table, works only for records contains UNIQUE column
-
+    REPLACE data into table
+    
     Parameters
     ----------
     TABLE : AnyStr
         Name of table
-    WITH : WithType
-        Optional parameter.
-
-    Returns
-    ----------
-        None or SQL-script in SQLStatement
-
+    WHERE : WhereType
+        Optional parameter for conditions
+        > WHERE=(db['table_name']['column_name'] == 'some_value')
+    
     """
-
 ```
 
 ## Examples
 
 ```python
 
-from sqllex import *
+from sqllex.classes import SQLite3x
+from sqllex.constants.sqlite import *
 
 db = SQLite3x(path='database.db')
 

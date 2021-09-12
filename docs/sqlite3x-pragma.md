@@ -5,9 +5,10 @@ def pragma(
         self,
         *args: str,
         **kwargs: NumStr
-) -> Union[List, None]:
+) -> Union[Tuple, None]:
     """
     Set PRAGMA parameter or send PRAGMA-request
+    
     Parameters
     ----------
     args : str
@@ -16,16 +17,17 @@ def pragma(
     kwargs : NumStr
         Might be used like this:
         Example: db.pragma(foreign_keys="ON")
+    
     Returns
     ----------
-    Union[List, None]
-        Database answer if it has
+    Union[Tuple, None]
+        ABDatabase answer if it has
     """
 ```
 
 ## Child methods
 
-### SQlite3x.foreign_keys
+### SQLite3x.foreign_keys
 
 Turn on/off PRAGMA param FOREIGN KEYS
 
@@ -38,6 +40,7 @@ def foreign_keys(
 ):
     """
     Turn on/off PRAGMA parameter FOREIGN KEYS
+    
     Parameters
     ----------
     mode : Literal["ON", "OFF"]
@@ -46,7 +49,7 @@ def foreign_keys(
 ```
 
 
-### SQlite3x.journal_mode
+### SQLite3x.journal_mode
 
 Set PRAGMA param journal_mode
 
@@ -59,6 +62,7 @@ def journal_mode(
 ):
     """
     Set PRAGMA param journal_mode
+    
     Parameters
     ----------
     mode : Literal["DELETE", "TRUNCATE", "PERSIST", "MEMORY", "WAL", "OFF"]
@@ -67,7 +71,7 @@ def journal_mode(
 ```
 
 
-### SQlite3x.table_info
+### SQLite3x.table_info
 
 Send PRAGMA request table_info(table_name)
 
@@ -80,10 +84,12 @@ def table_info(
 ):
     """
     Send table_info PRAGMA request
+    
     Parameters
     ----------
     table_name : str
         Name of table
+        
     """
 ```
 
@@ -92,7 +98,7 @@ def table_info(
 
 ```python
 
-from sqllex import *
+from sqllex.classes import SQLite3x
 
 db = SQLite3x(path='database.db')
 

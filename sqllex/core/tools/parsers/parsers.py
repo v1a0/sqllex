@@ -1,5 +1,7 @@
 from sqllex.types import *
-from sqllex.constants.sql import *
+from sqllex.constants import INNER_JOIN, LEFT_JOIN, CROSS_JOIN, LIKE
+from sqllex.core.entities.abc.sql_column import AbstractColumn
+from sqllex.core.entities.abc.sql_search_condition import SearchCondition
 
 
 def from_as_(func: callable):
@@ -19,11 +21,9 @@ def from_as_(func: callable):
     """
 
     def as_wrapper(*args, **kwargs):
-        if "TABLE" in kwargs.keys():
-
-            if isinstance(kwargs.get("TABLE"), list) and AS in kwargs.values():
-                TABLE = " ".join(t_arg for t_arg in kwargs.pop("TABLE"))
-                kwargs.update({"TABLE": TABLE})
+        if isinstance(kwargs.get("TABLE"), (list, tuple)):
+            TABLE = " ".join(t_arg for t_arg in kwargs.pop("TABLE"))
+            kwargs.update({"TABLE": TABLE})
 
         return func(*args, **kwargs)
 
@@ -54,7 +54,7 @@ def with_(func: callable) -> callable:
     """
 
     def with_wrapper(*args, **kwargs):
-        if "WITH" in kwargs.keys():
+        if "WITH" in kwargs:
             with_dict: WithType = kwargs.pop("WITH")
         else:
             with_dict: None = None
@@ -99,7 +99,7 @@ def with_(func: callable) -> callable:
     return with_wrapper
 
 
-def where_(func: callable) -> callable:
+def where_(placeholder: AnyStr = '?') -> callable:
     """
     Decorator for catching WHERE argument in kwargs of method
 
@@ -108,112 +108,98 @@ def where_(func: callable) -> callable:
 
     Parameters
     ----------
-    func : callable
-        SQLite3x method contains arg WHERE
+    placeholder: str
+        Symbol to use for placeholder
 
     Returns
     -------
     callable
         Decorated method with script contains where_statement and values contains values of where_statement
     """
-
-    def where_wrapper(*args, **kwargs):
-        if "WHERE" in kwargs.keys():
-            where_: WhereType = kwargs.pop("WHERE")
-
-        else:
-            where_: None = None
-
-        stmt: SQLStatement = func(*args, **kwargs)
-
-        if where_:
-            stmt.request.script += f" WHERE ("
-
-            if isinstance(where_, tuple):  #
-                where_ = list(where_)
-
-            if isinstance(where_, list):
-
-                # If WHERE is not List[List] (Just List[NotList])
-                if not isinstance(where_[0], list):
-                    where_ = [where_]
-
-                new_where = {}
-
-                for wh in where_:
-
-                    # List[List] -> Dict[val[0], val[1]]
-
-                    if isinstance(wh[0], str) and len(wh) > 1:
-                        new_where.update({wh[0]: wh[1:]})
-                    else:
-                        raise TypeError(f"Unexpected type of WHERE value")
-
-                where_ = new_where
-
-            if isinstance(where_, dict):
-                for (key, values) in where_.items():
-                    # parsing WHERE values
-
-                    if not isinstance(values, list):
-                        values = [values]
-
-                    # Looking for equality or inequality
-                    if len(values) > 1 and values[0] in [
-                        "<", "<<", "<=",
-                        ">=", ">>", ">",
-                        "=", "==", "!=",
-                        "<>",
-                    ]:
-                        operator = values.pop(0)
-
-                        if len(values) == 1 and isinstance(
-                                values[0], list
-                        ):
-                            values = values[0]
-                    else:
-                        operator = "="
-
-                    stmt.request.script += f"({f'{operator}? OR '.join(key for _ in values)}{operator}? OR "
-                    stmt.request.script = f"{stmt.request.script[:-3].strip()}) " + "AND "
-
-                    if stmt.request.values:
-                        if isinstance(stmt.request.values[0], tuple):
-                            # if .values contains many values for insertmany stmt
-                            # add where_ values for each value
-                            new_values = list(stmt.request.values)
-
-                            for i in range(len(new_values)):
-                                new_values[i] = tuple(
-                                    list(new_values[i]) + list(values)
-                                )
-
-                            stmt.request.values = tuple(new_values)
-
-                        else:
-                            # if .values contains only one set of values
-                            # add where_ values
-                            stmt.request.values = tuple(
-                                list(stmt.request.values) + list(values)
-                            )
-                    else:
-                        stmt.request.values = values
-
-                stmt.request.script = stmt.request.script.strip()[:-3]
-
-            elif isinstance(where_, str):
-                stmt.request.script += f"{where_}"
-
+    def where_pre_wrapper(func: callable):
+        def where_wrapper(*args, **kwargs):
+            if "WHERE" in kwargs:
+                where_: WhereType = kwargs.pop("WHERE")
             else:
-                raise TypeError
+                where_: None = None
 
-            stmt.request.script = (
-                f"{stmt.request.script.strip()}) "  # .strip() removing spaces around
-            )
+            __script, __values = func(*args, **kwargs)
 
-        return stmt
+            if where_:
+                __script = f"{__script} WHERE ("
 
-    return where_wrapper
+                if isinstance(where_, SearchCondition):
+                    __script = f"{__script}{where_.script}"
+                    __values += where_.values
+
+                elif isinstance(where_, AbstractColumn):
+                    __script = f"{__script}{where_}"
+
+                elif isinstance(where_, dict):
+                    for (key, values) in where_.items():
+                        # parsing WHERE values
+
+                        if not isinstance(values, list):
+                            values = [values]
+
+                        # Looking for equality or inequality
+                        if len(values) > 1 and values[0] in [
+                            "<", "<<", "<=",
+                            ">=", ">>", ">",
+                            "=", "==", "!=",
+                            "<>", LIKE,
+                        ]:
+                            operator = values.pop(0)
+
+                            if len(values) == 1 and isinstance(
+                                    values[0], list
+                            ):
+                                values = values[0]
+                        else:
+                            operator = "="
+
+                        __script += f"({f' {operator} {placeholder} OR '.join(key for _ in values)} {operator} {placeholder} OR "   # spaaces need for [LIKE, regexp]
+                        __script = f"{__script[:-3].strip()}) " + "AND "
+
+                        if __values:
+                            if isinstance(__values[0], tuple):
+                                # if .values contains many values for insertmany __script, __values
+                                # add where_ values for each value
+                                new_values = list(__values)
+
+                                for i in range(len(new_values)):
+                                    new_values[i] = tuple(
+                                        list(new_values[i]) + list(values)
+                                    )
+
+                                __values = tuple(new_values)
+
+                            else:
+                                # if .values contains only one set of values
+                                # add where_ values
+                                __values = tuple(
+                                    list(__values) + list(values)
+                                )
+                        else:
+                            __values = values
+
+                    __script = __script.strip()[:-3]
+
+                elif isinstance(where_, str):
+                    __script += f"{where_}"
+
+                else:
+                    raise TypeError
+
+                __script = (
+                    f"{__script.strip()}) "  # .strip() removing spaces around
+                )
+
+            return __script, __values
+
+        return where_wrapper
+
+    return where_pre_wrapper
 
 
 def join_(func: callable) -> callable:
@@ -236,35 +222,41 @@ def join_(func: callable) -> callable:
     """
 
     def join_wrapper(*args, **kwargs):
-        if "JOIN" in kwargs.keys():
-            JOIN: JoinArgType = kwargs.pop("JOIN")
-        else:
-            JOIN: None = None
-
-        stmt: SQLStatement = func(*args, **kwargs)
-
-        if JOIN:
-            if isinstance(JOIN, list):
+        def add_join_to_script(joins: tuple, base_script: str) -> str:
+            if isinstance(joins, (list, tuple)):
 
                 # if JOIN is not List[List] make it so
-                if not isinstance(JOIN[0], list):
-                    JOIN = [JOIN]
+                if not isinstance(joins[0], (list, tuple)):
+                    joins = (joins,)
 
-                for join_ in JOIN:
+                for _join in joins:
                     # If first element is JOIN type
-                    if join_[0] in [INNER_JOIN, LEFT_JOIN, CROSS_JOIN]:
-                        join_method = join_.pop(0)
+                    if _join[0] in [INNER_JOIN, LEFT_JOIN, CROSS_JOIN]:
+                        join_method = _join[0]
+                        _join = _join[1:]
                     else:
                         join_method = INNER_JOIN
 
                     # Adding JOIN to script
-                    stmt.request.script += (
-                        f"{join_method} {' '.join(j_arg for j_arg in join_)} "
+                    base_script += (
+                        f"{join_method} {' '.join(j_arg for j_arg in _join)} "
                     )
-            else:
-                raise TypeError("Unexp")
+            return base_script
 
-        return stmt
+        if "JOIN" in kwargs:
+            JOIN: JoinArgType = kwargs.pop("JOIN")
+        else:
+            JOIN: None = None
+
+        __script, __values = func(*args, **kwargs)
+
+        if JOIN:
+            if isinstance(JOIN, (list, tuple)):
+                __script = add_join_to_script(joins=JOIN, base_script=__script)
+            else:
+                raise TypeError(f"Incorrect JOIN extension type, got {type(JOIN)}, expected list or tuple")
+
+        return __script, __values
 
     return join_wrapper
 
@@ -289,13 +281,23 @@ def or_param_(func: callable) -> callable:
     """
 
     def or_wrapper(*args, **kwargs):
-        if "OR" in kwargs.keys():
+        def add_or_arg_to_script(or_argument: str, base_script: str) -> str:
+            return f"{base_script} OR {or_argument}"
+
+        if "OR" in kwargs:
             or_arg: OrOptionsType = kwargs.pop("OR")
         else:
             or_arg: None = None
 
         if or_arg:
-            kwargs.update({"script": kwargs.get("script") + f" OR {or_arg}"})
+            kwargs.update(
+                {
+                    "script": add_or_arg_to_script(
+                        or_argument=or_arg,
+                        base_script=kwargs.get('script')
+                    )
+                }
+            )
 
         return func(*args, **kwargs)
 
@@ -320,32 +322,26 @@ def order_by_(func: callable) -> callable:
     """
 
     def order_by_wrapper(*args, **kwargs):
-        if "ORDER_BY" in kwargs.keys():
+
+        if "ORDER_BY" in kwargs:
             order_by: OrderByType = kwargs.pop("ORDER_BY")
         else:
             order_by: None = None
 
-        stmt: SQLStatement = func(*args, **kwargs)
+        __script, __values = func(*args, **kwargs)
 
         if order_by:
             if isinstance(order_by, (str, int)):
-                stmt.request.script += f"ORDER BY {order_by} "
+                __script = f"{__script} ORDER BY {order_by} "
             elif isinstance(order_by, (list, tuple)):
-                stmt.request.script += (
-                    f"ORDER BY {', '.join(str(item_ob) for item_ob in order_by)} "
+                __script = (
+                    f"{__script} ORDER BY {', '.join(str(item_ob) for item_ob in order_by)} "
                 )
-            elif isinstance(order_by, dict):
-                for (key, val) in order_by.items():
-                    if isinstance(val, (str, int)):
-                        uni_val = f"{val} "
-                    elif isinstance(val, (list, tuple)):
-                        uni_val = " ".join(sub_val for sub_val in val)
-                    else:
-                        raise TypeError
+            else:
+                raise TypeError(f"Unexpected type of ORDER_BY parameter, "
+                                f"expected str or tuple, got {type(order_by)} instead")
 
-                    stmt.request.script += f"ORDER BY {key} {uni_val} "
-
-        return stmt
+        return __script, __values
 
     return order_by_wrapper
 
@@ -369,19 +365,19 @@ def limit_(func: callable) -> callable:
     """
 
     def limit_wrapper(*args, **kwargs):
-        if "LIMIT" in kwargs.keys():
+        if "LIMIT" in kwargs:
             limit: LimitOffsetType = kwargs.pop("LIMIT")
         else:
             limit: None = None
 
-        stmt: SQLStatement = func(*args, **kwargs)
+        __script, __values = func(*args, **kwargs)
 
         if limit:
             if isinstance(limit, (float, str)):
                 limit = int(limit)
-            stmt.request.script += f"LIMIT {limit} "
+            __script = f"{__script} LIMIT {limit} "
 
-        return stmt
+        return __script, __values
 
     return limit_wrapper
 
@@ -405,74 +401,21 @@ def offset_(func: callable) -> callable:
     """
 
     def offset_wrapper(*args, **kwargs):
-        if "OFFSET" in kwargs.keys():
+        if "OFFSET" in kwargs:
             offset: LimitOffsetType = kwargs.pop("OFFSET")
         else:
             offset: bool = False
 
-        stmt: SQLStatement = func(*args, **kwargs)
+        __script, __values = func(*args, **kwargs)
 
         if offset:
             if isinstance(offset, (float, str)):
                 offset = int(offset)
-            stmt.request.script += f"OFFSET {offset} "
+            __script = f"{__script} OFFSET {offset} "
 
-        return stmt
+        return __script, __values
 
     return offset_wrapper
-
-
-
-
-
-def args_parser(func: callable):
-    """
-    Decorator for parsing argument method.
-    If func got only one argument which contains args for function it'll unwrap it
-
-    if args is dict :
-        return args = None, kwargs = args[0]
-
-    if args is list :
-        return args = args[0], kwargs = kwargs
-
-    if args is tuple :
-        return args = list(args[0]), kwargs = kwargs
-
-    Parameters
-    ----------
-    func : callable
-        SQLite3x method contains args
-
-    Returns
-    ----------
-    callable
-        Decorated method with parsed args
-    """
-
-    def args_parser_wrapper(*args: Any, **kwargs: Any):
-        if not args:
-            return func(*args, **kwargs)
-
-        self = list(args)[0]
-        args = list(args)[1:]
-
-        if len(args) == 1:
-            if isinstance(args[0], list):
-                args = args[0]
-            elif isinstance(args[0], (str, int)):
-                args = [args[0]]
-            elif isinstance(args[0], tuple):
-                args = list(args[0])
-            elif isinstance(args[0], dict):
-                kwargs.update(args[0])
-                args = []
-
-        args = [self, *args]
-
-        return func(*args, **kwargs)
-
-    return args_parser_wrapper
 
 
 __all__ = [
@@ -484,6 +427,4 @@ __all__ = [
     'order_by_',
     'limit_',
     'offset_',
-
-    'args_parser',
 ]

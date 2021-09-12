@@ -46,10 +46,12 @@ Imagine you need create some database, with structure like:
 
 ```python
 # 
-# For the first, you need to import all from Sqllex lib and init your database
+# For the first, you need to import database-class and constants from Sqllex lib and init your database
 # 
 
-from sqllex import *
+# from sqllex import *
+from sqllex.classes import SQLite3x
+from sqllex.constants.sqlite import *
 
 db = SQLite3x(path='my_awesome_db.db')  # Init-ing your database
 
@@ -102,14 +104,14 @@ groups = db['groups']   # Get table 'groups' from db as object
 
 groups.insert(id=1, name="Admin") # You can insert data like this
 
-groups.insert([2, "User"])        # Or like this
+groups.insert((2, "User"))        # Or like this
 
 groups.insert(3, 'Guest')         # Or like this
 
 #
 # Same thing but without table object
 # db.insert('groups', id=1, name="Admin")
-# db.insert('groups', [2, "User"])
+# db.insert('groups', (2, "User"))
 # db.insert('groups', 3, 'Guest')
 #
 
@@ -118,19 +120,19 @@ groups.insert(3, 'Guest')         # Or like this
 # 
 
 
-# Down below is a list of users, format: [id, name, group_id]
+# Down below is a list of users, format: (id, name, group_id)
 
 users_list = [
-    [0, "User_0", 1],
-    [1, "User_1", 2],
-    [2, "User_2", 3],
-    [3, "User_3", 1],
-    [4, "User_4", 2],
-    [5, "User_5", 3],
-    [6, "User_6", 1],
-    [7, "User_7", 2],
-    [8, "User_8", 3],
-    [9, "User_9", 1],
+    (0, "User_0", 1),
+    (1, "User_1", 2),
+    (2, "User_2", 3),
+    (3, "User_3", 1),
+    (4, "User_4", 2),
+    (5, "User_5", 3),
+    (6, "User_6", 1),
+    (7, "User_7", 2),
+    (8, "User_8", 3),
+    (9, "User_9", 1),
 ]
 
 users = db['users']     # Get table 'groups' from db as object
@@ -145,7 +147,7 @@ users.insertmany(users_list)    # Insert it all by one line
 
 users_in_db = users.select('username')  # Without any special arguments == SELECT ALL (by default)
 
-print(users_in_db)  # ['User_0', 'User_1', 'User_2', 'User_3', 'User_4', 'User_5', 'User_6', 'User_7', 'User_8', 'User_9']
+print(users_in_db)  # [('User_0',), ('User_1',), ('User_2',), ('User_3',), ('User_4',), ('User_5',), ('User_6',), ('User_7',), ('User_8',), ('User_9',)]
 
 
 # 
@@ -166,21 +168,21 @@ users_group_1 = users.select(
 #   WHERE="user_group = 1"
 
 
-print(users_group_1)    # ['User_0', 'User_3', 'User_6', 'User_9']
+print(users_group_1)    # [('User_0',), ('User_3',), ('User_6',), ('User_9',)]
 
 
 #
 # And some large example for some another imaginary table
-# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-# !!! CODE DOWN BELOW WOULD NOT WORK !!!
-# !!!  This is an example of syntax  !!!
-# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! 
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# !!! CODE DOWN BELOW WOULD NOT WORK AS IS !!!
+# !!!    This is an example of syntax      !!!
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 #
 
 users.select(
     SELECT=['username', 'group_name', 'description'],                        # SELECT username, group_name, description
     JOIN=[                                                                   # JOIN
-        ['groups', AS, 'gr', ON, 'users.group_id == gr.group_id'],              # INNER JOIN groups AS gr ON us.group_id == gr.group_id
+        ['groups', AS, 'gr', ON, 'users.group_id == gr.group_id'],           # INNER JOIN groups AS gr ON us.group_id == gr.group_id
         [CROSS_JOIN, 'about', 'ab', ON, 'ab.group_id == gr.group_id']        # CROSS JOIN about ab ON ab.group_id == gr.group_id
     ],
     WHERE= (users['username'] != 'user_1') & (users['username'] != 'user_2'),  # WHERE (users.username<>'user_1') AND (users.username<>'user_2')
@@ -208,8 +210,9 @@ db.disconnect() # unlock your database and save all changes
 
 
 ```python
-
-from sqllex import *
+# from sqllex import *
+from sqllex.classes import SQLite3x
+from sqllex.constants.sqlite import *
 
 db = SQLite3x(path='my_awesome_db.db') 
 

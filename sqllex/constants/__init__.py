@@ -1,4 +1,41 @@
-from sqllex.constants.sql import *
+"""
+All constants, SQL aliases of different DMS (sqlite, postgres, common)
+"""
+
+from sqllex.constants.sqlite import *
+from sqllex.constants.postgresql import *
+
+
+CONST_PRIORITY = {
+    TEXT: 0,
+    NUMERIC: 0,
+    INTEGER: 0,
+    REAL: 0,
+    NONE: 1,
+    BLOB: 0,
+
+    ALL: None,
+    AUTOINCREMENT: 2,
+    CHECK: None,
+    DEFAULT: 1,
+    FOREIGN_KEY: None,
+    NOT_NULL: 3,
+    NULL: 1,
+    PRIMARY_KEY: 1,
+    REFERENCES: None,
+    UNIQUE: 1,
+    AS: None,
+    ON: None,
+
+    ABORT: None,
+    FAIL: None,
+    IGNORE: None,
+    REPLACE: None,
+    ROLLBACK: None,
+}
+
+CONST_PRIORITY.setdefault(1)
+
 
 __all__ = [
     # sql
@@ -23,6 +60,7 @@ __all__ = [
     'INTEGER',  # lgtm [py/undefined-export]
 
     'LEFT_JOIN',  # lgtm [py/undefined-export]
+    'LIKE',  # lgtm [py/undefined-export]
 
     'NONE',  # lgtm [py/undefined-export]
     'NOT_NULL',  # lgtm [py/undefined-export]

@@ -1,33 +1,28 @@
+"""
+Constants for Any SQL-like DRM
+"""
 from sqllex.types.types import *
 
 # Options of column datatype of value
-TEXT: DataType = "TEXT"
-NUMERIC: DataType = "NUMERIC"
-INTEGER: DataType = "INTEGER"
-REAL: DataType = "REAL"
-NONE: DataType = "NONE"
-BLOB: DataType = "BLOB"
+INTEGER: ColumnDataType = "INTEGER"
+REAL: ColumnDataType = "REAL"
+TEXT: ColumnDataType = "TEXT"
+
+
+# Options for JOIN-ing
+INNER_JOIN: JoinMethod = "INNER JOIN"
+LEFT_JOIN: JoinMethod = "LEFT JOIN"
 
 
 # Options of column value
 ALL: ConstantType = "*"
-AUTOINCREMENT: ConstantType = "AUTOINCREMENT"
-CHECK: ConstantType = "CHECK"
-DEFAULT: ConstantType = "DEFAULT"
 FOREIGN_KEY: ForeignKey = "FOREIGN KEY"
-NOT_NULL: ConstantType = "NOT NULL"
 NULL: ConstantType = "NULL"
 PRIMARY_KEY: ConstantType = "PRIMARY KEY"
 REFERENCES: ConstantType = "REFERENCES"
-UNIQUE: ConstantType = "UNIQUE"
 AS: ConstantType = "AS"
 ON: ConstantType = "ON"
-
-
-# Options for JOIN-ing
-INNER_JOIN: JoinType = "INNER JOIN"
-LEFT_JOIN: JoinType = "LEFT JOIN"
-CROSS_JOIN: JoinType = "CROSS JOIN"
+LIKE: ConstantType = "LIKE"
 
 
 # Options for "OR" argument
@@ -37,104 +32,4 @@ IGNORE: OrOptionsType = "IGNORE"
 REPLACE: OrOptionsType = "REPLACE"
 ROLLBACK: OrOptionsType = "ROLLBACK"
 
-
-CONST_PRIORITY = {
-    TEXT: 0,
-    NUMERIC: 0,
-    INTEGER: 0,
-    REAL: 0,
-    NONE: 1,
-    BLOB: 0,
-
-    ALL: None,
-    AUTOINCREMENT: 2,
-    CHECK: None,
-    DEFAULT: 1,
-    FOREIGN_KEY: None,
-    NOT_NULL: 3,
-    NULL: 1,
-    PRIMARY_KEY: 1,
-    REFERENCES: None,
-    UNIQUE: 1,
-    AS: None,
-    ON: None,
-
-    ABORT: None,
-    FAIL: None,
-    IGNORE: None,
-    REPLACE: None,
-    ROLLBACK: None,
-}
-
-
-CONSTANTS = [
-    TEXT,
-    NUMERIC,
-    INTEGER,
-    REAL,
-    NONE,
-    BLOB,
-
-    ALL,
-    AUTOINCREMENT,
-    CHECK,
-    DEFAULT,
-    FOREIGN_KEY,
-    NOT_NULL,
-    NULL,
-    PRIMARY_KEY,
-    REFERENCES,
-    UNIQUE,
-    AS,
-    ON,
-
-    ABORT,
-    FAIL,
-    IGNORE,
-    REPLACE,
-    ROLLBACK,
-]
-
-
-__all__ = [
-    'ABORT',
-    'ALL',
-    'AS',
-    'AUTOINCREMENT',
-
-    'BLOB',
-
-    'CHECK',
-    'CONST_PRIORITY',
-    'CROSS_JOIN',
-
-    'DEFAULT',
-
-    'FAIL',
-    'FOREIGN_KEY',
-
-    'IGNORE',
-    'INNER_JOIN',
-    'INTEGER',
-
-    'LEFT_JOIN',
-
-    'NONE',
-    'NOT_NULL',
-    'NULL',
-    'NUMERIC',
-
-    'ON',
-
-    'PRIMARY_KEY',
-
-    'REAL',
-    'REFERENCES',
-    'REPLACE',
-    'ROLLBACK',
-
-    'TEXT',
-
-    'UNIQUE'
-]
 

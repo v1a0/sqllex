@@ -1,13 +1,22 @@
-# Sqllex v0.1.10.5
+# Sqllex v0.2.0.0
 
-## This is the last "SQLite-only" Sqllex ORM version
+### Changed returning data type 
 
-With the new updates (0.2+) base logic of scripts generation will be changed. Since sqllex v0.2 output data will not be converting from (original) tuple of tuples to list of lists, it will return "as is" instead. 
+```python
+db.select(...) -> [(1, 'Data1'), (2, 'Data2')]
+```
 
-There is a few reasons of these changes: tuple are faster, lighter and more reasonable for use as type of static record than list. So that's why all databases drivers use tuples.
+By now all select-like methods returns `List[Tuple]` instead of `List[List]`
 
-Anyway I'll leave a few tools for converting in `sqllex.other` (return2list, lister, tuple2list) to simplify the process of transition to a new sqllex versions.
+```python
+# OLD
+db.select(...) -> [[1, 'Data1'], [2, 'Data2']]
 
+# NEW
+db.select(...) -> [(1, 'Data1'), (2, 'Data2')]
+```
+
+---
 
 # Sqllex v0.1.10.0
 

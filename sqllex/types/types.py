@@ -1,47 +1,12 @@
 from typing import Any, AnyStr, Generator, List, Literal, Mapping, Tuple, Union, Iterable, Sized
 from pathlib import Path
 from numbers import Number
-from sqlite3 import Connection
-
-
-class SQLRequest:
-    """
-    SQL request contains script and values (if necessary)
-    """
-
-    def __init__(self, script: AnyStr, values: Tuple = None):
-        self.script = script
-        self.values = values
-
-    def __str__(self):
-        return f"""{{SQLiteScript: script={self.script}, values={self.values}}}"""
-
-    def __eq__(self, other):
-        return self.script == other.script and self.values == other.values
-
-    def __bool__(self):
-        return bool(self.script)
-
-
-class SQLStatement:
-    """
-    SQL request contains SQLRequest
-    """
-
-    def __init__(self, request: SQLRequest, path: Union[Path, AnyStr], conn: Connection = None):
-        self.request = request
-        self.path = path
-        self.connection = conn
-
-    def __bool__(self):
-        return bool(self.request)
-
 
 # FOREIGN_KEY const type
 ForeignKey = Literal["FOREIGN KEY"]
 
 # Types of data for data types of column
-DataType = Literal[
+ColumnDataType = Literal[
     "TEXT",
     "NUMERIC",
     "INTEGER",
@@ -49,7 +14,6 @@ DataType = Literal[
     "NONE",
     "BLOB",
 ]
-
 
 # Types of constants used as keywords for column settings
 ConstantType = Union[
@@ -66,22 +30,26 @@ ConstantType = Union[
         "OR",
         "NULL",
         "AS",
-        "ON"
+        "ON",
+        "LIKE"
     ],
     ForeignKey
 ]
 
 # Subtypes for DBTemplateType
-ListDataType = List[Union[DataType, ConstantType, Number]]
-ColumnDataType = Union[ListDataType, DataType, AnyStr]
-ColumnsType = Mapping[AnyStr, ColumnDataType]
+ColumnType = Union[
+    Tuple[ColumnDataType, ConstantType, AnyStr, Number],
+    List[Union[ColumnDataType, ConstantType, AnyStr, Number]],
+    ColumnDataType,
+    ConstantType,
+    AnyStr
+]
+ColumnsType = Mapping[AnyStr, ColumnType]
 
 # Type for databases template
-DBTemplateType = Union[
-    Mapping[
-        AnyStr,
-        ColumnsType
-    ]
+DBTemplateType = Mapping[
+    AnyStr,
+    ColumnsType
 ]
 
 # Universal Path type
@@ -97,11 +65,17 @@ NumStr = Union[
 ]
 
 # Type of data INSERT awaiting
-InsertData = Union[
+InsertingData = Union[
     NumStr,
     Tuple,
     List,
     Mapping
+]
+
+InsertingManyData = Union[
+    List[InsertingData],
+    Tuple[InsertingData],
+    List, Tuple
 ]
 
 # Type for parameter of OR argument in INSERT method (?)
@@ -114,26 +88,18 @@ OrOptionsType = Literal[
 ]
 
 # Type for parameter of WITH argument
-WithType = Mapping[
-    AnyStr,
-    Union[
-        SQLStatement,
-        AnyStr
-    ]
-]
+WithType = Mapping[AnyStr, AnyStr]
 
 # Type for parameter of WHERE argument
 WhereType = Union[
     AnyStr,
-    Tuple[NumStr],
-    List[Union[NumStr, List[NumStr]]],
-    Mapping[AnyStr, Union[SQLStatement, NumStr, List]],
+    Mapping[AnyStr, Union[NumStr, List]],
+    bool,    # temporary fix
 ]
 
 # Type for parameter of ORDER BY argument
 OrderByType = Union[
     NumStr,
-    List,
     Tuple,
     Mapping[
         AnyStr,
@@ -153,63 +119,64 @@ LimitOffsetType = Union[
 ]
 
 # Type for parameter of JOIN argument
-JoinType = Union[
-    Literal[
-        "INNER JOIN",
-        "LEFT JOIN",
-        "CROSS JOIN"
-    ],
+JoinMethod = Literal[
+    "INNER JOIN",
+    "LEFT JOIN",
+    "CROSS JOIN"
 ]
 
+
 JoinArgType = Union[
-    List[
-        List[
+    Tuple[
+        Tuple[
             Union[
-                JoinType,
+                JoinMethod,
                 NumStr,
                 ConstantType,
             ]
         ]
     ],
-    List[
+    Tuple[
         Union[
-            JoinType,
+            JoinMethod,
             NumStr,
             ConstantType,
+            AnyStr
         ]
     ],
-    Union[
-        JoinType,
-        NumStr,
-        ConstantType,
-    ],
+    AnyStr
 ]
+
+ScriptAndValues = Tuple[
+    AnyStr, Tuple
+]
+
 
 __all__ = [
     # sql
-    'SQLRequest',
-    'SQLStatement',
     'ForeignKey',
-    'DataType',
-    'ConstantType',
-    'ListDataType',
     'ColumnDataType',
+    'ConstantType',
+    'ColumnType',
     'ColumnsType',
     'DBTemplateType',
     'PathType',
+    'Number',
     'NumStr',
-    'InsertData',
+    'InsertingData',
+    'InsertingManyData',
     'OrOptionsType',
     'WithType',
     'WhereType',
     'OrderByType',
     'LimitOffsetType',
-    'JoinType',
+    'JoinMethod',
     'JoinArgType',
 
     # typing
     'Literal',
     'Mapping',
+    'ScriptAndValues',
     'Union',
     'List',
     'AnyStr',
@@ -218,4 +185,5 @@ __all__ = [
     'Generator',
     'Iterable',
     'Sized',
+    'JoinMethod',
 ]

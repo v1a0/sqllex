@@ -15,16 +15,19 @@ setup(
         'sqllex.core',
 
         'sqllex.core.entities',
+        'sqllex.core.entities.abc',
+        'sqllex.core.entities.postgresqlx'
         'sqllex.core.entities.sqlite3x',
-        'sqllex.core.entities.super',
 
         'sqllex.core.tools',
         'sqllex.core.tools.convertors',
+        'sqllex.core.tools.docs_helpers',
         'sqllex.core.tools.parsers',
         'sqllex.core.tools.sorters',
 
         'sqllex.debug',
         'sqllex.exceptions',
+        'sqllex.old',
         'sqllex.types',
     ],
     version=sqllex.__version__,
@@ -34,9 +37,15 @@ setup(
     author_email='contact@v1a0.dev',
     url="https://github.com/v1a0/sqllex",
     download_url=f"https://github.com/V1A0/sqllex/archive/refs/tags/v{sqllex.__version__}.tar.gz",
-    keywords=['sql', 'sql3', 'sqlite', 'sqlite3', 'sqllex', 'db', 'database', 'easy'],
+    keywords=[
+        'sqllex', 'sql', 'db', 'database',
+        'sqlite3', 'sqlite', 'SQLite3', 'SQLite3x',
+        'psycopg2', 'postgresql', 'postgres', 'psql',
+        'easy', 'fast', 'orm', 'ORM',
+    ],
     install_requires=[
         'loguru==0.5.3',
+        'psycopg2==2.9.1',
     ],
     classifiers=[
         'Development Status :: 3 - Alpha',
@@ -50,17 +59,11 @@ setup(
 )
 # https://pypi.org/classifiers/
 
-print(
-    """
-This is the last "SQLite-only" Sqllex ORM version !!!
-
-With the new updates (0.2+) base logic of scripts generation will be changed.
-Since sqllex v0.2 output data will not be converting from (original) tuple of tuples to list of lists, it will return "as is" instead. 
-
-There is a few reasons of these changes: tuple are faster, lighter and more reasonable for use as type of static record than list.
-So that's why all databases drivers use tuples.
-
-Anyway I'll leave a few tools for converting in `sqllex.other` (return2list, lister, tuple2list) to simplify the process of transition to a new sqllex versions.
-
-"""
-)
+print("""
+\t\t\t\33[41m!!!\tWARNING\t!!!\033[0m
+\033[91m
+SQLLEX v0.2 have major changes that may breaks your old code! 
+Please, read https://github.com/v1a0/sqllex/blob/main/UPDATES.md#0200
+if you are moving from v0.1.10.5 to v0.2+, and open an issue if you have any bugs.
+\033[0m\33[93m
+Thanks for you support and feedback! 🥳\033[0m""")
