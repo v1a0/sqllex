@@ -5,24 +5,30 @@ from sqllex.classes import *
 from sqllex.constants import *
 from sqllex.debug import logger
 
-print("""
-\t\t\t\33[41m!!!\tWARNING\t!!!\033[0m
-\033[91m
-SQLLEX v0.2 have major changes that may breaks your old code! 
-Please, read https://github.com/v1a0/sqllex/blob/main/UPDATES.md#0200
-if you are moving from v0.1.10.5 to v0.2+, and open an issue if you have any bugs.
-\033[0m\33[93m
-Thanks for you support and feedback!\033[0m""")
+print(
+    "\033[91m"
+    "WARNING: SQLLEX v0.2+ have major changes that may breaks your old code! "
+    "Please, read https://github.com/v1a0/sqllex/blob/main/UPDATES.md#0200. "
+    "Especially if you are moving v0.1.10.5 -> v0.2+"
+    "\033[0m"
+    "\33[93m"
+    "\n"
+    "Thanks for you support and feedback!"
+    "\033[0m"
+    "\n")
 
-__version__ = '0.2.0.1a'
+__version__ = '0.2.0.2'
 
 __all__ = [
     # classes
+
+    # ABC
+    # "AbstractColumn",             # lgtm [py/undefined-export]
+    # "SearchCondition",            # lgtm [py/undefined-export]
+
     # SQLite3x
     "SQLite3x",                     # lgtm [py/undefined-export]
     # "SQLite3xTable",              # lgtm [py/undefined-export]
-    # "AbstractColumn",             # lgtm [py/undefined-export]
-    # "SQLite3xSearchCondition",    # lgtm [py/undefined-export]
 
     # PostgreSQL
     "PostgreSQLx",                  # lgtm [py/undefined-export]
