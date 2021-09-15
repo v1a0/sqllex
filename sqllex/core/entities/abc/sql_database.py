@@ -54,7 +54,7 @@ class AbstractTable(ABC):
             db['table_name']['column_name']
         """
         if key not in self.columns_names:
-            raise KeyError(key, "No such column in table")
+            raise KeyError(key, f"No such column '{key}' in table '{self.name}'")
 
         return AbstractColumn(table=self.name, name=key)
 
@@ -532,6 +532,9 @@ class AbstractDatabase(ABC):
         Get table from database
             db['table_name']
         """
+        if key not in self.tables_names:
+            raise KeyError(key, f"No such table '{key}' in database")
+
         return self._get_table(key)
 
     def __del__(self):
@@ -1209,7 +1212,7 @@ class AbstractDatabase(ABC):
 
         """
 
-        return self._get_table(name=name)
+        return self.__getitem__(key=name)
 
     def get_columns(
             self,
