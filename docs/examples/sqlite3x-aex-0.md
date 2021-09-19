@@ -297,4 +297,4 @@ Run it and we got:
 
 ### Explore more and learn how awesome SQL and SQLLEX is!
 
-### [Back to home](README.md)
+### [Back to home](../README.md)

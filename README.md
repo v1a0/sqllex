@@ -3,7 +3,7 @@
 
 <img src="./pics/sqllex-logo.svg" width="300px" alt="sqllex logo">
 
-# SQLLEX v0.2.0.2 🥳📚
+# SQLLEX v0.2.0.3 🥳📚
 
 ![python-3-9]
 [![lgtm-quality-img]][lgtm-quality-src]
@@ -27,7 +27,7 @@ pip install sqllex
 
 | Version |  Status | Tests, and actions |
 | :--------: | :----------------------------: | :---: |
-| `0.2.0.2`    | ✔️ supported         <br> ✔️ stable         | [![code-ql-img]][code-ql-src] <br> [![sqlite3x-test-img]][sqlite3x-test-src] <br> [![pypi-upload-img]][pypi-upload-img] |
+| `0.2.0.3`    | ✔️ supported         <br> ✔️ stable         | [![code-ql-img]][code-ql-src] <br> [![sqlite3x-test-img]][sqlite3x-test-src] <br> [![pypi-upload-img]][pypi-upload-img] |
 | `0.1.10.5`    | ⚠️ outdated         <br>                      | ⚠️ Mostly passing |
 | `<=0.1.10.4`  | ❌️ outdated       | ❌ |
 

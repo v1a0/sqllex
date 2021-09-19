@@ -67,6 +67,8 @@ db = PostgreSQLx(
 - [user *](postgresqlx-properties.md#postgresqlxuser)
 
 
+```
     * - available only for this specific database-class
+```
 
 ### [Back to home](README.md)

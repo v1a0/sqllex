@@ -17,7 +17,7 @@ print(
     "\033[0m"
     "\n")
 
-__version__ = '0.2.0.2'
+__version__ = '0.2.0.3'
 
 __all__ = [
     # classes

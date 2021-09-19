@@ -41,7 +41,7 @@ Imagine you need create some database, with structure like:
 </table>
 
 
-[I don't need explains, just show me the code](#Code)
+[I don't need explains, just show me the code](#code)
 
 
 ```python
@@ -207,7 +207,7 @@ db.disconnect() # unlock your database and save all changes
 <details>
 <summary id="just_code_1">Code without comments</summary>
 
-
+### Code
 
 ```python
 # from sqllex import *
@@ -295,4 +295,4 @@ db.disconnect()
 
 ### Congratulation, now you know basic SQLite3x methods! Explore more features and method on the links down below.
 
-### [Back to home](README.md)
+### [Back to home](../README.md)

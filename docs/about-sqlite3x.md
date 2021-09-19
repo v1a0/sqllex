@@ -62,6 +62,8 @@ db = SQLite3x(
 - [tables_names](database-properties.md#abstractdatabasetables_names)
 
 
+```
     * - available only for this specific database-class
+```
 
 ### [Back to home](README.md)

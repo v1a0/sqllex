@@ -13,7 +13,7 @@ Here you can find some explanations and examples for Sqllex ORM <br>
   - [PostgreSQLx](about-postgresqlx.md)
   - [PostgreSQLxTable](about-table.md)
   - [AbstractColumn](about-column.md)
-  - [SearchCondition](searchcondition-about.md)
+  - [SearchCondition](about-searchcondition.md)
   - [Project Showcase](sqllex-showcase.md)
  
 ---
@@ -25,38 +25,146 @@ Here you can find some explanations and examples for Sqllex ORM <br>
 Sqllex is a python ORM library for comfortable and safe interaction with databases.
 
 If you've ever worked with databases using python, you know what does "Eat nails while writing SQL-scripts" means.
-So give a sqllex deal with it, just call needed method, give it a data or necessary parameters and it's done.
-There no `con.cursor()`, only human `db.insert()`, `db.select()`, `db['my_table']`, 
+So give a sqllex deal with it, just call needed method, give it a data or necessary parameters and done.
+
+THERE NO `con.cursor()`, only human `db.insert()`, `db.select()`, `db['table']`, 
 only beautiful and pythonic code without unnecessary SQL-witchcrafting.
 
-Sqllex is not like other ORM's, has unfriendly API and awesome for beginners (and not only). 
-By the reason it is just an add-on for sqlite3, there will be easy to find explains for typical sqlite3 raised errors.
-And any moment you could call `db.execute()` method and run any sql-script directly in sqlite3.
+Sqllex has friendly API, documentation and it's awesome for beginners (but not only). 
+By the reason it is just an add-on for sqlite3/psycopg2, there will be easy to find explains for typical sqlite3 raised errors.
+And also in any moment you can call `db.execute()` method and run any sql-script directly in the database.
 
-It'll be a lot easier to show then explain. So down below is a few examples.
+It'll be a lot easier to show then explain. So check out examples down below.
 
-### If you never used SQLite before read [this awesome example #0](sqlite3x-aex-0.md)  
+---
 
-### Otherwise, you can check out [this one example #1](sqlite3x-aex-1.md)
-
-### [Project showcase](sqllex-showcase.md)
-
-# Pages
+## Pages
 
 - ### [SQLite3x](about-sqlite3x.md)
   - [SQLite3xTable](about-table.md) 
-  - Examples
-    - [Awesome example #0](sqlite3x-aex-0.md)
-    - [Awesome example #1](sqlite3x-aex-1.md)
+  - **Examples**
+    - [Awesome example #0](examples/sqlite3x-aex-0.md)
+    - [Awesome example #1](examples/sqlite3x-aex-1.md)
   
 - ### [PostgreSQLx](about-postgresqlx.md)
   - [PostgreSQLxTable](about-table.md)
   
 - ### [AbstractColumn](about-column.md)
   
-- ### [SearchCondition](searchcondition-about.md)
+- ### [SearchCondition](about-searchcondition.md)
   
 - ### [Project Showcase](sqllex-showcase.md)
-  - [Vaccine Update System](sqllex-showcase.md#vaccine-update-systemhttpsdeepnotecomabidvaccine-update-dashboard-gybicp-ftaydgmjimofj0w--by-kingabzpro)
-  - [Sqllex for Data Science Using Pandas](sqllex-showcase.md#sqllex-for-data-science-using-pandashttpsdeepnotecomabidsqllex-simple-and-faster-7wxrco0hrxaqvaixo8qjbq-by-kingabpro)
+  - [Vaccine Update System](sqllex-showcase.md#vaccine-update-systemcase-vsu-src-by-kingabzprokingabzpro)
+  - [Sqllex for Data Science Using Pandas](sqllex-showcase.md#sqllex-for-data-science-using-pandascase-dsup-src-by-kingabzprokingabzpro)
   - [Add your own project at this list](https://github.com/v1a0/sqllex/edit/main/docs/sqllex-showcase.md)
+
+
+---
+
+## How does this work?
+
+Basic idea of sqllex as any ORM is to give user an interface to interact with a database as abstract object.
+
+```markdown
+┌───────────────────────────────────────────┐ 
+│  DATABASE                                 │        
+│     ┌───────────────────────────────────┐ │
+│     │  TABLE                            │ │
+│     │     ┌───────────────────────────┐ │ │
+│     │     │  COLUMN                   │ │ │
+│     │     │     ┌───────────────────┐ │ │ │
+│     │     │     │  DATA             │ │ │ │
+│     │     │     └───────────────────┘ │ │ │
+│     │     └───────────────────────────┘ │ │
+│     │                                   │ │
+│     └───────────────────────────────────┘ │
+└───────────────────────────────────────────┘
+```
+
+Imagine you have a database called `'server.db'` with only one table inside named `'users'`,
+this table has 3 columns `'id'`, `'name'` and `'age'` (so as a pic down below)
+
+
+```markdown
+┌───────────────────────────────────────────┐ 
+│  DATABASE 'server.db'                     │             
+│     ┌───────────────────────────────────┐ │
+│     │  TABLE 'users'                    │ │
+│     │     ┌───────────────────────────┐ │ │
+│     │     │  COLUMN 'id'              │ │ │
+│     │     │     ┌───────────────────┐ │ │ │
+│     │     │     │  INTEGER DATA     │ │ │ │
+│     │     │     └───────────────────┘ │ │ │
+│     │     └───────────────────────────┘ │ │
+│     │     ┌───────────────────────────┐ │ │
+│     │     │  COLUMN 'name'            │ │ │
+│     │     │     ┌───────────────────┐ │ │ │
+│     │     │     │  TEXT DATA        │ │ │ │
+│     │     │     └───────────────────┘ │ │ │
+│     │     └───────────────────────────┘ │ │
+│     │     ┌───────────────────────────┐ │ │
+│     │     │  COLUMN 'age'             │ │ │
+│     │     │     ┌───────────────────┐ │ │ │
+│     │     │     │  INTEGER DATA     │ │ │ │
+│     │     │     └───────────────────┘ │ │ │
+│     │     └───────────────────────────┘ │ │
+│     └───────────────────────────────────┘ │
+└───────────────────────────────────────────┘
+```
+
+With the sqllex you can interact with this database in the craziest way
+
+```python
+# Import necessary modules
+from sqllex.classes import SQLite3x
+from sqllex.constants.sqlite import *
+
+# Database
+db = SQLite3x('server.db')
+
+# Create this table
+db.create_table(
+  'users',
+  {
+    'id': INTEGER,
+    'name': TEXT,
+    'age': INTEGER
+  },
+  IF_NOT_EXIST=True
+)
+
+table_users = db['users']
+# table_users = db.get_table('users') <-- the same
+
+# add one user
+table_users.insert(1, 'Sqllex', 33)
+
+# add 3 more
+table_users.insertmany(
+  (2, 'Phizilion', 22),
+  (3, 'kingabzpro', 44),
+  (4, 'asadafasab', 55)
+)
+
+print(table_users.select_all()) # [(1, 'Sqllex', 33), (2, 'Phizilion', 22), (3, 'kingabzpro', 44), (4, 'asadafasab', 55)]
+
+# Get column age as object
+column_age = table_users['age']
+
+print(
+  table_users.select(
+    WHERE=(column_age > 40)
+  )
+) # [(3, 'kingabzpro', 44), (4, 'asadafasab', 55)]
+
+
+column_name = table_users['name']
+
+
+print(
+  table_users.select(
+    WHERE=(column_age > 40) & (column_name |LIKE| 'kin%')
+  )
+) # [(3, 'kingabzpro', 44)]
+
+```

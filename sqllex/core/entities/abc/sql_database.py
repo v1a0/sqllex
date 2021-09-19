@@ -200,7 +200,7 @@ class AbstractTable(ABC):
     def select(
             self,
             SELECT: Union[AnyStr, AbstractColumn, ConstantType, List[Union[AnyStr, AbstractColumn]]] = None,
-            WHERE: WhereType = None,
+            WHERE: Union[WhereType, SearchCondition] = None,
             ORDER_BY: OrderByType = None,
             LIMIT: LimitOffsetType = None,
             OFFSET: LimitOffsetType = None,
@@ -254,7 +254,7 @@ class AbstractTable(ABC):
     def select_distinct(
             self,
             SELECT: Union[str, AbstractColumn, ConstantType, List[Union[str, AbstractColumn]]] = None,
-            WHERE: WhereType = None,
+            WHERE: Union[WhereType, SearchCondition] = None,
             WITH: WithType = None,
             ORDER_BY: OrderByType = None,
             LIMIT: LimitOffsetType = None,
@@ -276,7 +276,7 @@ class AbstractTable(ABC):
 
     def select_all(
             self,
-            WHERE: WhereType = None,
+            WHERE: Union[WhereType, SearchCondition] = None,
             WITH: WithType = None,
             ORDER_BY: OrderByType = None,
             LIMIT: LimitOffsetType = None,
@@ -327,7 +327,7 @@ class AbstractTable(ABC):
 
     def delete(
             self,
-            WHERE: WhereType = None,
+            WHERE: Union[WhereType, SearchCondition] = None,
             WITH: WithType = None,
             **kwargs,
     ) -> None:
@@ -349,7 +349,7 @@ class AbstractTable(ABC):
     def update(
             self,
             SET: Union[List, Tuple, Mapping],
-            WHERE: WhereType = None,
+            WHERE: Union[WhereType, SearchCondition] = None,
             OR: OrOptionsType = None,
             WITH: WithType = None,
             **kwargs,
@@ -407,7 +407,7 @@ class AbstractTable(ABC):
 
     def find(
             self,
-            WHERE: WhereType = None,
+            WHERE: Union[WhereType, SearchCondition] = None,
             ORDER_BY: OrderByType = None,
             LIMIT: LimitOffsetType = None,
             **kwargs,
@@ -701,7 +701,7 @@ class AbstractDatabase(ABC):
 
     def _insert_stmt(
             self, data: Union[Tuple, List, Mapping], TABLE: Union[AnyStr, AbstractTable], script="", values=(),
-            OR: OrOptionsType = None, WITH: WithType = None, WHERE: WhereType = None
+            OR: OrOptionsType = None, WITH: WithType = None, WHERE: Union[WhereType, SearchCondition] = None
     ) -> ScriptAndValues:
         """
         Constructor of insert/replace statements
@@ -728,7 +728,7 @@ class AbstractDatabase(ABC):
 
     def _fast_insert_stmt(
             self, data: Union[Tuple, List], TABLE: Union[AnyStr, AbstractTable], script="", values=(),
-            OR: OrOptionsType = None, WITH: WithType = None, WHERE: WhereType = None
+            OR: OrOptionsType = None, WITH: WithType = None, WHERE: Union[WhereType, SearchCondition] = None
     ) -> ScriptAndValues:
         """
         Constructor of fast insert/replace statements
@@ -1049,7 +1049,7 @@ class AbstractDatabase(ABC):
             without_rowid=without_rowid,
         )
 
-        return self.execute(script=script, values=values)
+        self.execute(script=script, values=values)
 
     def create_temp_table(
             self,
@@ -1321,7 +1321,7 @@ class AbstractDatabase(ABC):
             self,
             TABLE: Union[AnyStr, AbstractTable],
             *args: Any,
-            WHERE: WhereType = None,
+            WHERE: Union[WhereType, SearchCondition] = None,
             **kwargs: Any,
     ) -> None:
         """
@@ -1427,7 +1427,7 @@ class AbstractDatabase(ABC):
             self,
             TABLE: Union[AnyStr, AbstractTable] = None,
             SELECT: Union[AnyStr, AbstractColumn, ConstantType, List, Tuple] = None,
-            WHERE: WhereType = None,
+            WHERE: Union[WhereType, SearchCondition] = None,
             WITH: WithType = None,
             ORDER_BY: OrderByType = None,
             LIMIT: LimitOffsetType = None,
@@ -1508,7 +1508,7 @@ class AbstractDatabase(ABC):
             self,
             TABLE: Union[AnyStr, AbstractTable] = None,
             SELECT: Union[str, AbstractColumn, ConstantType, Tuple, List] = None,
-            WHERE: WhereType = None,
+            WHERE: Union[WhereType, SearchCondition] = None,
             WITH: WithType = None,
             ORDER_BY: OrderByType = None,
             LIMIT: LimitOffsetType = None,
@@ -1526,9 +1526,9 @@ class AbstractDatabase(ABC):
             Name of table
         SELECT : Union[str, AbstractColumn, Tuple, List]
             columns to select. Value '*' by default
-         WHERE : WhereType
-            optional parameter for conditions
-            > WHERE=(db['table_name']['column_name'] == 'some_value')
+        WHERE : WhereType
+           optional parameter for conditions
+           > WHERE=(db['table_name']['column_name'] == 'some_value')
         WITH : WithType
             Disabled!
         ORDER_BY : OrderByType
@@ -1575,7 +1575,7 @@ class AbstractDatabase(ABC):
             self,
             TABLE: Union[AnyStr, AbstractTable] = None,
             SELECT: Union[str, AbstractColumn, ConstantType, List, Tuple] = None,
-            WHERE: WhereType = None,
+            WHERE: Union[WhereType, SearchCondition] = None,
             WITH: WithType = None,
             ORDER_BY: OrderByType = None,
             LIMIT: LimitOffsetType = None,
@@ -1593,9 +1593,9 @@ class AbstractDatabase(ABC):
             Name of table
         SELECT : Union[str, AbstractColumn, List, Tuple]
             columns to select. Value '*' by default
-         WHERE : WhereType
-            optional parameter for conditions
-            > WHERE=(db['table_name']['column_name'] == 'some_value')
+        WHERE : WhereType
+           optional parameter for conditions
+           > WHERE=(db['table_name']['column_name'] == 'some_value')
         WITH : WithType
             Disabled!
         ORDER_BY : OrderByType
@@ -1641,7 +1641,7 @@ class AbstractDatabase(ABC):
     def delete(
             self,
             TABLE: str,
-            WHERE: WhereType = None,
+            WHERE: Union[WhereType, SearchCondition] = None,
             WITH: WithType = None,
             **kwargs,
     ) -> None:
@@ -1652,11 +1652,11 @@ class AbstractDatabase(ABC):
         ----------
         TABLE : AnyStr
             Name of table
-         WHERE : WhereType
-            optional parameter for conditions
-            > db: AbstractDatabase
-            > ...
-            > WHERE=(db['table_name']['column_name'] == 'some_value')
+        WHERE : WhereType
+           optional parameter for conditions
+           > db: AbstractDatabase
+           > ...
+           > WHERE=(db['table_name']['column_name'] == 'some_value')
         WITH : WithType
             Disabled!
 
@@ -1677,7 +1677,7 @@ class AbstractDatabase(ABC):
             self,
             TABLE: Union[AnyStr, AbstractTable],
             SET: Union[List, Tuple, Mapping],
-            WHERE: WhereType = None,
+            WHERE: Union[WhereType, SearchCondition] = None,
             OR: OrOptionsType = None,
             WITH: WithType = None,
             **kwargs,
