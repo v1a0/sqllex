@@ -12,7 +12,7 @@
 [![pypi-version-img]][pypi-version-src]
 [![pypi-downloads-img]][pypi-version-src]
 
-[![wiki-img]][wiki-src] 
+[![wiki-img]][wiki-src] [![docs-dark-img]]([docs-github])
 [![telegram-group-img]][telegram-group-src]
 
 
@@ -130,6 +130,7 @@ print(users_33)  # [('Sqllex', 33)]
 
   <!-- Images -->
   [wiki-img]: https://img.shields.io/badge/docs-Wiki-blue.svg
+  [docs-dark-img]: https://img.shields.io/badge/dosc-dark%20theme-black
   [python-3-9]: https://img.shields.io/badge/Python-3.9-green
   [python-3-8]: https://img.shields.io/badge/Python-3.8-green
   [lgtm-quality-img]: https://img.shields.io/lgtm/grade/python/g/V1A0/sqllex.svg?logo=lgtm&logoWidth=18
@@ -143,6 +144,7 @@ print(users_33)  # [('Sqllex', 33)]
 
   <!-- Sources -->
   [wiki-src]: https://v1a0.github.io/sqllex
+  [docs-github]: https://github.com/v1a0/sqllex/tree/main/docs#-welcome-to-the-sqllex-documentation-
   [lgtm-quality-src]: https://lgtm.com/projects/g/V1A0/sqllex/context:python
   [lgtm-alerts-src]: https://lgtm.com/projects/g/V1A0/sqllex/alerts/
   [pypi-version-src]: https://pypi.org/project/sqllex/
