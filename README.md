@@ -12,7 +12,7 @@
 [![pypi-version-img]][pypi-version-src]
 [![pypi-downloads-img]][pypi-version-src]
 
-[![wiki-img]][wiki-src] [![docs-dark-img]]([docs-github])
+[![wiki-img]][wiki-src] [![docs-dark-img]][docs-github]
 [![telegram-group-img]][telegram-group-src]
 
 
