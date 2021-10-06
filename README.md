@@ -1,4 +1,3 @@
-
 <div align="center">
 
 <img src="./pics/sqllex-logo.svg" width="300px" alt="sqllex logo">
@@ -8,6 +7,7 @@
 ![python-3-9]
 [![lgtm-quality-img]][lgtm-quality-src]
 [![lgtm-alerts-img]][lgtm-alerts-src]
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fv1a0%2Fsqllex.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fv1a0%2Fsqllex?ref=badge_shield)
 
 [![pypi-version-img]][pypi-version-src]
 [![pypi-downloads-img]][pypi-version-src]
@@ -156,3 +156,6 @@ print(users_33)  # [('Sqllex', 33)]
   [awesome-example-1]: https://v1a0.github.io/sqllex/sqlite3x-aex-1.html
   [data-science-example]: https://deepnote.com/@abid/SQLLEX-Simple-and-Faster-7WXrco0hRXaqvAiXo8QJBQ
   [project-showcase]: https://v1a0.github.io/sqllex/sqllex-showcase
+
+
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fv1a0%2Fsqllex.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Fv1a0%2Fsqllex?ref=badge_large)
