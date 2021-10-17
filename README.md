@@ -152,7 +152,7 @@ print(users_33)  # [('Sqllex', 33)]
   [code-ql-src]: https://github.com/v1a0/sqllex/actions/workflows/codeql-analysis.yml
   [sqlite3x-test-src]: https://github.com/v1a0/sqllex/actions/workflows/test_sqlite3x.yml
   [pypi-upload-src]: https://github.com/v1a0/sqllex/actions/workflows/python-publish.yml
-  [awesome-example-0]: https://v1a0.github.io/sqllex/sqlite3x-aex-0.html
-  [awesome-example-1]: https://v1a0.github.io/sqllex/sqlite3x-aex-1.html
+  [awesome-example-0]: https://v1a0.github.io/examples/sqllex/sqlite3x-aex-0.html
+  [awesome-example-1]: https://v1a0.github.io/examples/sqllex/sqlite3x-aex-1.html
   [data-science-example]: https://deepnote.com/@abid/SQLLEX-Simple-and-Faster-7WXrco0hRXaqvAiXo8QJBQ
   [project-showcase]: https://v1a0.github.io/sqllex/sqllex-showcase
