@@ -3,21 +3,21 @@
 
 <img src="./pics/sqllex-logo.svg" width="300px" alt="sqllex logo">
 
-# SQLLEX v0.2.0.3 🥳📚
+# SQLLEX ORM v0.2.0.3
 
 ![python-3-9]
 [![lgtm-quality-img]][lgtm-quality-src]
 [![lgtm-alerts-img]][lgtm-alerts-src]
 
 [![pypi-version-img]][pypi-version-src]
-[![pypi-downloads-img]][pypi-version-src]
+[![pypi-downloads-img]][pypi-stats]
 
 [![wiki-img]][wiki-src] [![docs-dark-img]][docs-github]
 [![telegram-group-img]][telegram-group-src]
 
 
 <br>
-Better than <b>sqlite3</b>. Seriously, try it out<br>
+The most pythonic ORM. Seriously, try it out<br>
 </div><br>
 
 ## Installation
@@ -27,9 +27,15 @@ pip install sqllex
 
 | Version |  Status | Tests, and actions |
 | :--------: | :----------------------------: | :---: |
-| `0.2.0.3`    | ✔️ supported         <br> ✔️ stable         | [![code-ql-img]][code-ql-src] <br> [![sqlite3x-test-img]][sqlite3x-test-src] <br> [![pypi-upload-img]][pypi-upload-img] |
+| `0.2.0.3`     | ✔️ supported         <br> ✔️ stable         | [![code-ql-img]][code-ql-src] <br> [![sqlite3x-test-img]][sqlite3x-test-src] <br> [![pypi-upload-img]][pypi-upload-img] |
 | `0.1.10.5`    | ⚠️ outdated         <br>                      | ⚠️ Mostly passing |
 | `<=0.1.10.4`  | ❌️ outdated       | ❌ |
+
+| Databases  | Support |
+| :---       | :-----: |
+| SQLite     | ✔️|
+| PostgreSQL | ✔️|
+
 
 ## About
 Use databases without thinking about SQL.
@@ -156,3 +162,4 @@ print(users_33)  # [('Sqllex', 33)]
   [awesome-example-1]: https://v1a0.github.io/examples/sqllex/sqlite3x-aex-1.html
   [data-science-example]: https://deepnote.com/@abid/SQLLEX-Simple-and-Faster-7WXrco0hRXaqvAiXo8QJBQ
   [project-showcase]: https://v1a0.github.io/sqllex/sqllex-showcase
+  [pypi-stats]: https://pypistats.org/packages/sqllex
