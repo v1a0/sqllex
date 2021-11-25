@@ -20,6 +20,7 @@
 The most pythonic ORM. Seriously, try it out!<br>
 </div><br>
 
+
 ## Installation
 ```shell
 pip install sqllex
@@ -121,8 +122,12 @@ print(users_33)  # [('Sqllex', 33)]
 | [SQLite3](#sqlite3) | [Project Showcase][project-showcase] |
 | PostgreSQL | - |
 
-## Not enough? Read more in [Sqllex Documentation!][wiki-src]
 
+# Community
+
+![stars-image](pics/metrics-stars.svg)
+
+## Not enough? Read more in [Sqllex Documentation!][wiki-src]
 
 -----
 # Other
@@ -130,6 +135,8 @@ print(users_33)  # [('Sqllex', 33)]
 #### [WARNING](./WARNING.md)
 #### [LICENSE](./LICENSE)
 #### [DOCUMENTATION][wiki-src]
+
+
 
 
 <!-- ALIASES -->
