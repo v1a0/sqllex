@@ -17,7 +17,7 @@
 
 
 <br>
-The most pythonic ORM. Seriously, try it out<br>
+The most pythonic ORM. Seriously, try it out!<br>
 </div><br>
 
 ## Installation
