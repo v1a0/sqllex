@@ -20,6 +20,8 @@ jobs:
           template: repository
           repo: sqllex
           plugin_people: yes
+          plugin_people_limit: 1000
+          plugin_people_size: 35
           plugin_people_types: contributors, stargazers
           plugins_errors_fatal: ${{ github.repository == 'v1a0/sqllex' }}
 
