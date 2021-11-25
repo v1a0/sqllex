@@ -125,7 +125,7 @@ print(users_33)  # [('Sqllex', 33)]
 
 # Community
 
-![stars-image](pics/metrics-stars.svg)
+![stars-image](https://raw.githubusercontent.com/v1a0/sqllex/main/pics/metrics-stars.svg)
 
 ## Not enough? Read more in [Sqllex Documentation!][wiki-src]
 
