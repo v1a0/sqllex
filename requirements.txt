@@ -1,2 +1,0 @@
-loguru==0.5.3
-psycopg2==2.9.1
