@@ -17,7 +17,7 @@
 
 
 <br>
-The most pythonic ORM. Seriously, try it out<br>
+The most pythonic ORM. Seriously, try it out!<br>
 </div><br>
 
 
@@ -41,7 +41,7 @@ pip install sqllex
 ## About
 Use databases without thinking about SQL.
 
-Interact with a database as python object by intuitive methods 
+Interact with a database as python object by intuitive methods
 just like `.insert()`, `.select()` or `.find()`.
 
 Let me show you how sqllex ORM makes your life easier.
@@ -81,7 +81,7 @@ print(users_33)  # [('Sqllex', 33)]
 from sqllex import *
 
 # Create some database, with simple structure
-db = SQLite3x(                              # create database 
+db = SQLite3x(                              # create database
     path='my_data.db',                      # path to your database, or where you would like it locate
     template={                              # schema for tables inside your database                              
         "users": {                              # name for the 1'st table
@@ -96,7 +96,7 @@ db = SQLite3x(                              # create database
 users = db["users"]
 
 # Now add record of 33 years old user named 'Sqllex' into it
-# Dear table, please insert ['Sqllex', 33] values 
+# Dear table, please insert ['Sqllex', 33] values
 users.insert('Sqllex', 33)
 
 # Dear table, please find records where_ column 'age' == 33

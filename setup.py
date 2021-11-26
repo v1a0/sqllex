@@ -32,7 +32,7 @@ setup(
     ],
     version=sqllex.__version__,
     license='gpl-3.0',
-    description='Better than sqlite3',
+    description='The most pythonic ORM (for SQLite and PostgreSQL). Seriously, try it out!',
     author='v1a0',
     author_email='contact@v1a0.dev',
     url="https://github.com/v1a0/sqllex",
