@@ -1,10 +1,29 @@
 # PostgreSQLx.connect
 
 ```python
-@copy_docs(ABDatabase.connect)
-def connect(self, password: AnyStr):
+def connect(
+        self,
+        password: AnyStr,
+        dbname=None,
+        user=None,
+        host=None,
+        port=None,
+        **kwargs
+):
     """
     Creating psycopg2.extensions.connection to interact with database
+    
+    Optional parameters (default):
+        dbname=self.dbname,
+        user=self.user,
+        host=self.host,
+        port=self.port,
+
+    Additional kwargs for psycopg2.connect()
+        dsn=None,
+        connection_factory=None,
+        cursor_factory=None,
+
     """
 ```
 
@@ -17,6 +36,8 @@ Highly recommend create connection manually.
 
 
 ## Examples
+
+### Casual
 
 ```python
 import sqllex

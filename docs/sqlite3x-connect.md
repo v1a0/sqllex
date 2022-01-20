@@ -1,10 +1,26 @@
 # SQLite3x.connect
 
 ```python
-def connect(self):
+def connect(
+        self,
+        path=None,
+        **kwargs
+) -> sqlite3.Connection:
     """
-    Create connection to database
     Creating sqlite3.connect() connection to interact with database
+    
+    Optional parameters (default):
+        path=self.path
+
+    Additional kwargs for sqlite3.connect()
+        path=None,
+        timeout=None,
+        detect_types=None,
+        isolation_level=None,
+        check_same_thread=None,
+        factory=None,
+        cached_statements=None,
+        uri=None,
     """
 ```
 
@@ -16,6 +32,8 @@ Highly recommend create connection manually.
 
 
 ## Examples
+
+### Casual
 
 ```python
 from sqllex import SQLite3x
@@ -33,7 +51,23 @@ for i in range(1000):
 # ---------------------------- THE END  ----------------------------------
     
 db.disconnect()
+```
+<!--
+### Recommended
+
+```python
+from sqllex import SQLite3x
+from sqllex.constants.sqlite import *
+
+db = SQLite3x('db-1', init_connection=False)
+
+with db.connect() as conn:
+    db.create_table("numbers", {"value": [INTEGER]}, IF_NOT_EXIST=True)
+
+    for i in range(1000):
+        db.insert("numbers", i, execute=False)
 
 ```
+-->
 
 ### [Back to home](README.md)
