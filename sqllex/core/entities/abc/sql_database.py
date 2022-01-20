@@ -206,7 +206,7 @@ class AbstractTable(ABC):
             OFFSET: LimitOffsetType = None,
             JOIN: JoinArgType = None,
             **kwargs,
-    ) -> List[Tuple]:
+    ) -> Tuple[Tuple]:
         """
         SELECT data from table
 
@@ -261,7 +261,7 @@ class AbstractTable(ABC):
             OFFSET: LimitOffsetType = None,
             JOIN: Union[str, List[str], List[List[str]]] = None,
             **kwargs,
-    ) -> List[Tuple]:
+    ) -> Tuple[Tuple]:
         return self.db.select_distinct(
             self.name,
             SELECT=SELECT,
@@ -283,7 +283,7 @@ class AbstractTable(ABC):
             OFFSET: LimitOffsetType = None,
             JOIN: Union[str, List[str], List[List[str]]] = None,
             **kwargs,
-    ) -> List[Tuple]:
+    ) -> Tuple[Tuple]:
         """
         SELECT ALL data from table
 
@@ -411,7 +411,7 @@ class AbstractTable(ABC):
             ORDER_BY: OrderByType = None,
             LIMIT: LimitOffsetType = None,
             **kwargs,
-    ) -> List[Tuple]:
+    ) -> Tuple[Tuple]:
         """
         Find all records in table where_
 
@@ -1436,7 +1436,7 @@ class AbstractDatabase(ABC):
             JOIN: JoinArgType = None,
             _method="SELECT",
             **kwargs,
-    ) -> List[Tuple]:
+    ) -> Tuple[Tuple]:
         """
         SELECT data from table
 
@@ -1516,7 +1516,7 @@ class AbstractDatabase(ABC):
             FROM: Union[str, List[str], Tuple[str], AbstractTable] = None,
             JOIN: JoinArgType = None,
             **kwargs,
-    ) -> List[Tuple]:
+    ) -> Tuple[Tuple]:
         """
         SELECT distinct from table
 
@@ -1583,7 +1583,7 @@ class AbstractDatabase(ABC):
             FROM: Union[str, List[str], AbstractTable] = None,
             JOIN: JoinArgType = None,
             **kwargs,
-    ) -> List[Tuple]:
+    ) -> Tuple[Tuple]:
         """
         SELECT all data from table
 

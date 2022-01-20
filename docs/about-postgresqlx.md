@@ -21,7 +21,10 @@ db = PostgreSQLx(
             'id': [INTEGER, AUTOINCREMENT],
             'name': TEXT
         }
-    }
+    },
+    
+    # Create connection to database with database class object initialisation
+    init_connection=True
 )
 
 ```

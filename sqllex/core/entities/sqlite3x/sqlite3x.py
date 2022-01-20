@@ -87,9 +87,12 @@ class SQLite3x(ABDatabase):
 
     # ============================ MAGIC METHODS =================================
 
-    def __init__(self,
-                 path: PathType = "sql3x.db",
-                 template: DBTemplateType = None):
+    def __init__(
+            self,
+            path: PathType = "sql3x.db",
+            template: DBTemplateType = None,
+            init_connection=True,
+    ):
         """
         Initialization
 
@@ -99,6 +102,8 @@ class SQLite3x(ABDatabase):
             Local __str__ to database (PathType)
         template : DBTemplateType
             template of database structure (DBTemplateType)
+        init_connection : bool
+            Create connection to database with database class object initialisation
 
         """
 
@@ -109,9 +114,8 @@ class SQLite3x(ABDatabase):
         self.__path = path
         self.__connection = None  # init connection
 
-        self.connect()  # creating connection with db
-        self.journal_mode(mode="WAL")  # make db little bit faster
-        self.foreign_keys(mode="ON")  # turning on foreign keys
+        if init_connection:
+            self.connect()  # creating connection with db
 
         if template:
             self.markup(template=template)
@@ -241,12 +245,37 @@ class SQLite3x(ABDatabase):
     # ============================== ABC PUBLIC METHODS ============================
 
     @copy_docs(ABDatabase.connect)
-    def connect(self):
+    def connect(
+            self,
+            path=None,
+            **kwargs
+    ) -> sqlite3.Connection:
         """
         Creating sqlite3.connect() connection to interact with database
+
+        Optional parameters (default):
+            path=self.path
+
+        Additional kwargs for sqlite3.connect()
+            path=None,
+            timeout=None,
+            detect_types=None,
+            isolation_level=None,
+            check_same_thread=None,
+            factory=None,
+            cached_statements=None,
+            uri=None,
         """
+        if path is None:
+            path = self.path
+        else:
+            self.__path = path  # Not sure about this
+
         if not self.connection:
-            self.__connection = sqlite3.connect(self.path)
+            self.__connection = sqlite3.connect(path, **kwargs)
+            self.journal_mode(mode="WAL")  # make db little bit faster
+            self.foreign_keys(mode="ON")  # turning on foreign keys
+            return self.connection
 
         else:
             logger.warning("Connection already exist")

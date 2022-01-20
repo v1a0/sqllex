@@ -24,6 +24,7 @@ db = PostgreSQLx(
     template=DB_TEMPLATE
 )
 
+
 debug_mode(True, log_file='sqllex-test.log')
 
 
@@ -77,7 +78,7 @@ def tables_test():
     db.drop('remove_me')
 
     for x in db.tables_names:
-        if not (x in ('t1', 'groups', 'users')):
+        if not (x in ('table1', 'table3', 'table2', 't1', 'groups', 'users')):
             print(db.tables_names)
             raise MemoryError
 

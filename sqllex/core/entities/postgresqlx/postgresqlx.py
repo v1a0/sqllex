@@ -71,13 +71,16 @@ class PostgreSQLx(ABDatabase):
 
     # ============================ MAGIC METHODS =================================
 
-    def __init__(self,
-                 dbname: AnyStr = "postgres",
-                 user: AnyStr = "postgres",
-                 password: AnyStr = None,
-                 host: AnyStr = "127.0.0.1",
-                 port: AnyStr = "5432",
-                 template: DBTemplateType = None):
+    def __init__(
+            self,
+            dbname: AnyStr = "postgres",
+            user: AnyStr = "postgres",
+            password: AnyStr = None,
+            host: AnyStr = "127.0.0.1",
+            port: AnyStr = "5432",
+            template: DBTemplateType = None,
+            init_connection=True,
+    ):
         """
         Initialization
 
@@ -95,6 +98,8 @@ class PostgreSQLx(ABDatabase):
             Port of postgres server, 5432 by default
         template : DBTemplateType
             template of database structure (DBTemplateType)
+        init_connection : bool
+            Create connection to database with database class object initialisation
 
         """
 
@@ -108,7 +113,8 @@ class PostgreSQLx(ABDatabase):
         self.__port = port
         self.__connection = None            # init connection
 
-        self.connect(password=password)     # creating connection with db
+        if init_connection:
+            self.connect(password=password)     # creating connection with db
 
         DEC2FLOAT = psycopg2.extensions.new_type(
             psycopg2.extensions.DECIMAL.values,
@@ -255,18 +261,49 @@ class PostgreSQLx(ABDatabase):
     # ============================== ABC PUBLIC METHODS ============================
 
     @copy_docs(ABDatabase.connect)
-    def connect(self, password: AnyStr):
+    def connect(
+            self,
+            password: AnyStr,
+            dbname=None,
+            user=None,
+            host=None,
+            port=None,
+            **kwargs
+    ):
         """
         Creating psycopg2.extensions.connection to interact with database
+
+        Optional parameters (default):
+            dbname=self.dbname,
+            user=self.user,
+            host=self.host,
+            port=self.port,
+
+        Additional kwargs for psycopg2.connect()
+            dsn=None,
+            connection_factory=None,
+            cursor_factory=None,
+
         """
+        if dbname is None:
+            dbname = self.dbname
+        if user is None:
+            user = self.user
+        if host is None:
+            host = self.host
+        if port is None:
+            port = self.port
+
         if not self.connection:
             self.__connection = psycopg2.connect(
-                dbname=self.__dbname,
-                user=self.__user,
+                dbname=dbname,
+                user=user,
                 password=password,
-                host=self.__host,
-                port=self.__port
+                host=host,
+                port=port,
+                **kwargs
             )
+            return self.connection
 
         else:
             logger.warning("Connection already exist")

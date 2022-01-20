@@ -5,19 +5,19 @@ from sqllex.classes import *
 from sqllex.constants import *
 from sqllex.debug import logger
 
-print(
-    "\033[91m"
-    "WARNING: SQLLEX v0.2+ have major changes that may breaks your old code! "
-    "Please, read https://github.com/v1a0/sqllex/blob/main/UPDATES.md#0200. "
-    "Especially if you are moving v0.1.10.5 -> v0.2+"
-    "\033[0m"
-    "\33[93m"
-    "\n"
-    "Thanks for you support and feedback!"
-    "\033[0m"
-    "\n")
+# print(
+#     "\033[91m"
+#     "WARNING: SQLLEX v0.2+ have major changes that may breaks your old code! "
+#     "Please, read https://github.com/v1a0/sqllex/blob/main/UPDATES.md#0200. "
+#     "Especially if you are moving v0.1.x -> v0.2+"
+#     "\033[0m"
+#     "\33[93m"
+#     "\n"
+#     "Thanks for you support and feedback!"
+#     "\033[0m"
+#     "\n")
 
-__version__ = '0.2.0.3'
+__version__ = '0.2.0.4'
 
 __all__ = [
     # classes
