@@ -15,5 +15,13 @@ DB_TEMPLATE: DBTemplateType = {
     }
 }
 
-db = SQLite3x(path=DB_NAME, template=DB_TEMPLATE)
+db = SQLite3x(
+    path='database.db',
+    init_connection=False
+)
 
+db.connect(check_same_thread=False)
+
+print(db.tables_names)
+
+db.disconnect()

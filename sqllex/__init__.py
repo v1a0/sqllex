@@ -17,7 +17,7 @@ from sqllex.debug import logger
 #     "\033[0m"
 #     "\n")
 
-__version__ = '0.2.0.4'
+__version__ = '0.2.0.5'
 
 __all__ = [
     # classes

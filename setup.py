@@ -44,7 +44,7 @@ setup(
         'easy', 'fast', 'orm', 'ORM',
     ],
     install_requires=[
-        'loguru==0.5.3',
+        'loguru==0.6.0',
         'psycopg2==2.9.1',
     ],
     classifiers=[

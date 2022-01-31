@@ -3,7 +3,7 @@
 
 <img src="./pics/sqllex-logo.svg" width="300px" alt="sqllex logo">
 
-# SQLLEX ORM v0.2.0.4
+# SQLLEX ORM v0.2.0.5
 
 ![python-3-9]
 [![lgtm-quality-img]][lgtm-quality-src]
@@ -28,15 +28,16 @@ pip install sqllex
 
 | Version |  Status | Tests, and actions |
 | :--------: | :----------------------------: | :---: |
-| `0.2.0.4`     | ✔️ supported         <br> ✔️ stable         | [![code-ql-img]][code-ql-src] <br> [![sqlite3x-test-img]][sqlite3x-test-src] <br> [![pypi-upload-img]][pypi-upload-img] |
-| `0.1.10.5`    | ⚠️ outdated         <br>                      | ⚠️ Mostly passing |
+| `==0.2.0.5`     | ✔️ supported         <br> ✔️ stable         | [![code-ql-img]][code-ql-src] <br> [![sqlite3x-test-img]][sqlite3x-test-src] <br> [![pypi-upload-img]][pypi-upload-img] |
+| `<=0.2.0.4`    | ⚠️ outdated         <br>   ⚠️ Security issue <br>  CVE-2022-0329| ⚠️ Mostly passing |
 | `<=0.1.10.4`  | ❌️ outdated       | ❌ |
 
 | Databases  | Support |
 | :---       | :-----: |
 | SQLite     | ✔️|
-| PostgreSQL | ✔️|
+| PostgreSQL | ✔️*|
 
+<small>* - partially support</small>
 
 ## About
 Use databases without thinking about SQL.
