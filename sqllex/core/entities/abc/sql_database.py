@@ -510,6 +510,7 @@ class AbstractDatabase(ABC):
         """
         Init-ing database, connection, creating connection, setting parameters
         """
+
         self.__connection = None
         self.__placeholder = placeholder
 
@@ -682,6 +683,9 @@ class AbstractDatabase(ABC):
             else:
                 raise TypeError(f'Incorrect column "{column}" initialisation, parameters type {type(parameters)}, '
                                 f'expected tuple, list or str')
+
+        if not columns:
+            raise ValueError("Zero-column tables aren't supported in SQLite")
 
         content = ""
         values = ()
@@ -976,7 +980,7 @@ class AbstractDatabase(ABC):
     def executemany(
             self,
             script: AnyStr = None,
-            values: Tuple[Tuple] = None,
+            values: Tuple = None,
     ) -> Union[Tuple, List, None]:
         """
         Execute any SQL-script for many values sets

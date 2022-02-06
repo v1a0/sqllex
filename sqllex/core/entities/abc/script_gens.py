@@ -64,7 +64,11 @@ def create(temp: str, if_not_exist: bool, name: str, content: str, without_rowid
            f"TABLE " \
            f"{'IF NOT EXISTS' if if_not_exist else ''} " \
            f'"{name}" ' \
-           f" (\n{content}\n) " \
+           f" {'(' if content else ''}" \
+           f"\n" \
+           f"{content}" \
+           f"\n" \
+           f"{')' if content else ''} " \
            f"{'WITHOUT ROWID' if without_rowid else ''};"
 
 

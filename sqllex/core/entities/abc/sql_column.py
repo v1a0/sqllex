@@ -52,7 +52,7 @@ class AbstractColumn:
             )
         elif isinstance(value, AbstractColumn):
             return SearchCondition(
-                f"({self}{operator}{value}",
+                f"({self}{operator}{value})",
                 placeholder=self.placeholder
             )
         else:

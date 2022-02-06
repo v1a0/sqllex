@@ -1,9 +1,11 @@
-## How to use this document
+# All Parameters
+
+### How to use this document
 
 Here you can find all possible parameter for sqllex databases methods.
 
 ```markdown
-## TABLE <-- parameter
+### TABLE <-- parameter
 
 TABLE: Union[str, List[str], SQLite3xTable]  <-- expected data types
 
@@ -15,7 +17,7 @@ TABLE = "my_table",  # string
 <-- the end -->
 ```
 
-### Usage
+#### Usage
 ```python
 from sqllex.classes import AbstractDatabase
 from sqllex.constants import TEXT, INTEGER
@@ -35,7 +37,7 @@ db.select(
 
 ---
 
-# All Parameters
+# Parameters
 
 ## TABLE
 ```python
@@ -293,35 +295,44 @@ from sqllex.constants import AS, ON, CROSS_JOIN, INNER_JOIN
 db: AbstractDatabase = ...
 users: AbstractTable = db['users']
 
+# Old and simple way 
 db.select(
     TABLE='users',
     SELECT=['username', 'group_name', 'description'],                        
-    JOIN=[                                                                   
-        ['groups', AS, 'gr', ON, 'users.group_id == gr.group_id'],            # INNER JOIN by default     
-        [CROSS_JOIN, 'about', 'ab', ON, 'ab.group_id == gr.group_id']        
-    ],
+    JOIN=(                                                                   
+        ('groups', AS, 'gr', ON, 'users.group_id == gr.group_id'),           
+        (INNER_JOIN, 'about', 'ab', ON, 'ab.group_id == gr.group_id')        
+    ),
     WHERE= (users['username'] != 'user_1') & (users['username'] != 'user_2')                                                               
 )
 
+# Old and simple way 
+JOIN=(                                                                   
+        (INNER_JOIN, 'groups', AS, 'gr', ON, 'users.group_id == gr.group_id'),         
+        (CROSS_JOIN, 'about', 'ab', ON, 'ab.group_id == gr.group_id')        
+    ),
 
-JOIN=[                                                                   
-        [INNER_JOIN, 'groups', AS, 'gr', ON, 'users.group_id == gr.group_id'],         
-        [CROSS_JOIN, 'about', 'ab', ON, 'ab.group_id == gr.group_id']        
-    ],
+# Modern and most stable way
+JOIN=(                                                                   
+        (INNER_JOIN, db['groups'], ON, db['users']['group_id'] == db['groups']['group_id']),         
+        (CROSS_JOIN, db['about'],  ON, db['about']['group_id'] == db['users']['group_id'])        
+    ),
 
-JOIN=[                                                                   
-        ['groups', 'gr', ON, 'users.group_id == gr.group_id'],       # INNER JOIN by default    
-        ['about', 'ab', ON, 'ab.group_id == gr.group_id']           # INNER JOIN by default    
-    ],
+JOIN=(                                                                   
+        ('groups', 'gr', ON, 'users.group_id == gr.group_id'),       # INNER JOIN by default    
+        ('about', 'ab', ON, 'ab.group_id == gr.group_id')            # INNER JOIN by default    
+    ),
 
-JOIN=[                                                                   
-        ['groups', ON, 'users.group_id == groups.group_id'],       # INNER JOIN by default    
-        ['about', ON, 'about.group_id == groups.group_id']           # INNER JOIN by default    
-    ],
+JOIN=(                                                                   
+        ('groups', ON, 'users.group_id == groups.group_id'),       # INNER JOIN by default    
+        ('about', ON, 'about.group_id == groups.group_id')           # INNER JOIN by default    
+     ),
 
-JOIN=[                                                                   
-        ['groups', ON, 'users.group_id == groups.group_id'],       # INNER JOIN by default    
-    ],
+JOIN=(                                                                
+        ('groups', ON, 'users.group_id == groups.group_id'),       # INNER JOIN by default    
+     ),
+
+
 ```
 
 ---

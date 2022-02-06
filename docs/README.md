@@ -1,4 +1,4 @@
-<div style="text-align: center">
+ <div style="text-align: center">
 <h1> Welcome to the Sqllex Documentation! 👋</h1>
 <br>
 Here you can find some explanations and examples for Sqllex ORM <br>
@@ -166,5 +166,31 @@ print(
     WHERE=(column_age > 40) & (column_name |LIKE| 'kin%')
   )
 ) # [(3, 'kingabzpro', 44)]
-
 ```
+
+### Also, you can do crazy things like this
+
+```python
+self.db['employee'].select(
+    SELECT=[
+        db['employee']['id'],
+        db['employee']['firstName'],
+        db['position']['name']
+    ],
+    JOIN=(
+        (
+            LEFT_JOIN, db['position'],
+            ON, db['position']['id'] == db['employee']['positionID']
+        ),
+        (
+            INNER_JOIN, self.db['payments'],
+            ON, db['employee']['id'] == db['payments']['employeeID']
+        )
+    ),
+    ORDER_BY=(
+        db['payments']['amount'],
+        'DESC'
+    )
+)
+```
+

@@ -111,8 +111,12 @@ class SQLite3x(ABDatabase):
 
         super(SQLite3x, self).__init__(placeholder='?')
 
-        self.__path = path
         self.__connection = None  # init connection
+
+        if not path:
+            raise ValueError("Path can't be empty or undefined")
+        else:
+            self.__path = path
 
         if init_connection:
             self.connect()  # creating connection with db

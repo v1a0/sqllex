@@ -1,6 +1,6 @@
 # This workflow run tests for sqllex.SQLite3x class
 
-name: Test Sqlite3x
+name: Test Sqllex
 
 on:
   push:
@@ -35,13 +35,11 @@ jobs:
 
     - name: Moving tests to current dir
       run: |
-        mv ./tests/sqlite3x/* ./
+        mv ./tests/* ./
 
-    - name: Main test - tests/new_test_all.py
+    - name: Running unit tests (tests/test_sqllex.py)
       run: |
-        python new_test_all.py
-        python old_test_all_1.py
-        python old_test_all_2.py
+        python -m unittest test_sqllex.py
     
     
   python-3-8:
@@ -60,10 +58,8 @@ jobs:
 
     - name: Moving tests to current dir
       run: |
-        mv ./tests/sqlite3x/* ./
+        mv ./tests/* ./
 
-    - name: Main test - tests/new_test_all.py
+    - name: Running unit tests (tests/test_sqllex.py)
       run: |
-        python new_test_all.py
-        python old_test_all_1.py
-        python old_test_all_2.py
+        python -m unittest test_sqllex.py
