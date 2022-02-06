@@ -158,7 +158,7 @@ def where_(placeholder: AnyStr = '?') -> callable:
                         else:
                             operator = "="
 
-                        __script += f"({f' {operator} {placeholder} OR '.join(key for _ in values)} {operator} {placeholder} OR "   # spaaces need for [LIKE, regexp]
+                        __script += f"({f' {operator} {placeholder} OR '.join(str(key) for _ in values)} {operator} {placeholder} OR "   # spaaces need for [LIKE, regexp]
                         __script = f"{__script[:-3].strip()}) " + "AND "
 
                         if __values:
@@ -192,7 +192,7 @@ def where_(placeholder: AnyStr = '?') -> callable:
                     raise TypeError
 
                 __script = (
-                    f"{__script.strip()}) "  # .strip() removing spaces around
+                    f"{__script}) "  # .strip() removing spaces around
                 )
 
             return __script, __values
@@ -238,9 +238,8 @@ def join_(func: callable) -> callable:
                         join_method = INNER_JOIN
 
                     # Adding JOIN to script
-                    base_script += (
-                        f"{join_method} {' '.join(j_arg for j_arg in _join)} "
-                    )
+                    base_script += f" {join_method} {' '.join(str(j_arg) for j_arg in _join)} "
+
             return base_script
 
         if "JOIN" in kwargs:
@@ -334,9 +333,18 @@ def order_by_(func: callable) -> callable:
             if isinstance(order_by, (str, int)):
                 __script = f"{__script} ORDER BY {order_by} "
             elif isinstance(order_by, (list, tuple)):
-                __script = (
-                    f"{__script} ORDER BY {', '.join(str(item_ob) for item_ob in order_by)} "
-                )
+                __script = f"{__script} ORDER BY"
+
+                for i, ord_ob in enumerate(order_by):
+
+                    __script = f"{__script}" \
+                               f"{', ' if i!=0 and ord_ob.lower() not in ['asc', 'desc'] else ''}" \
+                               f" " \
+                               f"{ord_ob}"
+
+                # __script = (
+                #     f"{__script} ORDER BY {', '.join(str(item_ob) for item_ob in order_by)} "
+                # )
             else:
                 raise TypeError(f"Unexpected type of ORDER_BY parameter, "
                                 f"expected str or tuple, got {type(order_by)} instead")
