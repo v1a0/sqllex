@@ -144,32 +144,170 @@ db.select(
     LIMIT=50,
     OFFSET=20
 )
-
-
-# For some another table
-
-x_table.select(
-    SELECT=['username', 'group_name', 'description'],                        # SELECT username, group_name, description
-    JOIN=[                                                                   # JOIN
-        ['groups', AS, 'gr', ON, 'users.group_id == gr.group_id'],              # INNER JOIN groups AS gr ON us.group_id == gr.group_id
-        [CROSS_JOIN, 'about', 'ab', ON, 'ab.group_id == gr.group_id']        # CROSS JOIN about ab ON ab.group_id == gr.group_id
-    ],
-    WHERE= (x_table['username'] != 'user_1') & (x_table['username'] != 'user_2'),  # WHERE (users.username<>'user_1') AND (users.username<>'user_2')
-    ORDER_BY='age DESC',                                                     # order by age DESC
-    LIMIT=50,                                                                # limit = 50
-    OFFSET=20                                                                # offset = 20
-)
-
-# Same as SQL script like
-# SELECT username, group_name, description
-# FROM x_table
-# INNER JOIN groups AS gr ON us.group_id == gr.group_id
-# CROSS JOIN about ab ON ab.group_id == gr.group_id
-# WHERE (users.username<>'user_1') AND (users.username<>'user_2')
-# ORDER BY age DESC
-# LIMIT 50
-# OFFSET 20
 ```
 
+
+# JOIN EXAMPLES
+
+## 1. Simples but not the best way
+
+```python
+# Old and simple way 
+some_table.select(
+    SELECT=[                                                                 # SELECT username, group_name, description
+        'username',
+        'group_name',
+        'description'
+    ],      
+    JOIN=(                                                                   # JOIN
+        ('groups', AS, 'gr', ON, 'users.group_id == gr.group_id'),           # INNER JOIN groups AS gr ON us.group_id == gr.group_id
+        (LEFT_JOIN, 'about', 'ab', ON, 'ab.group_id == gr.group_id')         # LEFT JOIN about ab ON ab.group_id == gr.group_id
+    ),
+    WHERE= (users['username'] != 'user_1') & (users['username'] != 'user_2'),  # WHERE (users.username<>'user_1') AND (users.username<>'user_2')
+    ORDER_BY='age DESC',                                                     # ORDER BY age DESC
+    LIMIT=50,                                                                # LIMIT 50
+    OFFSET=20                                                                # OFFSET 20
+)
+```
+
+### SQL script
+
+```shell
+SELECT username, group_name, description
+FROM x_table
+INNER JOIN groups AS gr ON us.group_id == gr.group_id
+LEFT JOIN about ab ON ab.group_id == gr.group_id
+WHERE (users.username<>'user_1') AND (users.username<>'user_2')
+ORDER BY age DESC
+LIMIT 50
+OFFSET 20
+```
+
+
+## 2. Better way
+
+```python
+# DATABASE SCHEMA
+# {
+#      'position': {
+#          'id': [INTEGER, PRIMARY_KEY, AUTOINCREMENT],
+#          'name': TEXT,
+#          'description': [TEXT, DEFAULT, NULL],
+#      },
+#      'employee': {
+#          'id': [INTEGER, PRIMARY_KEY, AUTOINCREMENT],
+#          'firstName': TEXT,
+#          'surname': TEXT,
+#          'age': [INTEGER, NOT_NULL],
+#          'positionID': INTEGER,
+#
+#          FOREIGN_KEY: {
+#              'positionID': ['position', 'id']
+#          }
+#      },
+#      'payments': {
+#          'date': [TEXT],
+#          'employeeID': INTEGER,
+#          'amount': [INTEGER, NOT_NULL],
+#          
+#          FOREIGN_KEY: {
+#              'positionID': ['employee', 'id']
+#          },
+#      }
+# }
+
+db['employee'].select(
+    SELECT=[
+        db['employee']['id'],
+        db['employee']['firstName'],
+        db['position']['name']
+    ],
+    JOIN=(
+        INNER_JOIN, self.db['position'],
+        ON, db['position']['id'] == db['employee']['positionID']
+    ),
+    ORDER_BY=(
+        db['position']['id'],
+        'DESC'
+    )
+)
+```
+
+### SQL script
+
+```shell
+SELECT e.id, e.firstName, p.name
+FROM employee e 
+INNER JOIN position p 
+ON e.positionID == p.id 
+ORDER BY e.positionID DESC
+```
+
+## 3. More than one JOIN
+
+```python
+# DATABASE SCHEMA
+# {
+#      'position': {
+#          'id': [INTEGER, PRIMARY_KEY, AUTOINCREMENT],
+#          'name': TEXT,
+#          'description': [TEXT, DEFAULT, NULL],
+#      },
+#      'employee': {
+#          'id': [INTEGER, PRIMARY_KEY, AUTOINCREMENT],
+#          'firstName': TEXT,
+#          'surname': TEXT,
+#          'age': [INTEGER, NOT_NULL],
+#          'positionID': INTEGER,
+#
+#          FOREIGN_KEY: {
+#              'positionID': ['position', 'id']
+#          }
+#      },
+#      'payments': {
+#          'date': [TEXT],
+#          'employeeID': INTEGER,
+#          'amount': [INTEGER, NOT_NULL],
+#          
+#          FOREIGN_KEY: {
+#              'positionID': ['employee', 'id']
+#          },
+#      }
+# }
+
+self.db['employee'].select(
+    SELECT=[
+        db['employee']['id'],
+        db['employee']['firstName'],
+        db['position']['name']
+    ],
+    JOIN=(
+        (
+            LEFT_JOIN, db['position'],
+            ON, db['position']['id'] == db['employee']['positionID']
+        ),
+        (
+            INNER_JOIN, self.db['payments'],
+            ON, db['employee']['id'] == db['payments']['employeeID']
+        )
+    ),
+    ORDER_BY=(
+        db['payments']['amount'],
+        'DESC'
+    )
+)
+```
+
+### SQL script
+
+```shell
+SELECT e.id, e.firstName, p.name 
+FROM employee e 
+LEFT JOIN position p 
+ON e.positionID == p.id 
+INNER JOIN payments 
+ON e.id == payments.employeeID 
+ORDER BY payments.amount DESC
+```
 
 ### [Back to home](README.md)
