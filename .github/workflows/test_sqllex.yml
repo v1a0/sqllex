@@ -39,7 +39,7 @@ jobs:
 
     - name: Running unit tests (tests/test_sqllex.py)
       run: |
-        python -m unittest ./test_sqllex.py
+        python -m unittest test_sqllex.py
     
     
   python-3-8:
@@ -62,4 +62,4 @@ jobs:
 
     - name: Running unit tests (tests/test_sqllex.py)
       run: |
-        python -m unittest ./test_sqllex.py
+        python -m unittest test_sqllex.py
