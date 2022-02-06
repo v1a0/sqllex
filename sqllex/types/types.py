@@ -93,7 +93,7 @@ WithType = Mapping[AnyStr, AnyStr]
 # Type for parameter of WHERE argument
 WhereType = Union[
     AnyStr,
-    Mapping[AnyStr, Union[NumStr, List]],
+    Mapping,
     bool,    # temporary fix
 ]
 
@@ -127,23 +127,8 @@ JoinMethod = Literal[
 
 
 JoinArgType = Union[
-    Tuple[
-        Tuple[
-            Union[
-                JoinMethod,
-                NumStr,
-                ConstantType,
-            ]
-        ]
-    ],
-    Tuple[
-        Union[
-            JoinMethod,
-            NumStr,
-            ConstantType,
-            AnyStr
-        ]
-    ],
+    Tuple[Tuple],
+    Tuple,
     AnyStr
 ]
 
