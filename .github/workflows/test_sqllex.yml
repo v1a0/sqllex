@@ -35,7 +35,6 @@ jobs:
 
     - name: Moving tests to current dir
       run: |
-        mv ./tests/sqlite3x/* ./
         mv ./tests/* ./
 
     - name: Running unit tests (tests/test_sqllex.py)
@@ -59,7 +58,6 @@ jobs:
 
     - name: Moving tests to current dir
       run: |
-        mv ./tests/sqlite3x/* ./
         mv ./tests/* ./
 
     - name: Running unit tests (tests/test_sqllex.py)
