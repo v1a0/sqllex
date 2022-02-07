@@ -32,25 +32,8 @@ def from_as_(func: callable):
 
 def with_(func: callable) -> callable:
     """
-    Decorator for catching WITH argument in kwargs of method
+    [Temporary disabled]Decorator for catching WITH argument in kwargs of method
 
-    If it has, adding into beginning of :SQLStatement.script: with_statement.
-    And adding values into :values: if it has.
-
-    Parameters
-    ----------
-    func : callable
-        SQLite3x method contains arg WITH
-
-    Returns
-    -------
-    callable
-        Decorated method with script contains with_statement and values contains values of with_statement
-
-    Raise
-    -------
-    TypeError
-        If value of WHERE dict is not SQLStatement or str
     """
 
     def with_wrapper(*args, **kwargs):
@@ -58,41 +41,6 @@ def with_(func: callable) -> callable:
             with_dict: WithType = kwargs.pop("WITH")
         else:
             with_dict: None = None
-
-        # if with_dict:
-        #     script = f"WITH RECURSIVE "
-        #     values = []
-        #
-        #     for (var, statement) in with_dict.items():
-        #
-        #         # Checking is value of dict SQLStatement or str
-        #         if issubclass(type(statement), SQLStatement):
-        #             condition = statement.request
-        #             script += f"{var} AS ({condition.script.strip()}), "  # .strip() removing spaces around
-        #             values += list(condition.values)
-        #
-        #         elif isinstance(statement, str):
-        #             condition = statement
-        #             script += f"{var} AS ({condition}), "
-        #
-        #         else:
-        #             raise TypeError(f"Unexpected type of WITH value\n"
-        #                             f"Got {type(statement)} instead of SQLStatement or str")
-        #
-        #     if script[-2:] == ', ':
-        #         script = script[:-2]
-        #
-        #     kwargs.update(
-        #         {
-        #             "values": tuple(values)
-        #             if not kwargs.get("values")
-        #             else tuple(list(kwargs.get("values")) + list(values)),
-        #
-        #             "script": f"{script} "
-        #             if not kwargs.get("script")
-        #             else f"{script} " + kwargs.get("script"),
-        #         }
-        #     )
 
         return func(*args, **kwargs)
 
@@ -333,7 +281,7 @@ def order_by_(func: callable) -> callable:
             if isinstance(order_by, (str, int)):
                 __script = f"{__script} ORDER BY {order_by} "
             elif isinstance(order_by, (list, tuple)):
-                __script = f"{__script} ORDER BY"
+                __script = f"{__script} ORDER BY "
 
                 for i, ord_ob in enumerate(order_by):
 
@@ -426,6 +374,43 @@ def offset_(func: callable) -> callable:
     return offset_wrapper
 
 
+def group_by_(func: callable) -> callable:
+    """
+    Decorator for catching GROUP_BY argument in kwargs of method
+
+    If it has, adding in the end of :SQLStatement.script: group_by_statement.
+
+    Parameters
+    ----------
+    func : callable
+        SQLite3x method contains kwarg GROUP_BY
+
+    Returns
+    ----------
+    callable
+        Decorated method with script contains group_by_statement
+
+    """
+
+    def group_by_wrapper(*args, **kwargs):
+        if "GROUP_BY" in kwargs:
+            group_by: GroupByType = kwargs.pop("GROUP_BY")
+        else:
+            group_by: None = None
+
+        __script, __values = func(*args, **kwargs)
+
+        if group_by:
+            if not isinstance(group_by, (tuple, list)):
+                group_by = (group_by,)
+
+            __script = f"{__script} GROUP BY {', '.join(str(gr) for gr in group_by)} "
+
+        return __script, __values
+
+    return group_by_wrapper
+
+
 __all__ = [
     'from_as_',
     'with_',
@@ -435,4 +420,5 @@ __all__ = [
     'order_by_',
     'limit_',
     'offset_',
+    'group_by_',
 ]

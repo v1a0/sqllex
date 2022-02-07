@@ -38,44 +38,44 @@ ConstantType = Union[
 
 # Subtypes for DBTemplateType
 ColumnType = Union[
-    Tuple[ColumnDataType, ConstantType, AnyStr, Number],
-    List[Union[ColumnDataType, ConstantType, AnyStr, Number]],
+    Tuple[ColumnDataType, ConstantType, str, Number],
+    List[Union[ColumnDataType, ConstantType, str, Number]],
     ColumnDataType,
     ConstantType,
-    AnyStr
+    str
 ]
-ColumnsType = Mapping[AnyStr, ColumnType]
+ColumnsType = Mapping[str, ColumnType]
 
 # Type for databases template
 DBTemplateType = Mapping[
-    AnyStr,
+    str,
     ColumnsType
 ]
 
 # Universal Path type
 PathType = Union[
     Path,
-    AnyStr
+    str
 ]
 
 # Type for string or numeric data
 NumStr = Union[
     Number,
-    AnyStr
+    str
 ]
 
 # Type of data INSERT awaiting
 InsertingData = Union[
     NumStr,
-    Tuple,
-    List,
+    tuple,
+    list,
     Mapping
 ]
 
 InsertingManyData = Union[
     List[InsertingData],
     Tuple[InsertingData],
-    List, Tuple
+    list, tuple
 ]
 
 # Type for parameter of OR argument in INSERT method (?)
@@ -88,26 +88,28 @@ OrOptionsType = Literal[
 ]
 
 # Type for parameter of WITH argument
-WithType = Mapping[AnyStr, AnyStr]
+WithType = Mapping[str, str]
 
 # Type for parameter of WHERE argument
 WhereType = Union[
-    AnyStr,
+    str,
     Mapping,
     bool,    # temporary fix
 ]
 
 # Type for parameter of ORDER BY argument
 OrderByType = Union[
-    NumStr,
-    Tuple,
+    int,
+    str,
+    tuple,
+    list,
     Mapping[
-        AnyStr,
+        str,
         Union[
-            AnyStr,
+            str,
+            list,
+            tuple,
             Number,
-            List,
-            Tuple
         ]
     ]
 ]
@@ -115,7 +117,7 @@ OrderByType = Union[
 # Type for parameter of LIMIT argument
 LimitOffsetType = Union[
     Number,
-    AnyStr,
+    str,
 ]
 
 # Type for parameter of JOIN argument
@@ -127,15 +129,18 @@ JoinMethod = Literal[
 
 
 JoinArgType = Union[
-    Tuple[Tuple],
-    Tuple,
-    AnyStr
+    Tuple[tuple],
+    tuple,
+    str
 ]
 
 ScriptAndValues = Tuple[
-    AnyStr, Tuple
+    str, tuple
 ]
 
+GroupByType = Union[
+    str, int, tuple, list,
+]
 
 __all__ = [
     # sql
@@ -157,6 +162,7 @@ __all__ = [
     'LimitOffsetType',
     'JoinMethod',
     'JoinArgType',
+    'GroupByType',
 
     # typing
     'Literal',

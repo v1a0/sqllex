@@ -22,6 +22,7 @@ __all__ = [
     'LimitOffsetType',  # lgtm [py/undefined-export]
     'JoinMethod',  # lgtm [py/undefined-export]
     'JoinArgType',  # lgtm [py/undefined-export]
+    'GroupByType',  # lgtm [py/undefined-export]
 
     # typing
     'Literal',  # lgtm [py/undefined-export]

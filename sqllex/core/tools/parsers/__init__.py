@@ -12,4 +12,5 @@ __all__ = [
     'order_by_',  # lgtm [py/undefined-export]
     'limit_',  # lgtm [py/undefined-export]
     'offset_',  # lgtm [py/undefined-export]
+    'group_by_',  # lgtm [py/undefined-export]
 ]

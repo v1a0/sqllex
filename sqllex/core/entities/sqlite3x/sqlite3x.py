@@ -182,6 +182,7 @@ class SQLite3x(ABDatabase):
     @parse.offset_
     @parse.limit_
     @parse.order_by_
+    @parse.group_by_
     @parse.where_(placeholder='?')
     @parse.join_
     @parse.with_

@@ -38,21 +38,34 @@ It'll be a lot easier to show then explain. So check out examples down below.
 
 ---
 
-## Pages
+## Must have links
 
-- ### [SQLite3x](about-sqlite3x.md)
-  - [SQLite3xTable](about-table.md) 
-  - **Examples**
-    - [Awesome example #0](examples/sqlite3x-aex-0.md)
-    - [Awesome example #1](examples/sqlite3x-aex-1.md)
+- ### Main classes
+- - [Database](./about-sqlite3x.md)
+- - [Table](./about-table.md)
+- - [Column](./about-column.md)
+- - [SearchConditions](./about-searchcondition.md)
+- ### Main method
+- - [db.select](./database-select.md)
+- - [db.insert](./database-insert.md)
+- - [db.insertmany](./database-insertmany.md)
+- - [db.update](./database-update.md)
+- - [db.delete](./database-delete.md)
+- - [db.drop](./database-drop.md)
+- - [db.markup](./database-markup.md)
+- - [db.create_table](./database-create_table.md)
+- - [db.add_column](./database-add_column.md)
+- - [db.remove_column](./database-remove_column.md)
+- - [db.connect](./sqlite3x-connect.md)
+- - [db.disconnect](./database-disconnect.md)
+- - [db['table_name']](./database-get_table.md)
+- ### [Database properties](./database-properties.md)
+- ### Examples
+- - [Awesome example #0](./examples/sqlite3x-aex-0.md)
+- - [Awesome example #1](./examples/sqlite3x-aex-1.md)
   
-- ### [PostgreSQLx](about-postgresqlx.md)
-  - [PostgreSQLxTable](about-table.md)
-  
-- ### [AbstractColumn](about-column.md)
-  
-- ### [SearchCondition](about-searchcondition.md)
-  
+---
+
 - ### [Project Showcase](sqllex-showcase.md)
   - [Vaccine Update System](sqllex-showcase.md#vaccine-update-systemcase-vsu-src-by-kingabzprokingabzpro)
   - [Sqllex for Data Science Using Pandas](sqllex-showcase.md#sqllex-for-data-science-using-pandascase-dsup-src-by-kingabzprokingabzpro)

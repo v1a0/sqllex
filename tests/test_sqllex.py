@@ -29,6 +29,9 @@ class TestSqllexSQLite(unittest.TestCase):
         self.db.disconnect()
         os.remove(self.db_name)
 
+    def raw_sql_get_tables_names(self):
+        return tuple(map(lambda ret: ret[0], self.db.execute("SELECT name FROM sqlite_master WHERE type='table'")))
+
     def test_sqlite_db_crating_db(self):
         """
         Testing SQLite database init
@@ -91,15 +94,15 @@ class TestSqllexSQLite(unittest.TestCase):
             'test_table_1',
             columns
         )
-        self.assertEqual(self.db.tables_names, ('test_table_1',))
+        self.assertEqual(self.raw_sql_get_tables_names(), ('test_table_1',))
 
         self.db.create_table(
             'test_table_2',
             columns
         )
-        self.assertEqual(self.db.tables_names, ('test_table_1', 'test_table_2'))
+        self.assertEqual(self.raw_sql_get_tables_names(), ('test_table_1', 'test_table_2'))
 
-    def test_create_table_columns(self):
+    def test_create_table_all_columns(self):
         """
         Testing table creating
         """
@@ -113,7 +116,18 @@ class TestSqllexSQLite(unittest.TestCase):
                 'status': [TEXT, DEFAULT, 'offline']
             }
         )
-        self.assertEqual(self.db.tables_names, ('test_table', 'sqlite_sequence'))
+        self.assertEqual(self.raw_sql_get_tables_names(), ('test_table', 'sqlite_sequence'))
+
+        self.db.create_table(
+            name='test_table_1',
+            columns={
+                'id': [INTEGER, AUTOINCREMENT, PRIMARY_KEY],
+                'user': [TEXT, UNIQUE, NOT_NULL],
+                'about': [TEXT, DEFAULT, NULL],
+                'status': [TEXT, DEFAULT, 'offline']
+            }
+        )
+        self.assertEqual(self.raw_sql_get_tables_names(), ('test_table', 'sqlite_sequence', 'test_table_1'))
 
     def test_create_table_inx(self):
         """
@@ -125,7 +139,7 @@ class TestSqllexSQLite(unittest.TestCase):
         self.db.create_table('test_table_2', columns, IF_NOT_EXIST=True)
         self.db.create_table('test_table_1', columns, IF_NOT_EXIST=True)
 
-        self.assertEqual(self.db.tables_names, ('test_table_1', 'test_table_2'))
+        self.assertEqual(self.raw_sql_get_tables_names(), ('test_table_1', 'test_table_2'))
         self.assertRaises(sqlite3.OperationalError, self.db.create_table, 'test_table_1', columns, IF_NOT_EXIST=False)
 
     def test_markup(self):
@@ -152,17 +166,32 @@ class TestSqllexSQLite(unittest.TestCase):
             }
         )
 
-        self.assertEqual(self.db.tables_names, ('tt_groups', 'tt_users'))
+        self.assertEqual(
+            self.raw_sql_get_tables_names(),
+            ('tt_groups', 'tt_users')
+        )
 
     def test_drop_and_create_table(self):
         """
         Create and remove table
         """
-        self.db.create_table('test_table', {'id': INTEGER})
-        self.assertEqual(self.db.tables_names, ('test_table',))
+        self.db.execute(
+            """
+            CREATE  TABLE  "test_table"  (
+            "id" INTEGER
+            );
+            """
+        )
+        self.assertEqual(
+            self.raw_sql_get_tables_names(),
+            ('test_table',)
+        )
 
         self.db.drop('test_table')
-        self.assertEqual(self.db.tables_names, tuple())
+        self.assertEqual(
+            self.raw_sql_get_tables_names(),
+            tuple()
+        )
 
     def test_insert(self):
         """
@@ -531,7 +560,7 @@ class TestSqllexSQLite(unittest.TestCase):
 
     def test_select(self):
         """
-        All kind of selects (WHERE, ORDER BY, JOIN)
+        All kind of selects (WHERE, ORDER BY, JOIN, GROUP BY)
         """
 
         self.db.executescript(
@@ -639,6 +668,9 @@ class TestSqllexSQLite(unittest.TestCase):
         )
         self.assertEqual(
             expected, self.db['employee'].select_all()
+        )
+        self.assertEqual(
+            expected, self.db['employee'].select_all(GROUP_BY=1)
         )
 
         # SELECT one column
@@ -952,10 +984,80 @@ class TestSqllexSQLite(unittest.TestCase):
             )
         )
 
-    def test_select_or(self):
-        """
-        OR kwarg with different values
-        """
+        # SELECT * FROM employee GROUP BY
+        expected = self.db.execute("SELECT * FROM employee GROUP BY surname")
+        self.assertEqual(
+            expected,
+            self.db.select(SELECT=ALL, FROM='employee', GROUP_BY='surname')
+        )
+        self.assertEqual(
+            expected,
+            self.db.select(SELECT=ALL, FROM='employee', GROUP_BY=('surname',))
+        )
+        self.assertEqual(
+            expected,
+            self.db.select(SELECT=ALL, FROM='employee', GROUP_BY=['surname'])
+        )
+        self.assertEqual(
+            expected,
+            self.db.select(SELECT=ALL, FROM='employee', GROUP_BY=self.db['employee']['surname'])
+        )
+        self.assertEqual(
+            expected,
+            self.db.select(SELECT=ALL, FROM='employee', GROUP_BY=(self.db['employee']['surname'],))
+        )
+
+        # SELECT * FROM employee GROUP BY 2 rows
+        expected = self.db.execute("SELECT * FROM employee GROUP BY surname, positionID")
+        self.assertEqual(
+            expected,
+            self.db.select(SELECT=ALL, FROM='employee', GROUP_BY='surname, positionID')
+        )
+        self.assertEqual(
+            expected,
+            self.db.select(SELECT=ALL, FROM='employee', GROUP_BY=('surname', 'positionID'))
+        )
+        self.assertEqual(
+            expected,
+            self.db.select(SELECT=ALL, FROM='employee', GROUP_BY=['surname', 'positionID'])
+        )
+
+        # SELECT with JOINS GROUP BY
+        expected = self.db.execute(''
+                                   'SELECT pos.name, pay.amount '
+                                   'FROM payments pay '
+                                   'INNER JOIN employee emp '
+                                   'ON emp.id == pay.employeeID '
+                                   'INNER JOIN position pos '
+                                   'ON emp.positionID == pos.id '
+                                   'GROUP BY pos.name '
+                                   'ORDER BY pay.amount DESC')
+
+        self.assertEqual(
+            expected,
+            self.db['employee'].select(
+                SELECT=[
+                    self.db['position']['name'],
+                    self.db['payments']['amount'],
+                ],
+                JOIN=(
+                    (
+                        INNER_JOIN, self.db['payments'],
+                        ON, self.db['payments']['employeeID'] == self.db['employee']['id']
+                    ),
+                    (
+                        INNER_JOIN, self.db['position'],
+                        ON, self.db['position']['id'] == self.db['employee']['positionID']
+                    )
+                ),
+                GROUP_BY=self.db['position']['name'],
+                ORDER_BY=(
+                    self.db['payments']['amount'],
+                    'DESC'
+                )
+            )
+        )
+
 
     def test_extra_features(self):
         """
@@ -982,7 +1084,7 @@ class TestSqllexSQLite(unittest.TestCase):
 
         # Tables
         #
-        self.assertEqual(self.db.tables_names, ('test_table_1', 'test_table_2'))
+        self.assertEqual(self.raw_sql_get_tables_names(), self.db.tables_names)
 
         # self.db['notExistingTable']
         self.assertRaises(KeyError, self.db.__getitem__, 'notExistingTable')
@@ -1009,6 +1111,7 @@ class TestSqllexSQLite(unittest.TestCase):
 
         self.assertEqual(self.db['test_table_1']['id'].table, 'test_table_1')
         self.assertEqual(self.db['test_table_2']['id'].table, 'test_table_2')
+
 
     @unittest.skipUnless(importlib.util.find_spec('numpy'), "Module numpy not found")
     def test_numpy(self):
