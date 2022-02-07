@@ -58,7 +58,10 @@ TABLE = ["my_awesome_table", "mat"],   # use alias "mat" in code instead of "my_
 
 ## SELECT
 ```python
-SELECT: Union[str, SQLite3xColumn, List[Union[str, SQLite3xColumn]]]
+SELECT: Union[
+                AnyStr, AbstractColumn, ConstantType,
+                List[Union[AbstractColumn, AnyStr]], Tuple[Union[AbstractColumn, AnyStr]]
+            ] = None
 ```
 
 Parameter of select-like methods to specify selecting columns. Can be string or column object SQLite3xColumn,
@@ -90,7 +93,7 @@ SELECT = (db['users']['id'],  db['users']['username']),   # Tuple[AbstractColumn
 WHERE: WhereType
 ```
 
-parameter for highlighting the cells of the method action, in accordance with the specified pattern.
+Parameter for highlighting the cells of the method action, in accordance with the specified pattern.
 
 ```python
 from sqllex.classes import AbstractDatabase
@@ -332,6 +335,36 @@ JOIN=(
         ('groups', ON, 'users.group_id == groups.group_id'),       # INNER JOIN by default    
      ),
 
+
+```
+
+---
+
+## GROUP_BY
+```python
+GROUP_BY: Union[GroupByType, AbstractColumn] = None
+```
+
+Optional parameter for group data in database response.
+
+```python
+GROUP_BY = 'column1'
+
+GROUP_BY = db['table1']['column1']
+
+GROUP_BY = ('column1',)
+
+GROUP_BY = (
+    db['table1']['column1'],
+    db['table1']['column2']
+)
+
+GROUP_BY = ['column1',]
+
+GROUP_BY = [
+    db['table1']['column1'],
+    db['table1']['column2']
+]
 
 ```
 

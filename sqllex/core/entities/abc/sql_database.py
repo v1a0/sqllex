@@ -199,12 +199,16 @@ class AbstractTable(ABC):
 
     def select(
             self,
-            SELECT: Union[AnyStr, AbstractColumn, ConstantType, List[Union[AnyStr, AbstractColumn]]] = None,
+            SELECT: Union[
+                AnyStr, AbstractColumn, ConstantType,
+                List[Union[AbstractColumn, AnyStr]], Tuple[Union[AbstractColumn, AnyStr]]
+            ] = None,
             WHERE: Union[WhereType, SearchCondition] = None,
             ORDER_BY: OrderByType = None,
             LIMIT: LimitOffsetType = None,
             OFFSET: LimitOffsetType = None,
             JOIN: JoinArgType = None,
+            GROUP_BY: Union[GroupByType, AbstractColumn] = None,
             **kwargs,
     ) -> Tuple[Tuple]:
         """
@@ -232,6 +236,8 @@ class AbstractTable(ABC):
             > OFFSET=5
         JOIN: Union[str, List[str], List[List[str]]]
             optional parameter for joining data from other tables ['groups'],
+        GROUP_BY: Union[GroupByType, AbstractColumn]
+            optional parameter for group data in database response
 
         Returns
         ----------
@@ -248,18 +254,23 @@ class AbstractTable(ABC):
             LIMIT=LIMIT,
             OFFSET=OFFSET,
             JOIN=JOIN,
+            GROUP_BY=GROUP_BY,
             **kwargs,
         )
 
     def select_distinct(
             self,
-            SELECT: Union[str, AbstractColumn, ConstantType, List[Union[str, AbstractColumn]]] = None,
+            SELECT: Union[
+                AnyStr, AbstractColumn, ConstantType,
+                List[Union[AbstractColumn, AnyStr]], Tuple[Union[AbstractColumn, AnyStr]]
+            ] = None,
             WHERE: Union[WhereType, SearchCondition] = None,
             WITH: WithType = None,
             ORDER_BY: OrderByType = None,
             LIMIT: LimitOffsetType = None,
             OFFSET: LimitOffsetType = None,
             JOIN: Union[str, List[str], List[List[str]]] = None,
+            GROUP_BY: Union[GroupByType, AbstractColumn] = None,
             **kwargs,
     ) -> Tuple[Tuple]:
         return self.db.select_distinct(
@@ -271,6 +282,7 @@ class AbstractTable(ABC):
             LIMIT=LIMIT,
             OFFSET=OFFSET,
             JOIN=JOIN,
+            GROUP_BY=GROUP_BY,
             **kwargs,
         )
 
@@ -282,6 +294,7 @@ class AbstractTable(ABC):
             LIMIT: LimitOffsetType = None,
             OFFSET: LimitOffsetType = None,
             JOIN: Union[str, List[str], List[List[str]]] = None,
+            GROUP_BY: Union[GroupByType, AbstractColumn] = None,
             **kwargs,
     ) -> Tuple[Tuple]:
         """
@@ -306,6 +319,8 @@ class AbstractTable(ABC):
             > OFFSET=5
         JOIN: Union[str, List[str], List[List[str]]]
             optional parameter for joining data from other tables ['groups'],
+        GROUP_BY: Union[GroupByType, AbstractColumn]
+            optional parameter for group data in database response
 
         Returns
         ----------
@@ -322,6 +337,7 @@ class AbstractTable(ABC):
             LIMIT=LIMIT,
             OFFSET=OFFSET,
             JOIN=JOIN,
+            GROUP_BY=GROUP_BY,
             **kwargs,
         )
 
@@ -1436,8 +1452,9 @@ class AbstractDatabase(ABC):
             ORDER_BY: OrderByType = None,
             LIMIT: LimitOffsetType = None,
             OFFSET: LimitOffsetType = None,
-            FROM: Union[AnyStr, AbstractTable] = None,
+            FROM: Union[str, List[str], Tuple[str], AbstractTable] = None,
             JOIN: JoinArgType = None,
+            GROUP_BY: Union[GroupByType, AbstractColumn] = None,
             _method="SELECT",
             **kwargs,
     ) -> Tuple[Tuple]:
@@ -1470,6 +1487,8 @@ class AbstractDatabase(ABC):
             Name of table, same at TABLE
         JOIN: JoinArgType
             optional parameter for joining data from other tables ['groups'],
+        GROUP_BY: Union[GroupByType, AbstractColumn]
+            optional parameter for group data in database response
         _method: str
             DON'T CHANGE IT! special argument for unite select_all, select_distinct into select()
 
@@ -1503,6 +1522,7 @@ class AbstractDatabase(ABC):
             LIMIT=LIMIT,
             OFFSET=OFFSET,
             JOIN=JOIN,
+            GROUP_BY=GROUP_BY,
             **kwargs,
         )
 
@@ -1519,6 +1539,7 @@ class AbstractDatabase(ABC):
             OFFSET: LimitOffsetType = None,
             FROM: Union[str, List[str], Tuple[str], AbstractTable] = None,
             JOIN: JoinArgType = None,
+            GROUP_BY: Union[GroupByType, AbstractColumn] = None,
             **kwargs,
     ) -> Tuple[Tuple]:
         """
@@ -1551,6 +1572,8 @@ class AbstractDatabase(ABC):
             > OFFSET=5
         JOIN: Union[str, List[str], List[List[str]]]
             optional parameter for joining data from other tables ['groups'],
+        GROUP_BY: Union[GroupByType, AbstractColumn]
+            optional parameter for group data in database response
         FROM : str
             Name of table, same at TABLE
 
@@ -1572,6 +1595,7 @@ class AbstractDatabase(ABC):
             OFFSET=OFFSET,
             FROM=FROM,
             JOIN=JOIN,
+            GROUP_BY=GROUP_BY,
             **kwargs
         )
 
@@ -1584,8 +1608,9 @@ class AbstractDatabase(ABC):
             ORDER_BY: OrderByType = None,
             LIMIT: LimitOffsetType = None,
             OFFSET: LimitOffsetType = None,
-            FROM: Union[str, List[str], AbstractTable] = None,
+            FROM: Union[str, List[str], Tuple[str], AbstractTable] = None,
             JOIN: JoinArgType = None,
+            GROUP_BY: Union[GroupByType, AbstractColumn] = None,
             **kwargs,
     ) -> Tuple[Tuple]:
         """
@@ -1618,6 +1643,8 @@ class AbstractDatabase(ABC):
             > OFFSET=5
         JOIN: Union[str, List[str], List[List[str]]]
             optional parameter for joining data from other tables ['groups'],
+        GROUP_BY: Union[GroupByType, AbstractColumn]
+            optional parameter for group data in database response
         FROM : Union[str, List[str], AbstractTable]
             Name of table, same at TABLE
 
@@ -1639,6 +1666,7 @@ class AbstractDatabase(ABC):
             OFFSET=OFFSET,
             FROM=FROM,
             JOIN=JOIN,
+            GROUP_BY=GROUP_BY,
             **kwargs
         )
 

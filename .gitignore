@@ -122,3 +122,5 @@ dmypy.json
 
 # Statistic
 *.prof
+*.log.zip
+*.zip

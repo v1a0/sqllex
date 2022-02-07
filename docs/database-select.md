@@ -4,33 +4,31 @@
 ```python
 def select(
         self,
-        TABLE: Union[AnyStr, AbstractTable] = None,
-        SELECT: Union[AnyStr, AbstractColumn, List, Tuple] = None,
-        WHERE: WhereType = None,
-        WITH: WithType = None,
+        SELECT: Union[
+            AnyStr, AbstractColumn, ConstantType,
+            List[Union[AbstractColumn, AnyStr]], Tuple[Union[AbstractColumn, AnyStr]]
+        ] = None,
+        WHERE: Union[WhereType, SearchCondition] = None,
         ORDER_BY: OrderByType = None,
         LIMIT: LimitOffsetType = None,
         OFFSET: LimitOffsetType = None,
-        FROM: Union[AnyStr, AbstractTable] = None,
         JOIN: JoinArgType = None,
-        _method="SELECT",
+        GROUP_BY: Union[GroupByType, AbstractColumn] = None,
         **kwargs,
-) -> Tuple:
+) -> Tuple[Tuple]:
     """
     SELECT data from table
-    
+
     Parameters
     ----------
-    TABLE: Union[AnyStr, AbstractTable]
-        Name of table
     SELECT : Union[str, List[str]]
         columns to select. Value '*' by default
         > SELECT=['id', 'name']
     WHERE : WhereType
-       optional parameter for conditions
-       > WHERE=(db['table_name']['column_name'] == 'some_value')
-    WITH : WithType
-        Disabled!
+        optional parameter for conditions
+        > db: AbstractDatabase
+        > ...
+        > WHERE=(db['table_name']['column_name'] == 'some_value')
     ORDER_BY : OrderByType
         optional parameter for conditions
         > ORDER_BY=['age', 'DESC']
@@ -41,19 +39,33 @@ def select(
     OFFSET : LimitOffsetType
         Set offset for selecting records
         > OFFSET=5
-    FROM : str
-        Name of table, same at TABLE
-    JOIN: JoinArgType
+    JOIN: Union[str, List[str], List[List[str]]]
         optional parameter for joining data from other tables ['groups'],
-    _method: str
-        DON'T CHANGE IT! special argument for unite select_all, select_distinct into select()
-    
+    GROUP_BY: Union[GroupByType, AbstractColumn]
+         optional parameter for group data in database response
+
     Returns
     ----------
-    List[Tuple]
-        Tuple of Selected data
+    Tuple[Tuple]
+        Selected records
+
     """
 ```
+
+## Parameters
+
+| Parameter | Description |
+| :---      | :---     |
+| [TABLE](./all-parameters.md#table)     | Table name or table object SQLite3xTable to select from |
+| [SELECT *](./all-parameters.md#select)    | Column or columns to select from table (ALL by default) |
+| [WHERE *](./all-parameters.md#where)     | Expression that have to be true for selecting records |
+| [ORDER_BY *](./all-parameters.md#order_by)  | Sort selected records in specific order |
+| [LIMIT *](./all-parameters.md#limit)     | Limit selected values amount |
+| [FROM *](./all-parameters.md#from)      | Same as TABLE, exists just for backward compatibility |
+| [JOIN *](./all-parameters.md#join)      | JOIN data from another table |
+| [GROUP_BY *](./all-parameters.md#group_by)  | Group elements by value from specific column or columns |
+
+<small>* - optional parameter</small>
 
 ## Examples
 
