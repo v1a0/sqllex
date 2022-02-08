@@ -28,7 +28,7 @@ pip install sqllex
 
 | Version |  Status | Tests, and actions |
 | :--------: | :----------------------------: | :---: |
-| `==0.2.1.0`     | ✔️ supported         <br> ✔️ stable         | [![code-ql-img]][code-ql-src] <br> [![sqlite3x-test-img]][sqlite3x-test-src] <br> [![pypi-upload-img]][pypi-upload-img] |
+| `==0.2.1.0`     | ✔️ supported         <br> ✔️ stable         | [![code-ql-img]][code-ql-src] <br> [![sqllex-tests-img]][sqllex-tests-src] <br> [![pypi-upload-img]][pypi-upload-img] |
 | `<=0.2.0.4`    | ⚠️ outdated         <br>   ⚠️ Security issue <br>  CVE-2022-0329| ⚠️ Mostly passing |
 | `<=0.1.10.4`  | ❌️ outdated       | ❌ |
 
@@ -130,6 +130,9 @@ print(users_33)  # [('Sqllex', 33)]
 
 ## Not enough? Read more in [Sqllex Documentation!][wiki-src]
 
+## [Wiki contents][contents]
+
+
 -----
 # Other
 #### [UPDATES](./UPDATES.md)
@@ -153,7 +156,7 @@ print(users_33)  # [('Sqllex', 33)]
   [pypi-downloads-img]: https://img.shields.io/pypi/dm/sqllex
   [telegram-group-img]: https://img.shields.io/badge/Telegram-Group-blue.svg?logo=telegram
   [code-ql-img]: https://github.com/v1a0/sqllex/actions/workflows/codeql-analysis.yml/badge.svg?branch=main
-  [sqlite3x-test-img]: https://github.com/v1a0/sqllex/actions/workflows/test_sqlite3x.yml/badge.svg?branch=main
+  [sqllex-tests-img]: https://github.com/v1a0/sqllex/actions/workflows/test_sqllex.yml/badge.svg?branch=main
   [pypi-upload-img]: https://github.com/v1a0/sqllex/actions/workflows/python-publish.yml/badge.svg
 
   <!-- Sources -->
@@ -164,10 +167,11 @@ print(users_33)  # [('Sqllex', 33)]
   [pypi-version-src]: https://pypi.org/project/sqllex/
   [telegram-group-src]: https://t.me/joinchat/CKq9Mss1UlNlMDIy
   [code-ql-src]: https://github.com/v1a0/sqllex/actions/workflows/codeql-analysis.yml
-  [sqlite3x-test-src]: https://github.com/v1a0/sqllex/actions/workflows/test_sqlite3x.yml
+  [sqllex-tests-src]: https://github.com/v1a0/sqllex/actions/workflows/test_sqllex.yml
   [pypi-upload-src]: https://github.com/v1a0/sqllex/actions/workflows/python-publish.yml
-  [awesome-example-0]: https://v1a0.github.io/examples/sqllex/sqlite3x-aex-0.html
-  [awesome-example-1]: https://v1a0.github.io/examples/sqllex/sqlite3x-aex-1.html
+  [awesome-example-0]: https://v1a0.github.io/sqllex/examples/sqlite3x-aex-0.html
+  [awesome-example-1]: https://v1a0.github.io/sqllex/examples/sqlite3x-aex-1.html
   [data-science-example]: https://deepnote.com/@abid/SQLLEX-Simple-and-Faster-7WXrco0hRXaqvAiXo8QJBQ
-  [project-showcase]: https://v1a0.github.io/sqllex/sqllex-showcase
+  [project-showcase]: https://v1a0.github.io/sqllex/sqllex-showcase.html
   [pypi-stats]: https://pypistats.org/packages/sqllex
+  [contents]: https://v1a0.dev/sqllex/#contents

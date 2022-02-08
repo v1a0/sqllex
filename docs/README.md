@@ -38,7 +38,7 @@ It'll be a lot easier to show then explain. So check out examples down below.
 
 ---
 
-## Must have links
+## Contents
 
 - ### Main classes
 - - [Database](./about-sqlite3x.md)
