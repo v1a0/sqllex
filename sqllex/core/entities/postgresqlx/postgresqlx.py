@@ -350,4 +350,5 @@ class PostgreSQLx(ABDatabase):
 __all__ = [
     "PostgreSQLx",  # lgtm [py/undefined-export]
     "PostgreSQLxTable",  # lgtm [py/undefined-export]
+    "PostgreSQLxTransaction",  # lgtm [py/undefined-export]
 ]

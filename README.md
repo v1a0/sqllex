@@ -3,7 +3,7 @@
 
 <img src="./pics/sqllex-logo.svg" width="300px" alt="sqllex logo">
 
-# SQLLEX ORM v0.2.2.0
+# SQLLEX ORM v0.2.2.1
 
 ![python-3-9]
 [![lgtm-quality-img]][lgtm-quality-src]
