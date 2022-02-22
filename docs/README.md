@@ -45,7 +45,7 @@ It'll be a lot easier to show then explain. So check out examples down below.
 - - [Table](./about-table.md)
 - - [Column](./about-column.md)
 - - [SearchConditions](./about-searchcondition.md)
-- ### Main method
+- ### Main methods
 - - [db.select](./database-select.md)
 - - [db.insert](./database-insert.md)
 - - [db.insertmany](./database-insertmany.md)
@@ -58,7 +58,10 @@ It'll be a lot easier to show then explain. So check out examples down below.
 - - [db.remove_column](./database-remove_column.md)
 - - [db.connect](./sqlite3x-connect.md)
 - - [db.disconnect](./database-disconnect.md)
+
+- ### Features
 - - [db['table_name']](./database-get_table.md)
+- - [db.transaction <b>(NEW!)</b>](./database-transaction.md)
 - ### [Database properties](./database-properties.md)
 - ### Examples
 - - [Awesome example #0](./examples/sqlite3x-aex-0.md)

@@ -4,7 +4,8 @@ PostgreSQLxTable and PostgreSQLx
 from sqllex.core.entities.abc import \
     AbstractDatabase as ABDatabase, \
     AbstractTable as ABTable, \
-    AbstractColumn as ABColumn
+    AbstractColumn as ABColumn, \
+    AbstractTransaction
 import sqllex.core.tools.parsers.parsers as parse
 from sqllex.debug import logger
 from sqllex.exceptions import TableNotExist
@@ -13,6 +14,12 @@ import sqllex.core.entities.sqlite3x.middleware as middleware
 import sqlite3
 from sqllex.core.tools.docs_helpers import copy_docs
 import sqllex.core.entities.sqlite3x.script_gens as script_gen
+
+
+class SQLite3xTransaction(AbstractTransaction):
+    @property
+    def __name__(self):
+        return "SQLite3xTransaction"
 
 
 class SQLite3xTable(ABTable):
@@ -92,6 +99,7 @@ class SQLite3x(ABDatabase):
             path: PathType = "sql3x.db",
             template: DBTemplateType = None,
             init_connection=True,
+            connection: sqlite3.Connection = None
     ):
         """
         Initialization
@@ -104,21 +112,22 @@ class SQLite3x(ABDatabase):
             template of database structure (DBTemplateType)
         init_connection : bool
             Create connection to database with database class object initialisation
-
+        connection: sqlite3.Connection
+            Already existing connection to database
         """
 
         #        __slots__ = ('__path', '__connection') # Memory optimisation !!!
 
         super(SQLite3x, self).__init__(placeholder='?')
 
-        self.__connection = None  # init connection
+        self.__connection = connection  # init connection
 
         if not path:
             raise ValueError("Path can't be empty or undefined")
         else:
             self.__path = path
 
-        if init_connection:
+        if init_connection and not self.connection:
             self.connect()  # creating connection with db
 
         if template:
@@ -138,8 +147,13 @@ class SQLite3x(ABDatabase):
 
     # =============================== PROPERTIES ==================================
 
+    @copy_docs(ABDatabase.transaction)
     @property
+    def transaction(self) -> SQLite3xTransaction:
+        return SQLite3xTransaction(db=self)
+
     @copy_docs(ABDatabase.connection)
+    @property
     def connection(self) -> Union[sqlite3.Connection, None]:
         return self.__connection
 

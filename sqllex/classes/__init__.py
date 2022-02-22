@@ -2,16 +2,17 @@
 All sqllex (public) classes
 """
 
-from sqllex.core.entities.sqlite3x import *
+from sqllex.core.entities.abc import SearchCondition, AbstractTable, AbstractDatabase, AbstractColumn, \
+    AbstractTransaction
 from sqllex.core.entities.postgresqlx import *
-from sqllex.core.entities.abc import SearchCondition, AbstractTable, AbstractDatabase, AbstractColumn
-
+from sqllex.core.entities.sqlite3x import *
 
 __all__ = [
     # ABCs
     "AbstractTable",  # lgtm [py/undefined-export]
     "AbstractDatabase",   # lgtm [py/undefined-export]
     "AbstractColumn",  # lgtm [py/undefined-export]
+    "AbstractTransaction",  # lgtm [py/undefined-export]
 
     # SearchCondition
     "SearchCondition",  # lgtm [py/undefined-export]

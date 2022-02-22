@@ -563,6 +563,8 @@ class AbstractDatabase(ABC):
 
         del self
 
+
+
     @property
     @abstractmethod
     def connection(self):
@@ -591,6 +593,29 @@ class AbstractDatabase(ABC):
         Placeholder symbol
         """
         return self.__placeholder
+
+    @property
+    @abstractmethod
+    def transaction(self):
+        """
+        Property to create transaction statement. Have to be used inside 'with' statement.
+
+            >>> import sqllex as sx
+            >>>
+            >>> db = sx.SQLite3x('some.db')
+            >>>
+            >>> with db.transaction as tran:
+            >>>    try:
+            >>>        # Transaction body
+            >>>        # db.execute(...)
+            >>>        ...
+            >>>        tran.commit() # optional
+            >>>
+            >>>    except Exception:
+            >>>        tran.rollback()  # rollback transaction is something goes wrong
+        """
+
+        return
 
     # ============================== PRIVATE METHODS ==============================
 

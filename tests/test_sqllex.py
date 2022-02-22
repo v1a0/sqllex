@@ -76,6 +76,125 @@ class TestSqllexSQLite(unittest.TestCase):
         db_name = f"{self.db_name}_{1}"
         self.assertIs(SQLite3x(db_name, init_connection=False).connection, None)
 
+    def test_transaction(self):
+        """
+        Testing transactions
+        """
+        def get_by_id(table: str, val: int):
+            return self.db.execute(f"SELECT * FROM {table} WHERE id={val}")
+
+        def get_user_by_id(val: int):
+            return get_by_id(table='user', val=val)
+
+        def get_car_by_id(val: int):
+            return get_by_id(table='car', val=val)
+
+
+        self.db.execute(
+            """
+            CREATE TABLE "user" (
+                "id" INTEGER PRIMARY KEY,
+                "name" TEXT UNIQUE
+            );
+            """
+        )
+
+        self.db.execute(
+            """
+            CREATE TABLE "car" (
+                "id" INTEGER PRIMARY KEY,
+                "owner_id" INTEGER,
+                "brand" TEXT,
+
+                FOREIGN KEY (owner_id) REFERENCES user(id)
+            );
+            """
+        )
+
+        # Transaction with auto commit
+        with self.db.transaction as tran:
+            self.db.execute(
+                "INSERT INTO user VALUES (1, 'Alex')"
+            )
+
+        self.assertEqual(get_user_by_id(1), [(1, 'Alex')])
+
+        # Transaction with auto commit for many executes
+        with self.db.transaction as tran:
+            self.db.execute(
+                "INSERT INTO user VALUES (22, 'Alex22')"
+            )
+            self.db.execute(
+                "INSERT INTO user VALUES (23, 'Alex23')"
+            )
+            self.db.execute(
+                "INSERT INTO user VALUES (24, 'Alex24')"
+            )
+
+        self.assertEqual(get_user_by_id(22), [(22, 'Alex22')])
+        self.assertEqual(get_user_by_id(23), [(23, 'Alex23')])
+        self.assertEqual(get_user_by_id(24), [(24, 'Alex24')])
+
+        # Transaction with manual commit
+        with self.db.transaction as tran:
+            self.db.execute(
+                "INSERT INTO user VALUES (2, 'Bob')"
+            )
+            tran.commit()
+
+        self.assertEqual(get_user_by_id(2), [(2, 'Bob')])
+
+        # Transaction with rollback
+        with self.db.transaction as tran:
+            self.db.execute(
+                "INSERT INTO user VALUES (3, 'Cara')"
+            )
+            self.assertEqual(get_user_by_id(3), [(3, 'Cara')])
+            tran.rollback()
+
+        self.assertEqual(get_user_by_id(3), [])
+
+        # Prep
+        self.assertRaises(sqlite3.IntegrityError, self.db.execute, "INSERT INTO user VALUES (2, 'Sam')")
+
+        # Transaction with rollback
+        with self.db.transaction as tran:
+            try:
+                self.db.execute(
+                    "INSERT INTO user VALUES (2, 'Sam')"
+                )
+            except sqlite3.IntegrityError:
+                tran.rollback()
+
+        self.assertEqual(get_user_by_id(2), [(2, 'Bob')])
+
+        # Normal Transaction
+        with self.db.transaction as tran:
+            self.db.execute(
+                "INSERT INTO user VALUES (55, 'Master')"
+            )
+            self.db.execute(
+                "INSERT INTO car VALUES (55, 55, 'BMW')"
+            )
+
+        self.assertEqual(get_user_by_id(55), [(55, 'Master')])
+        self.assertEqual(get_car_by_id(55), [(55, 55, 'BMW')])
+
+        # Prep
+        self.assertRaises(sqlite3.IntegrityError, self.db.execute, "INSERT INTO car VALUES (9999, 9999, 'BMW')")
+
+        # Transaction with rollback
+        with self.db.transaction as tran:
+            try:
+                self.db.execute(
+                    "INSERT INTO car VALUES (9999, 9999, 'BMW')"
+                )
+            except sqlite3.IntegrityError:
+                tran.rollback()
+
+        self.assertEqual(get_car_by_id(9999), [])
+
+
     def test_create_table_1(self):
         """
         Testing table creating
@@ -1058,7 +1177,6 @@ class TestSqllexSQLite(unittest.TestCase):
             )
         )
 
-
     def test_extra_features(self):
         """
         Special extra features with no other options to test
@@ -1111,7 +1229,6 @@ class TestSqllexSQLite(unittest.TestCase):
 
         self.assertEqual(self.db['test_table_1']['id'].table, 'test_table_1')
         self.assertEqual(self.db['test_table_2']['id'].table, 'test_table_2')
-
 
     @unittest.skipUnless(importlib.util.find_spec('numpy'), "Module numpy not found")
     def test_numpy(self):

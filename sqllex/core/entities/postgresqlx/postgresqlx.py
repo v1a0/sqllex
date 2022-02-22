@@ -4,7 +4,8 @@ PostgreSQLxTable and PostgreSQLx
 from sqllex.core.entities.abc import \
     AbstractDatabase as ABDatabase, \
     AbstractTable as ABTable, \
-    AbstractColumn as ABColumn
+    AbstractColumn as ABColumn, \
+    AbstractTransaction
 import sqllex.core.tools.parsers.parsers as parse
 from sqllex.debug import logger
 from sqllex.exceptions import TableNotExist
@@ -13,6 +14,12 @@ import sqllex.core.entities.postgresqlx.middleware as middleware
 import psycopg2
 from psycopg2.extensions import connection
 from sqllex.core.tools.docs_helpers import copy_docs
+
+
+class PostgreSQLxTransaction(AbstractTransaction):
+    @property
+    def __name__(self):
+        return "PostgreSQLxTransaction"
 
 
 class PostgreSQLxTable(ABTable):
@@ -80,6 +87,7 @@ class PostgreSQLx(ABDatabase):
             port: AnyStr = "5432",
             template: DBTemplateType = None,
             init_connection=True,
+            connection=None,
     ):
         """
         Initialization
@@ -111,7 +119,7 @@ class PostgreSQLx(ABDatabase):
         self.__user = user
         self.__host = host
         self.__port = port
-        self.__connection = None            # init connection
+        self.__connection = connection            # init connection
 
         if init_connection:
             self.connect(password=password)     # creating connection with db
@@ -152,7 +160,6 @@ class PostgreSQLx(ABDatabase):
         """
         return self.__dbname
 
-
     @property
     def host(self) -> AnyStr:
         """
@@ -173,6 +180,10 @@ class PostgreSQLx(ABDatabase):
         Username to login, "postgres" by default
         """
         return self.__user
+
+    @property
+    def transaction(self) -> PostgreSQLxTransaction:
+        return PostgreSQLxTransaction(db=self)
 
     # ================================== STMT'S ====================================
 

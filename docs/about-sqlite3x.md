@@ -63,6 +63,7 @@ db = SQLite3x(
 - [placeholder](database-properties.md#abstractdatabaseplaceholder)
 - [tables](database-properties.md#abstractdatabasetables)
 - [tables_names](database-properties.md#abstractdatabasetables_names)
+- [transaction (NEW!)](database-transaction.md) 
 
 
 ```
