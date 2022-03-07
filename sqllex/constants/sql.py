@@ -32,4 +32,30 @@ IGNORE: OrOptionsType = "IGNORE"
 REPLACE: OrOptionsType = "REPLACE"
 ROLLBACK: OrOptionsType = "ROLLBACK"
 
+__all__ = [
+    # Options of column datatype of value
+    'INTEGER',
+    'REAL',
+    'TEXT',
 
+    # Options for JOIN-ing
+    'INNER_JOIN',
+    'LEFT_JOIN',
+
+    # Options of column value
+    'ALL',
+    'FOREIGN_KEY',
+    'NULL',
+    'PRIMARY_KEY',
+    'REFERENCES',
+    'AS',
+    'ON',
+    'LIKE',
+
+    # Options for "OR" argument
+    'ABORT',
+    'FAIL',
+    'IGNORE',
+    'REPLACE',
+    'ROLLBACK',
+]

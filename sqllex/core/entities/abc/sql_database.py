@@ -561,7 +561,6 @@ class AbstractDatabase(ABC):
         if self.connection:
             self.disconnect()
 
-        del self
 
 
 

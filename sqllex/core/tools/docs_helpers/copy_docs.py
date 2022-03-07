@@ -9,10 +9,10 @@ def copy_docs(parent_func: callable, sep='\n'):
 
         if not func_doc and parent_doc:
             func.__doc__ = parent_doc
-        elif func_doc:
+        elif not func_doc and not parent_doc:
+            func.__doc__ = sep.join((f"\nChild of '{parent_func.__name__}':\n",))
+        elif func_doc and parent_doc:
             func.__doc__ = sep.join((func_doc, f"\nChild of '{parent_func.__name__}':\n", parent_doc))
-        elif parent_doc:
-            func.__doc__ = sep.join((f"\nChild of '{parent_func.__name__}':\n", parent_doc))
         else:
             pass
         return func

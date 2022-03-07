@@ -37,10 +37,49 @@ UNIQUE: ConstantType = "UNIQUE"
 
 
 # Options for "OR" argument
-ABORT: OrOptionsType = "ABORT"
-FAIL: OrOptionsType = "FAIL"
-IGNORE: OrOptionsType = "IGNORE"
-REPLACE: OrOptionsType = "REPLACE"
-ROLLBACK: OrOptionsType = "ROLLBACK"
+# ABORT: OrOptionsType = "ABORT"
+# FAIL: OrOptionsType = "FAIL"
+# IGNORE: OrOptionsType = "IGNORE"
+# REPLACE: OrOptionsType = "REPLACE"
+# ROLLBACK: OrOptionsType = "ROLLBACK"
 
 
+__all__ = [
+    # Options of column datatype of value
+    'INTEGER',  # lgtm [py/undefined-export]
+    'REAL',  # lgtm [py/undefined-export]
+    'TEXT',  # lgtm [py/undefined-export]
+    'NUMERIC',
+    'NONE',
+    'BLOB',
+
+    # psql
+
+
+    # Options for JOIN-ing
+    'INNER_JOIN',  # lgtm [py/undefined-export]
+    'LEFT_JOIN',  # lgtm [py/undefined-export]
+    'CROSS_JOIN',
+
+    # Options of column value
+    'ALL',  # lgtm [py/undefined-export]
+    'FOREIGN_KEY',  # lgtm [py/undefined-export]
+    'NULL',  # lgtm [py/undefined-export]
+    'PRIMARY_KEY',  # lgtm [py/undefined-export]
+    'REFERENCES',  # lgtm [py/undefined-export]
+    'AS',  # lgtm [py/undefined-export]
+    'ON',  # lgtm [py/undefined-export]
+    'LIKE',  # lgtm [py/undefined-export]
+    'AUTOINCREMENT',
+    'CHECK',
+    'DEFAULT',
+    'NOT_NULL',
+    'UNIQUE',
+
+    # Options for "OR" argument
+    'ABORT',  # lgtm [py/undefined-export]
+    'FAIL',  # lgtm [py/undefined-export]
+    'IGNORE',  # lgtm [py/undefined-export]
+    'REPLACE',  # lgtm [py/undefined-export]
+    'ROLLBACK',  # lgtm [py/undefined-export]
+]

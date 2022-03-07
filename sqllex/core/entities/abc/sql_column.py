@@ -100,10 +100,13 @@ class AbstractColumn:
         column-like-reg_ex
         column |LIKE| '%find_me%'
         """
-        assert value is LIKE, \
-            "Column object does not support '|' operator by itself. " \
-            "Supports only construction with LIKE (as syntax sugar): " \
-            """db['column'] |LIKE| '%find_me%' """
+
+        assert_msg = "Column object does not support '|' operator by itself. " \
+                     "Supports only construction with LIKE (as syntax sugar): " \
+                     "db['column'] |LIKE| '%find_me%' "
+
+        assert value is LIKE, assert_msg    # lgtm [py/comparison-using-is]
+
         return SearchCondition(
                 script=f"({self} LIKE {self.placeholder})",
                 placeholder=self.placeholder,
