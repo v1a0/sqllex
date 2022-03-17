@@ -19,6 +19,28 @@ on:
 
 
 jobs:
+  python-3-10:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python3.10
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.10'
+      - name: Update pip, Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+
+      - name: Moving tests to current dir
+        run: |
+          mv ./tests/* ./
+
+      - name: Running unit tests (tests/test_sqllex.py)
+        run: |
+          python -m unittest test_sqllex.py
+
   python-3-9:
     runs-on: ubuntu-latest
 

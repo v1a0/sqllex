@@ -5,7 +5,7 @@
 
 # SQLLEX ORM v0.2.2.1
 
-![python-3-9]
+![python-auto-ver]
 [![lgtm-quality-img]][lgtm-quality-src]
 [![lgtm-alerts-img]][lgtm-alerts-src]
 
@@ -148,6 +148,8 @@ print(users_33)  # [('Sqllex', 33)]
   <!-- Images -->
   [wiki-img]: https://img.shields.io/badge/docs-Wiki-blue.svg
   [docs-dark-img]: https://img.shields.io/badge/dosc-dark%20theme-black
+  [python-auto-ver]: https://img.shields.io/pypi/pyversions/sqllex?color=green
+  [python-3-10]: https://img.shields.io/badge/Python-3.10-green
   [python-3-9]: https://img.shields.io/badge/Python-3.9-green
   [python-3-8]: https://img.shields.io/badge/Python-3.8-green
   [lgtm-quality-img]: https://img.shields.io/lgtm/grade/python/g/V1A0/sqllex.svg?logo=lgtm&logoWidth=18
