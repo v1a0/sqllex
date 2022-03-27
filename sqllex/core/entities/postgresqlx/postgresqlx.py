@@ -11,9 +11,10 @@ from sqllex.debug import logger
 from sqllex.exceptions import TableNotExist
 from sqllex.types.types import *
 import sqllex.core.entities.postgresqlx.middleware as middleware
+from sqllex.core.tools.docs_helpers import copy_docs
+
 import psycopg2
 from psycopg2.extensions import connection
-from sqllex.core.tools.docs_helpers import copy_docs
 
 
 class PostgreSQLxTransaction(AbstractTransaction):
@@ -88,6 +89,7 @@ class PostgreSQLx(ABDatabase):
             template: DBTemplateType = None,
             init_connection=True,
             connection=None,
+            **connection_kwargs
     ):
         """
         Initialization
@@ -119,15 +121,25 @@ class PostgreSQLx(ABDatabase):
         self.__user = user
         self.__host = host
         self.__port = port
-        self.__connection = connection            # init connection
+
+        # connection
+        self.__connection = connection  # init connection
+
+        if init_connection and connection_kwargs and self.connection:
+            # if connection already exist but func also got an connection_kwargs
+            logger.warning(f"Connection already exists, parameters ({connection_kwargs}) have not been set")
 
         if init_connection:
-            self.connect(password=password)     # creating connection with db
+            try:
+                self.connect(password=password, **connection_kwargs)     # creating connection with db
+            except TypeError:
+                self.connect(**connection_kwargs)
 
         DEC2FLOAT = psycopg2.extensions.new_type(
             psycopg2.extensions.DECIMAL.values,
             'DEC2FLOAT',
-            lambda value, curs: float(value) if value is not None else None)
+            lambda value, curs: float(value) if value is not None else None
+        )
 
         psycopg2.extensions.register_type(DEC2FLOAT)
 

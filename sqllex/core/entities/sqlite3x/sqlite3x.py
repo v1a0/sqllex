@@ -99,7 +99,8 @@ class SQLite3x(ABDatabase):
             path: PathType = "sql3x.db",
             template: DBTemplateType = None,
             init_connection=True,
-            connection: sqlite3.Connection = None
+            connection: sqlite3.Connection = None,
+            **connection_kwargs
     ):
         """
         Initialization
@@ -114,30 +115,39 @@ class SQLite3x(ABDatabase):
             Create connection to database with database class object initialisation
         connection: sqlite3.Connection
             Already existing connection to database
+        connection_kwargs: Any
+            Optional parameters for creating connection with db (for example: check_same_thread=False)
         """
 
         #        __slots__ = ('__path', '__connection') # Memory optimisation !!!
 
         super(SQLite3x, self).__init__(placeholder='?')
 
-        self.__connection = connection  # init connection
-
+        # path
         if not path:
             raise ValueError("Path can't be empty or undefined")
         else:
             self.__path = path
 
-        if init_connection and not self.connection:
-            self.connect()  # creating connection with db
+        # connection
+        self.__connection = connection  # init connection
 
+        if init_connection and connection_kwargs and self.connection:
+            # if connection already exist but func also got an connection_kwargs
+            logger.warning(f"Connection already exists, parameters ({connection_kwargs}) have not been set")
+
+        if init_connection and not self.connection:
+            self.connect(path=self.path, **connection_kwargs)  # creating connection with db
+
+        # mark_up
         if template:
             self.markup(template=template)
 
-    @copy_docs(ABTable.__str__)
+    @copy_docs(ABDatabase.__str__)
     def __str__(self):
         return f"{{SQLite3x: '{self.path}'}}"
 
-    @copy_docs(ABTable.__bool__)
+    @copy_docs(ABDatabase.__bool__)
     def __bool__(self):
         try:
             return bool(self.connection)
@@ -155,7 +165,14 @@ class SQLite3x(ABDatabase):
     @copy_docs(ABDatabase.connection)
     @property
     def connection(self) -> Union[sqlite3.Connection, None]:
-        return self.__connection
+        try:
+            return self.__connection
+        except AttributeError:
+            # TODO: I have no idea why but some tests falling with exception
+            # AttributeError: 'SQLite3x' object has no attribute '_SQLite3x__connection'
+            logger.debug("WTF??? self.__connection undef. ???")
+
+            return None
 
     @property
     def path(self) -> PathType:
@@ -293,7 +310,7 @@ class SQLite3x(ABDatabase):
         if not self.connection:
             self.__connection = sqlite3.connect(path, **kwargs)
             self.journal_mode(mode="WAL")  # make db little bit faster
-            self.foreign_keys(mode="ON")  # turning on foreign keys
+            self.foreign_keys(mode="ON")   # turning on foreign keys
             return self.connection
 
         else:

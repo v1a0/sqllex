@@ -19,7 +19,10 @@ db = SQLite3x(
     },
         
     # Create connection to database with database class object initialisation
-    init_connection=True
+    init_connection=True,
+    
+    # Optional sqlite connection parameters
+    check_same_thread=False
 )
 
 ```
