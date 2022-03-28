@@ -3,7 +3,7 @@
 
 <img src="./pics/sqllex-logo.svg" width="300px" alt="sqllex logo">
 
-# SQLLEX ORM v0.2.2.1
+# SQLLEX ORM v0.2.3
 
 ![python-auto-ver]
 [![lgtm-quality-img]][lgtm-quality-src]
@@ -26,11 +26,12 @@ The most pythonic ORM. Seriously, try it out!<br>
 pip install sqllex
 ```
 
-| Version |  Status | Tests, and actions |
-| :--------: | :----------------------------: | :---: |
-| `==0.2.2.0`     | ✔️ supported         <br> ✔️ stable         | [![code-ql-img]][code-ql-src] <br> [![sqllex-tests-img]][sqllex-tests-src] <br> [![pypi-upload-img]][pypi-upload-img] |
-| `<=0.2.0.4`    | ⚠️ outdated         <br>   ⚠️ Security issue <br>  CVE-2022-0329| ⚠️ Mostly passing |
-| `<=0.1.10.4`  | ❌️ outdated       | ❌ |
+|   Version    |                              Status                              |                                                  Tests, and actions                                                   |
+|:------------:|:----------------------------------------------------------------:|:---------------------------------------------------------------------------------------------------------------------:|
+|  `==0.2.3`   |               ✔️ supported         <br> ✔️ stable                | [![code-ql-img]][code-ql-src] <br> [![sqllex-tests-img]][sqllex-tests-src] <br> [![pypi-upload-img]][pypi-upload-img] |
+| `<=0.2.0.4`  | ⚠️ outdated         <br>   ⚠️ Security issue <br>  CVE-2022-0329 |                                                   ⚠️ Mostly passing                                                   |
+| `<=0.1.10.4` |                           ❌️ outdated                            |                                                           ❌                                                           |
+
 
 | Databases  | Support |
 | :---       | :-----: |
