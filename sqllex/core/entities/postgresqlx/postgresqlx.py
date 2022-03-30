@@ -13,8 +13,8 @@ from sqllex.types.types import *
 import sqllex.core.entities.postgresqlx.middleware as middleware
 from sqllex.core.tools.docs_helpers import copy_docs
 
-import psycopg2
-from psycopg2.extensions import connection
+from sqllex.core.entities.abc import AbstractEngine
+from sqllex.core.entities.abc import AbstractConnection
 
 
 class PostgreSQLxTransaction(AbstractTransaction):
@@ -81,6 +81,7 @@ class PostgreSQLx(ABDatabase):
 
     def __init__(
             self,
+            engine: AbstractEngine,
             dbname: AnyStr = "postgres",
             user: AnyStr = "postgres",
             password: AnyStr = None,
@@ -319,7 +320,7 @@ class PostgreSQLx(ABDatabase):
             port = self.port
 
         if not self.connection:
-            self.__connection = psycopg2.connect(
+            self.__connection = self.engine.connect(
                 dbname=dbname,
                 user=user,
                 password=password,

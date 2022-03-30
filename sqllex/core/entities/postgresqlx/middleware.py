@@ -3,13 +3,12 @@ Middleware for PostgreSQLx
 """
 from sqllex.types import Tuple, AnyStr
 from sqllex.debug import logger
-from psycopg2.extensions import connection
-import psycopg2
+from sqllex.core.entities.abc import AbstractConnection
 
 
 
-def execute(script: AnyStr, values: Tuple, connection: connection):
-    def mw_executor(conn: connection, script: AnyStr, values: Tuple):
+def execute(script: AnyStr, values: Tuple, connection: AbstractConnection):
+    def mw_executor(conn: AbstractConnection, script: AnyStr, values: Tuple):
         cur = conn.cursor()
 
         try:
@@ -24,8 +23,14 @@ def execute(script: AnyStr, values: Tuple, connection: connection):
             try:
                 return cur.fetchall()
 
-            except psycopg2.ProgrammingError:
-                pass
+            # except psycopg2.ProgrammingError:
+            #     pass
+
+            except Exception as exc:
+                if "ProgrammingError" in exc.__class__.__name__:
+                    pass
+                else:
+                    raise exc
 
         except Exception as error:
             raise error
@@ -42,11 +47,9 @@ def execute(script: AnyStr, values: Tuple, connection: connection):
         else:
             return mw_executor(conn=connection, script=script, values=values)
 
-# here and down below
 
-
-def executemany(script: AnyStr, values: Tuple, connection: connection):
-    def mw_executor(conn: connection, script: AnyStr, values: Tuple):
+def executemany(script: AnyStr, values: Tuple, connection: AbstractConnection):
+    def mw_executor(conn: AbstractConnection, script: AnyStr, values: Tuple):
         cur = conn.cursor()
 
         try:
@@ -55,15 +58,21 @@ def executemany(script: AnyStr, values: Tuple, connection: connection):
             try:
                 return cur.fetchall()
 
-            except psycopg2.ProgrammingError:
-                pass
+            # except psycopg2.ProgrammingError:
+            #     pass
+
+            except Exception as exc:
+                if "ProgrammingError" in exc.__class__.__name__:
+                    pass
+                else:
+                    raise exc
 
         except Exception as error:
             raise error
 
         conn.commit()
 
-    if script:  # it's necessary
+    if script:
         script = script.strip()
 
         logger.debug(f"\n {script}\n {values if values else ''}\n")
@@ -74,8 +83,8 @@ def executemany(script: AnyStr, values: Tuple, connection: connection):
             return mw_executor(conn=connection, script=script, values=values)
 
 
-def executescript(script: AnyStr, connection: connection):
-    def mw_executor(conn: connection, script: AnyStr):
+def executescript(script: AnyStr, connection: AbstractConnection):
+    def mw_executor(conn: AbstractConnection, script: AnyStr):
         cur = conn.cursor()
 
         try:
@@ -84,15 +93,21 @@ def executescript(script: AnyStr, connection: connection):
             try:
                 return cur.fetchall()
 
-            except psycopg2.ProgrammingError:
-                pass
+            # except psycopg2.ProgrammingError:
+            #     pass
+
+            except Exception as exc:
+                if "ProgrammingError" in exc.__class__.__name__:
+                    pass
+                else:
+                    raise exc
 
         except Exception as error:
             raise error
 
         conn.commit()
 
-    if script:  # it's necessary
+    if script:
         script = script.strip()
 
         logger.debug(f"\n {script}\n")

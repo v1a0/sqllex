@@ -45,7 +45,6 @@ setup(
     ],
     install_requires=[
         'loguru==0.6.0',
-        'psycopg2==2.9.1',
     ],
     classifiers=[
         'Development Status :: 3 - Alpha',
