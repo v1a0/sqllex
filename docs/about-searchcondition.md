@@ -5,16 +5,16 @@ Special class for generating condition with AbstractColumn.
 ## Examples
 
 ```python
-from sqllex import *
-from sqllex.classes import SearchCondition
+import sqllex as sx
 
-db = SQLite3x(path='database.db')
+db = sx.SQLite3x(path='database.db')
+# db = sx.PostgreSQL(...)
 
 db.create_table(
     'users',
     {
-        'id': [INTEGER, PRIMARY_KEY, UNIQUE],
-        'name': [TEXT, NOT_NULL, DEFAULT, 'Unknown']
+        'id': [sx.INTEGER, sx.PRIMARY_KEY, sx.UNIQUE],
+        'name': [sx.TEXT, sx.NOT_NULL, sx.DEFAULT, 'Unknown']
     }
 )
 
@@ -87,7 +87,7 @@ db.update(
     WHERE=(
        (id_col != 1) & (id_col !=2)    # <---- SearchCondition !!!!
     ),
-    OR=IGNORE
+    OR=sx.IGNORE
 )
 
 db.update(

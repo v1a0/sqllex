@@ -22,7 +22,7 @@ Here you can find some explanations and examples for Sqllex ORM <br>
 
 ### What the heck is Sqllex? 🤔
 
-Sqllex is a python ORM library for comfortable and safe interaction with databases.
+Sqllex is a python ORM for comfortable and safe interaction with databases.
 
 If you've ever worked with databases using python, you know what does "Eat nails while writing SQL-scripts" means.
 So give a sqllex deal with it, just call needed method, give it a data or necessary parameters and done.
@@ -38,13 +38,35 @@ It'll be a lot easier to show then explain. So check out examples down below.
 
 ---
 
+### SQLite3
+
+Sqllex was originally created for SQLite. 
+So It's currently best suited especially for work with it.
+
+### Postgres
+
+PostgreSQL now is only partially support. 
+It has the same api interface as SQLite3x so feel free to use documentation
+of it for PostgreSQLx. 
+
+---
+
+
 ## Contents
 
 - ### Main classes
-- - [Database](./about-sqlite3x.md)
-- - [Table](./about-table.md)
-- - [Column](./about-column.md)
-- - [SearchConditions](./about-searchcondition.md)
+- Database
+- - [SQLite3x](./about-sqlite3x.md)
+- - [PostgreSQLx](./about-postgresqlx.md) 
+- [Table](./about-table.md)
+- - [SQLite3xTable](./about-table.md)
+- - [PostgreSQLxTable](./about-table.md)
+- [Column](./about-column.md)
+- - [SQLite3xColumn](./about-column.md) 
+- - [PostgreSQLxColumn](./about-column.md)
+- [SearchConditions](./about-searchcondition.md)
+
+
 - ### Main methods
 - - [db.select](./database-select.md)
 - - [db.insert](./database-insert.md)
@@ -62,7 +84,9 @@ It'll be a lot easier to show then explain. So check out examples down below.
 - ### Features
 - - [db['table_name']](./database-get_table.md)
 - - [db.transaction <b>(NEW!)</b>](./database-transaction.md)
-- ### [Database properties](./database-properties.md)
+- ### [SQLite3x properties](./sqlite3x-properties.md)
+- ### [SQLite3xTable properties](./sqlite3x-table-properties.md)
+- ### [PostgreSQLx properties](./postgresqlx-properties.md)
 - ### Examples
 - - [Awesome example #0](./examples/sqlite3x-aex-0.md)
 - - [Awesome example #1](./examples/sqlite3x-aex-1.md)
@@ -132,19 +156,18 @@ With the sqllex you can interact with this database in the craziest way
 
 ```python
 # Import necessary modules
-from sqllex.classes import SQLite3x
-from sqllex.constants.sqlite import *
+import sqllex as sx
 
 # Database
-db = SQLite3x('server.db')
+db = sx.SQLite3x('server.db')
 
 # Create this table
 db.create_table(
   'users',
   {
-    'id': INTEGER,
-    'name': TEXT,
-    'age': INTEGER
+    'id': sx.INTEGER,
+    'name': sx.TEXT,
+    'age': sx.INTEGER
   },
   IF_NOT_EXIST=True
 )
@@ -179,7 +202,7 @@ column_name = table_users['name']
 
 print(
   table_users.select(
-    WHERE=(column_age > 40) & (column_name |LIKE| 'kin%')
+    WHERE=(column_age > 40) & (column_name |sx.LIKE| 'kin%')
   )
 ) # [(3, 'kingabzpro', 44)]
 ```
@@ -187,7 +210,7 @@ print(
 ### Also, you can do crazy things like this
 
 ```python
-self.db['employee'].select(
+db['employee'].select(
     SELECT=[
         db['employee']['id'],
         db['employee']['firstName'],
@@ -195,11 +218,11 @@ self.db['employee'].select(
     ],
     JOIN=(
         (
-            LEFT_JOIN, db['position'],
+            sx.LEFT_JOIN, db['position'],
             ON, db['position']['id'] == db['employee']['positionID']
         ),
         (
-            INNER_JOIN, self.db['payments'],
+            sx.INNER_JOIN, db['payments'],
             ON, db['employee']['id'] == db['payments']['employeeID']
         )
     ),

@@ -1,4 +1,4 @@
-# AbstractDatabase.drop
+# SQLite3x.drop
 
 
 ```python
@@ -24,14 +24,14 @@ def drop(
 ## Examples
 
 ```python
-from sqllex.classes import AbstractDatabase
-from sqllex.constants import INTEGER
+import sqllex as sx
 
-db: AbstractDatabase = ...
+db = sx.SQLite3x(path='database.db')
+# db = sx.PostgreSQL(...)
 
-db.create_table('table1', {'id': INTEGER})
-db.create_table('table2', {'id': INTEGER})
-db.create_table('table3', {'id': INTEGER})
+db.create_table('table1', {'id': sx.INTEGER})
+db.create_table('table2', {'id': sx.INTEGER})
+db.create_table('table3', {'id': sx.INTEGER})
 
 db.drop('table1')
 db.drop(TABLE='table2')

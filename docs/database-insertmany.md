@@ -1,4 +1,4 @@
-# AbstractDatabase.insertmany
+# SQLite3x.insertmany
 
 ```python
 def insertmany(
@@ -35,17 +35,17 @@ def insertmany(
 ## Examples
 
 ```python
-from sqllex.classes import AbstractDatabase
-from sqllex.constants import INTEGER, TEXT, NOT_NULL, IGNORE
+import sqllex as sx
 
-db: AbstractDatabase = ...
+db = sx.SQLite3x(path='database.db')
+# db = sx.PostgreSQL(...)
 
 
 db.create_table(
     'users',
     {
-        'id': [INTEGER],
-        'name': [TEXT, NOT_NULL]
+        'id': [sx.INTEGER],
+        'name': [sx.TEXT, sx.NOT_NULL]
     }
 )
 
@@ -67,7 +67,7 @@ db.insertmany('users', users_list)
 db.insertmany(
     'users',
     users_list,
-    OR=IGNORE, # REPLACE, FAIL, ABORT, ROLLBACK
+    OR=sx.IGNORE, # REPLACE, FAIL, ABORT, ROLLBACK
 )
 
 

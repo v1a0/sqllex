@@ -1,4 +1,4 @@
-# AbstractDatabase.updatemany
+# SQLite3x.updatemany
 
 ```python
 def updatemany(
@@ -24,16 +24,16 @@ def updatemany(
 # Examples
 
 ```python
-from sqllex.classes import AbstractDatabase
-from sqllex.constants import INTEGER, TEXT, REPLACE
+import sqllex as sx
 
-db: AbstractDatabase = ...
+db = sx.SQLite3x(path='database.db')
+# db = sx.PostgreSQL(...)
 
 db.create_table(
     't6',
     {
-        'id': INTEGER,
-        'val': TEXT
+        'id': sx.INTEGER,
+        'val': sx.TEXT
     },
     IF_NOT_EXIST=True
 )
@@ -48,7 +48,7 @@ db.insertmany('t6', data1)
 
 db.updatemany('t6', data2)
 
-db.insertmany('t6', data2, OR=REPLACE)  # actually do the same thing
+db.insertmany('t6', data2, OR=sx.REPLACE)  # actually do the same thing
 
 ```
 

@@ -1,4 +1,4 @@
-# AbstractDatabase.markup
+# SQLite3x.markup
 
 
 ```python
@@ -19,16 +19,16 @@ def markup(
 ## Examples
 
 ```python
-from sqllex.classes import AbstractDatabase
-from sqllex.constants import INTEGER, TEXT, NOT_NULL, FOREIGN_KEY
+import sqllex as sx
 
-db: AbstractDatabase = ...
+db = sx.SQLite3x(path='database.db')
+# db = sx.PostgreSQL(...)
 
 db.markup(
     template={
         'table': {
-            'column_1': INTEGER,
-            'column_2': TEXT
+            'column_1': sx.INTEGER,
+            'column_2': sx.TEXT
         } 
     }
 )
@@ -43,8 +43,8 @@ db.markup(
 db.markup(
     template={
         'books': {
-            'id': [INTEGER],
-            'name': [TEXT, NOT_NULL]
+            'id': [sx.INTEGER],
+            'name': [sx.TEXT, sx.NOT_NULL]
         } 
     }
 )
@@ -63,9 +63,9 @@ db.markup(
 db.markup(
     template={
         'descriptions': {
-            'book_id': [INTEGER],
-            'about': [TEXT, NOT_NULL],
-            FOREIGN_KEY: {
+            'book_id': [sx.INTEGER],
+            'about': [sx.TEXT, sx.NOT_NULL],
+            sx.FOREIGN_KEY: {
                 'book_id': ['books', 'id']
             }
         } 
@@ -90,14 +90,14 @@ db.markup(
 db.markup(
     template={
         'table_1': {
-            'c1': [INTEGER],
-            'c2': [TEXT, NOT_NULL],
+            'c1': [sx.INTEGER],
+            'c2': [sx.TEXT, sx.NOT_NULL],
         },
         'table_2': {
-            'c1': [INTEGER],
+            'c1': [sx.INTEGER],
         },
         'table_3': {
-            'c1': [INTEGER],
+            'c1': [sx.INTEGER],
         },
     }
 )

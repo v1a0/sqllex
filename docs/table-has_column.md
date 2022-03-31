@@ -1,4 +1,4 @@
-# AbstractTable.has_column
+# SQLite3x.has_column
 
 ```python
 def has_column(self, column: Union[AnyStr, AbstractTable]) -> bool:
@@ -20,21 +20,21 @@ def has_column(self, column: Union[AnyStr, AbstractTable]) -> bool:
 # Examples
 
 ```python
-from sqllex.classes import AbstractDatabase, AbstractTable
-from sqllex.constants import *
+import sqllex as sx
 
-db: AbstractDatabase = ...
+db = sx.SQLite3x(path='db-1.db')
+# db = sx.PostgreSQL(...)
 
 db.create_table(
     'users',
     {
-        'id': [INTEGER, PRIMARY_KEY, UNIQUE],
-        'name': [TEXT, NOT_NULL, DEFAULT, 'Unknown'],
-        'group': [INTEGER, NOT_NULL]
+        'id': [sx.INTEGER, sx.PRIMARY_KEY, sx.UNIQUE],
+        'name': [sx.TEXT, sx.NOT_NULL, sx.DEFAULT, 'Unknown'],
+        'group': [sx.INTEGER, sx.NOT_NULL]
     }
 )
 
-users: AbstractTable = db['users'] # <--- HERE WE GOT AbstractTable
+users: sx.SQLite3xTable = db['users'] # <--- HERE WE GOT AbstractTable
 
 users.has_column('id')  # True
 users.has_column('name')  # True

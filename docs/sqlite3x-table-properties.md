@@ -1,17 +1,17 @@
-# AbstractTable properties and constants
+# SQLite3xTable properties and constants
 
 
-## AbstractTable.db
+## SQLite3xTable.db
 
 ```python
-db: AbstractDatabase
+db: SQLite3xTable
 ```
 
 Parent database, where this table exist
 
 
 
-## AbstractTable.name
+## SQLite3xTable.name
 
 ```python
 name: AnyStr
@@ -21,7 +21,7 @@ Name fo table as strings
 
 
 
-## AbstractTable.columns
+## SQLite3xTable.columns
 
 ```python
 @property
@@ -34,7 +34,7 @@ Generator of columns as AbstractColumn objects
 
 
 
-## AbstractTable.columns_names
+## SQLite3xTable.columns_names
 
 ```python
 @property

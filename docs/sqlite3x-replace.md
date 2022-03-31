@@ -25,17 +25,16 @@ def replace(
 ## Examples
 
 ```python
+import sqllex as sx
 
-from sqllex.classes import SQLite3x
-from sqllex.constants.sqlite import *
-
-db = SQLite3x(path='database.db')
+db = sx.SQLite3x(path='db-1.db')
+# db = sx.PostgreSQL(...)
 
 db.create_table(
     'users',
     {
-        'id': [INTEGER, PRIMARY_KEY, UNIQUE],
-        'name': [TEXT, NOT_NULL, DEFAULT, 'Unknown']
+        'id': [sx.INTEGER, sx.PRIMARY_KEY, sx.UNIQUE],
+        'name': [sx.TEXT, sx.NOT_NULL, sx.DEFAULT, 'Unknown']
     }
 )
 

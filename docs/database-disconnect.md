@@ -1,4 +1,4 @@
-# AbstractDatabase.disconnect
+# SQLite3x.disconnect
 
 
 ```python
@@ -18,18 +18,24 @@ and [postgresqlx-connect.md](postgresqlx-connect.md)
 ## Examples
 
 ```python
-from sqllex.classes import AbstractDatabase
-from sqllex.constants import INTEGER
+import sqllex as sx
 
-db: AbstractDatabase = ...
+db = sx.SQLite3x(path='database.db')
+# db = sx.PostgreSQL(...)
 
 db.connect()
 
 # ------------------ ANY INTERACTION WITH DATABASE -----------------------
-db.create_table("numbers", {"value": [INTEGER]}, IF_NOT_EXIST=True)
+db.create_table(
+    "numbers", 
+    {
+        "value": [sx.INTEGER]
+    }, 
+    IF_NOT_EXIST=True
+)
 
 for i in range(1000):
-    db.insert("numbers", i, execute=False)
+    db["numbers"].insert(i)
 # ---------------------------- THE END  ----------------------------------
 
 db.disconnect()

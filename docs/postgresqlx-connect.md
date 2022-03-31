@@ -40,14 +40,14 @@ Highly recommend create connection manually.
 ### Casual
 
 ```python
-import sqllex
+import sqllex as sx
 
-db = sqllex.PostgreSQLx('db-1')
+db = sx.PostgreSQLx('db-1')
 
 db.connect()
 
 # ------------------ ANY INTERACTION WITH DATABASE -----------------------
-db.create_table("numbers", {"value": [sqllex.INTEGER]}, IF_NOT_EXIST=True)
+db.create_table("numbers", {"value": [sx.INTEGER]}, IF_NOT_EXIST=True)
 
 for i in range(1000):
     db.insert("numbers", i, execute=False)

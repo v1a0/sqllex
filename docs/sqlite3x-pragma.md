@@ -48,6 +48,14 @@ def foreign_keys(
     """
 ```
 
+#### Example
+
+```python
+db: SQLite3x
+db.foreign_keys('ON')
+db.foreign_keys('OFF')
+```
+
 
 ### SQLite3x.journal_mode
 
@@ -68,6 +76,14 @@ def journal_mode(
     mode : Literal["DELETE", "TRUNCATE", "PERSIST", "MEMORY", "WAL", "OFF"]
         Journal mode
     """
+```
+
+#### Example
+
+```python
+db: SQLite3x
+db.journal_mode('DELETE')
+db.journal_mode('WAL')
 ```
 
 
@@ -93,14 +109,26 @@ def table_info(
     """
 ```
 
+#### Example
+
+```python
+db: SQLite3x
+
+print(
+    db.table_info('table_name')
+)
+print(
+    db['table_name'].info('WAL')
+)
+```
+
 
 ## Examples
 
 ```python
+import sqllex as sx
 
-from sqllex.classes import SQLite3x
-
-db = SQLite3x(path='database.db')
+db = sx.SQLite3x(path='database.db')
 
 db.pragma("database_list")
 

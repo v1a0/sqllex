@@ -1,4 +1,4 @@
-# AbstractDatabase.create_table
+# SQLite3x.create_table
 
 
 ```python
@@ -29,24 +29,24 @@ def create_table(
 ## Examples
 
 ```python
-from sqllex.classes import AbstractDatabase
-from sqllex.constants import INTEGER, TEXT, NOT_NULL, FOREIGN_KEY
+import sqllex as sx
 
-db: AbstractDatabase = ...
+db = sx.SQLite3x(path='database.db')
+# db = sx.PostgreSQL(...)
 
 db.create_table(
     'table',  # here is name of table
     {
-        'column_1': INTEGER,
-        'column_2': TEXT
+        'column_1': sx.INTEGER,
+        'column_2': sx.TEXT
     } 
 )
 
 db.create_table(
     'table2',  # here is name of table
     {
-        'column_21': INTEGER,
-        'column_22': TEXT
+        'column_21': sx.INTEGER,
+        'column_22': sx.TEXT
     },
     IF_NOT_EXIST=True
 )
@@ -61,8 +61,8 @@ db.create_table(
 db.create_table(
     name='books',
     columns={
-        'id': [INTEGER],
-        'name': [TEXT, NOT_NULL]
+        'id': [sx.INTEGER],
+        'name': [sx.TEXT, sx.NOT_NULL]
     } 
 )
 
@@ -80,9 +80,9 @@ db.create_table(
 db.create_table(
     name='descriptions',
     columns={
-        'book_id': [INTEGER],
-        'about': [TEXT, NOT_NULL],
-        FOREIGN_KEY: {
+        'book_id': [sx.INTEGER],
+        'about': [sx.TEXT, sx.NOT_NULL],
+        sx.FOREIGN_KEY: {
             'book_id': ['books', 'id']
         }
     },

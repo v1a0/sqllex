@@ -1,4 +1,4 @@
-# AbstractDatabase.update
+# SQLite3x.update
 
 
 ```python
@@ -36,16 +36,16 @@ def update(
 ## Examples
 
 ```python
-from sqllex.classes import AbstractDatabase
-from sqllex.constants import INTEGER, TEXT, NOT_NULL, IGNORE
+import sqllex as sx
 
-db: AbstractDatabase = ...
+db = sx.SQLite3x(path='database.db')
+# db = sx.PostgreSQL(...)
 
 db.create_table(
     'users',
     {
-        'id': [INTEGER],
-        'name': [TEXT, NOT_NULL]
+        'id': [sx.INTEGER],
+        'name': [sx.TEXT, sx.NOT_NULL]
     }
 )
 
@@ -118,7 +118,7 @@ db.update(
     WHERE=(
        (id_col != 1) & (id_col !=2)
     ),
-    OR=IGNORE
+    OR=sx.IGNORE
 )
 
 db.update(

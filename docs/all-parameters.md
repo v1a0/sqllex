@@ -19,10 +19,10 @@ TABLE = "my_table",  # string
 
 #### Usage
 ```python
-from sqllex.classes import AbstractDatabase
-from sqllex.constants import TEXT, INTEGER
+import sqllex as sx
 
-db: AbstractDatabase = ...
+db = sx.SQLite3x(path='db-1.db')
+# db = sx.PostgreSQL(...)
 
 db.insert(
     "my_table", # <--- HERE !!! (TABLE is the fires parameter)
@@ -96,10 +96,11 @@ WHERE: WhereType
 Parameter for highlighting the cells of the method action, in accordance with the specified pattern.
 
 ```python
-from sqllex.classes import AbstractDatabase
+import sqllex as sx
 from sqllex.constants import LIKE
 
-db: AbstractDatabase = ...
+db = sx.SQLite3x(path='db-1.db')
+# db = sx.PostgreSQL(...)
 
 # id == 1
 
@@ -214,9 +215,10 @@ ORDER_BY: Union[str, int, AbstractColumn, List[int, str, AbstractColumn], List[L
 An optional parameter to set ordering of selected elements. Awaiting column or lost of columns with ordering parameter
 
 ```python
-from sqllex.classes import AbstractDatabase
+import sqllex as sx
 
-db: AbstractDatabase = ...
+db = sx.SQLite3x(path='db-1.db')
+# db = sx.PostgreSQL(...)
 
 ORDERD_BY = "id",
 
@@ -292,11 +294,11 @@ JOIN: Union[str, List[str], List[List[str]]]
 SQL JOIN-ing.
 
 ```python
-from sqllex.classes import AbstractDatabase, AbstractTable
+import sqllex as sx
 from sqllex.constants import AS, ON, CROSS_JOIN, INNER_JOIN
 
-db: AbstractDatabase = ...
-users: AbstractTable = db['users']
+db = sx.SQLite3x(path='db-1.db')
+users: sx.SQLite3xTable = db['users']
 
 # Old and simple way 
 db.select(

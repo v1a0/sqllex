@@ -1,4 +1,4 @@
-# AbstractDatabase.executescript
+# SQLite3x.executescript
 
 ```python
 def executescript(
@@ -22,5 +22,25 @@ def executescript(
 
 Sames as sqlite3.executescript
 
+
+## Examples
+
+```python
+import sqllex as sx
+
+db = sx.SQLite3x(path='database.db')
+# db = sx.PostgreSQL(...)
+
+db.executescript(
+    """
+    CREATE TABLE users (
+        id INTEGER PRIMARY KEY UNIQUE,
+        name TEXT
+    );
+    INSERT INTO users (id, text) VALUES (1, 2);
+    INSERT INTO users (id, text) VALUES (2, 3);
+    """
+)
+```
 
 ### [Back to home](README.md)

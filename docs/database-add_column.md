@@ -1,4 +1,4 @@
-# AbstractDatabase.add_column
+# SQLite3x.add_column
 
 ```python
 def add_column(
@@ -26,15 +26,16 @@ def add_column(
 # Examples
 
 ```python
-from sqllex import *
+import sqllex as sx
 
-db = SQLite3x(path='database.db')
+db = sx.SQLite3x(path='database.db')
+# db = sx.PostgreSQL(...)
 
 db.create_table(
     'users',
     {
-        'id': [INTEGER, PRIMARY_KEY, UNIQUE],
-        'name': [TEXT, NOT_NULL, DEFAULT, 'Unknown']
+        'id': [sx.INTEGER, sx.PRIMARY_KEY, sx.UNIQUE],
+        'name': [sx.TEXT, sx.NOT_NULL, sx.DEFAULT, 'Unknown']
     }
 )
 
@@ -43,7 +44,7 @@ print(db.get_columns_names('users'))  # ['id', 'name']
 db.add_column(
     'users', 
     {
-        'group': [INTEGER, NOT_NULL]
+        'group': [sx.INTEGER, sx.NOT_NULL]
     },
 )
 

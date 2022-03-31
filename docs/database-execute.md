@@ -1,4 +1,4 @@
-# AbstractDatabase.execute
+# SQLite3x.execute
 
 ```python
 def execute(
@@ -27,9 +27,10 @@ def execute(
 ## Examples
 
 ```python
-from sqllex.classes import AbstractDatabase
+import sqllex as sx
 
-db: AbstractDatabase = ...
+db = sx.SQLite3x(path='database.db')
+# db = sx.PostgreSQL(...)
 
 db.execute(
     script="""

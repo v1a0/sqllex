@@ -1,4 +1,4 @@
-# AbstractDatabase.get_columns_names
+# SQLite3x.get_columns_names
 
 
 ```python
@@ -24,9 +24,10 @@ def get_columns_names(
 ## Example
 
 ```python
-from sqllex.classes import AbstractDatabase
+import sqllex as sx
 
-db: AbstractDatabase = ...
+db = sx.SQLite3x(path='database.db')
+# db = sx.PostgreSQL(...)
 
 for column_name in db.get_columns_names('table1'):
     print(column_name)

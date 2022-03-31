@@ -63,10 +63,10 @@ db = PostgreSQLx(
 - [connection](postgresqlx-properties.md#postgresqlxconnection)
 - [dbname *](postgresqlx-properties.md#postgresqlxdbname)
 - [host *](postgresqlx-properties.md#postgresqlxhost)
-- [placeholder](database-properties.md#abstractdatabaseplaceholder)
+- [placeholder](postgresqlx-properties.md#postgresqlxplaceholder)
 - [port *](postgresqlx-properties.md#postgresqlxport)
-- [tables](database-properties.md#abstractdatabasetables)
-- [tables_names](database-properties.md#abstractdatabasetables_names)
+- [tables](postgresqlx-properties.md#postgresqlxtables)
+- [tables_names](postgresqlx-properties.md#postgresqlxtables_names)
 - [user *](postgresqlx-properties.md#postgresqlxuser)
 
 

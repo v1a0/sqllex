@@ -1,4 +1,4 @@
-# AbstractDatabase.select_all
+# SQLite3x.select_all
 
 ```python
 def select_all(

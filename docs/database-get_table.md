@@ -1,4 +1,4 @@
-# AbstractDatabase.get_tables
+# SQLite3x.get_tables
 
 ```python
 def get_table(
@@ -25,16 +25,16 @@ Same as `db['table_name']`
 
 
 ```python
-from sqllex.classes import AbstractDatabase
-from sqllex.constants import INTEGER, TEXT, NOT_NULL
+import sqllex as sx
 
-db: AbstractDatabase = ...
+db = sx.SQLite3x(path='database.db')
+# db = sx.PostgreSQL(...)
 
 db.create_table(
     'users',
     {
-        'id': [INTEGER],
-        'name': [TEXT, NOT_NULL]
+        'id': [sx.INTEGER],
+        'name': [sx.TEXT, sx.NOT_NULL]
     }
 )
 

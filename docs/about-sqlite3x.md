@@ -3,18 +3,16 @@
 Main class to interact with SQLite3 databases, belongs to the sqllex-databases family, child of AbstractDatabase.
 
 ```python
-# from sqllex import SQLite3x, INTEGER, TEXT, AUTOINCREMENT
-from sqllex.classes import SQLite3x
-from sqllex.constants.sqlite import INTEGER, TEXT, AUTOINCREMENT
+import sqllex as sx
 
-db = SQLite3x(
+db = sx.SQLite3x(
     path="data/my_data.db", # path to db location, might be Path type
     
     # Optional parameters
     template={
         'users': {
-            'id': [INTEGER, AUTOINCREMENT],
-            'name': TEXT
+            'id': [sx.INTEGER, sx.AUTOINCREMENT],
+            'name': sx.TEXT
         }
     },
         
@@ -63,9 +61,9 @@ db = SQLite3x(
 
 - [path *](sqlite3x-properties.md#sqlite3xpath)
 - [connection](sqlite3x-properties.md#sqlite3xconnection)
-- [placeholder](database-properties.md#abstractdatabaseplaceholder)
-- [tables](database-properties.md#abstractdatabasetables)
-- [tables_names](database-properties.md#abstractdatabasetables_names)
+- [placeholder](sqlite3x-properties.md#sqlite3xplaceholder)
+- [tables](sqlite3x-properties.md#sqlite3xtables)
+- [tables_names](sqlite3x-properties.md#sqlite3xtables_names)
 - [transaction (NEW!)](database-transaction.md) 
 
 

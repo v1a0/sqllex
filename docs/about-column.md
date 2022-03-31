@@ -40,16 +40,17 @@ class AbstractColumn:
 # Examples
 
 ```python
-from sqllex.classes import AbstractDatabase, AbstractColumn
-from sqllex.constants import *
+import sqllex as sx
+from sqllex.classes import 
 
-db: AbstractDatabase = ...
+db = sx.SQLite3x(path='db-1.db')
+# db = sx.PostgreSQL(...)
 
 db.create_table(
     'users',
     {
-        'id': [INTEGER, PRIMARY_KEY, UNIQUE],
-        'name': [TEXT, NOT_NULL, DEFAULT, 'Unknown']
+        'id': [sx.INTEGER, sx.PRIMARY_KEY, sx.UNIQUE],
+        'name': [sx.TEXT, sx.NOT_NULL, sx.DEFAULT, 'Unknown']
     }
 )
 

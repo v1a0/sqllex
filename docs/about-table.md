@@ -31,23 +31,22 @@ I guess you sharp person, but anyway I'll show you a few examples.
 ## Examples
 
 ```python
-from sqllex.classes import AbstractDatabase, AbstractTable
-from sqllex.constants.sqlite import *
+import sqllex as sx
 
-db: AbstractDatabase = ...
+db = sx.SQLite3x(path='database.db')
+# db = sx.PostgreSQL(...)
 
 db.create_table(
     'users',
     {
-        'id': [INTEGER, PRIMARY_KEY, UNIQUE],
-        'name': [TEXT, NOT_NULL, DEFAULT, 'Unknown'],
-        'group': [INTEGER, NOT_NULL]
+        'id': [sx.INTEGER, sx.PRIMARY_KEY, sx.UNIQUE],
+        'name': [sx.TEXT, sx.NOT_NULL, sx.DEFAULT, 'Unknown'],
+        'group': [sx.INTEGER, sx.NOT_NULL]
     }
 )
 
-users: AbstractTable = db['users'] # <--- HERE WE GOT AbstractTable
-
-# users: SQLite3xTable = db['users']
+users: sx.SQLite3xTable = db['users'] # <--- HERE WE GOT AbstractTable
+# users: PostgreSQLxTable = db['users']
 
 users.insert([1, 'Alex', 1])
 
@@ -59,10 +58,10 @@ users.insertmany(
     ]
 )
 
-users.select(ALL) # [(1, 'Alex', 1), (2, 'Blex', 2), (3, 'Clex', 1), (4, 'Dlex', 2)]
+users.select(sx.ALL) # [(1, 'Alex', 1), (2, 'Blex', 2), (3, 'Clex', 1), (4, 'Dlex', 2)]
 
 users.select(
-    ALL,
+    sx.ALL,
     WHERE=(
         users['group'] == 1
     )
@@ -71,7 +70,7 @@ users.select(
 
 users.remove_column('group')
 
-users.select(ALL) # [(1, 'Alex'), (2, 'Blex'), (3, 'Clex'), (4, 'Dlex')]
+users.select(sx.ALL) # [(1, 'Alex'), (2, 'Blex'), (3, 'Clex'), (4, 'Dlex')]
 
 # And so on
 ```

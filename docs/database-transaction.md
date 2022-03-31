@@ -1,4 +1,4 @@
-# AbstractDatabase.add_column
+# SQLite3x.transaction
 
 ```python
 @property
@@ -34,7 +34,7 @@ with db.transaction as tran:
        ...
        tran.commit() # optional
         
-   except Exception:
+   except Exception as e:
        tran.rollback()  # rollback transaction is something goes wrong
    
 

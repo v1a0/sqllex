@@ -1,4 +1,4 @@
-# AbstractDatabase.remove_column
+# SQLite3x.remove_column
 
 ```python
 def remove_column(  # !!!
@@ -22,17 +22,17 @@ def remove_column(  # !!!
 # Examples
 
 ```python
-from sqllex.classes import AbstractDatabase
-from sqllex.constants import INTEGER, TEXT, NOT_NULL
+import sqllex as sx
 
-db: AbstractDatabase = ...
+db = sx.SQLite3x(path='database.db')
+# db = sx.PostgreSQL(...)
 
 db.create_table(
     'users',
     {
-        'id': [INTEGER],
-        'name': [TEXT, NOT_NULL],
-        'group': [INTEGER, NOT_NULL]
+        'id': [sx.INTEGER],
+        'name': [sx.TEXT, sx.NOT_NULL],
+        'group': [sx.INTEGER, sx.NOT_NULL]
     }
 )
 

@@ -1,10 +1,10 @@
-# AbstractDatabase.get_columns
+# SQLite3x.get_columns
 
 ```python
 def get_columns(
         self,
         table: AnyStr
-) -> Generator[AbstractColumn, None, None]:
+) -> Generator[SQLite3xColumn, None, None]:
     """
     Get columns of table as AbstractColumns objects
     
@@ -25,9 +25,10 @@ Get columns of table as AbstractColumns objects
 ## Example
 
 ```python
-from sqllex.classes import AbstractDatabase
+import sqllex as sx
 
-db: AbstractDatabase = ...
+db = sx.SQLite3x(path='database.db')
+# db = sx.PostgreSQL(...)
 
 for column in db.get_columns('table1'):
     print(column.name)

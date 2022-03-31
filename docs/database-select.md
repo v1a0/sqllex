@@ -1,4 +1,4 @@
-# AbstractDatabase.select
+# SQLite3x.select
 
 
 ```python
@@ -70,27 +70,27 @@ def select(
 ## Examples
 
 ```python
-from sqllex.classes import AbstractDatabase
-from sqllex.constants import INTEGER, TEXT, NOT_NULL, ALL, AS, ON, CROSS_JOIN
+import sqllex as sx
 
-db: AbstractDatabase = ...
+db = sx.SQLite3x(path='database.db')
+# db = sx.PostgreSQL(...)
 
 db.create_table(
     'users',
     {
-        'id': [INTEGER],
-        'name': [TEXT, NOT_NULL],
-        'age': [INTEGER],
+        'id': [sx.INTEGER],
+        'name': [sx.TEXT, sx.NOT_NULL],
+        'age': [sx.INTEGER],
     }
 )
 
 ...
 
-db.select('users', ALL) # The same as: db.select(FROM='users')
+db.select('users', sx.ALL) # The same as: db.select(FROM='users')
 
 db.select('users')      # without any args selecting ALL by default
 
-db.select('users', ALL, ORDER_BY='age')     # sorting by age column
+db.select('users', sx.ALL, ORDER_BY='age')     # sorting by age column
 
 
 age_column = db['users']['age']  # !!!
@@ -100,7 +100,7 @@ db.select(
     TABLE='users',
     SELECT='name',
     WHERE=(
-        age_column == 10,    # where column users.age = 10
+        age_column == 10    # where column users.age = 10
     ),
     ORDER_BY='age'
 )
@@ -148,7 +148,7 @@ db.select(
 
 db.select(
     TABLE='users',
-    SELECT=ALL,
+    SELECT=sx.ALL,
     WHERE=(
         (age_column == 10)
     ),
@@ -164,6 +164,12 @@ db.select(
 ## 1. Simples but not the best way
 
 ```python
+import sqllex as sx
+
+db = sx.SQLite3x(...)
+some_table = db['some_table']
+users = db['users']
+
 # Old and simple way 
 some_table.select(
     SELECT=[                                                                 # SELECT username, group_name, description
@@ -172,8 +178,8 @@ some_table.select(
         'description'
     ],      
     JOIN=(                                                                   # JOIN
-        ('groups', AS, 'gr', ON, 'users.group_id == gr.group_id'),           # INNER JOIN groups AS gr ON us.group_id == gr.group_id
-        (LEFT_JOIN, 'about', 'ab', ON, 'ab.group_id == gr.group_id')         # LEFT JOIN about ab ON ab.group_id == gr.group_id
+        ('groups', sx.AS, 'gr', sx.ON, 'users.group_id == gr.group_id'),           # INNER JOIN groups AS gr ON us.group_id == gr.group_id
+        (sx.LEFT_JOIN, 'about', 'ab', sx.ON, 'ab.group_id == gr.group_id')         # LEFT JOIN about ab ON ab.group_id == gr.group_id
     ),
     WHERE= (users['username'] != 'user_1') & (users['username'] != 'user_2'),  # WHERE (users.username<>'user_1') AND (users.username<>'user_2')
     ORDER_BY='age DESC',                                                     # ORDER BY age DESC
@@ -235,8 +241,8 @@ db['employee'].select(
         db['position']['name']
     ],
     JOIN=(
-        INNER_JOIN, self.db['position'],
-        ON, db['position']['id'] == db['employee']['positionID']
+        sx.INNER_JOIN, db['position'],
+        sx.ON, db['position']['id'] == db['employee']['positionID']
     ),
     ORDER_BY=(
         db['position']['id'],
@@ -287,7 +293,7 @@ ORDER BY e.positionID DESC
 #      }
 # }
 
-self.db['employee'].select(
+db['employee'].select(
     SELECT=[
         db['employee']['id'],
         db['employee']['firstName'],
@@ -295,11 +301,11 @@ self.db['employee'].select(
     ],
     JOIN=(
         (
-            LEFT_JOIN, db['position'],
-            ON, db['position']['id'] == db['employee']['positionID']
+            sx.LEFT_JOIN, db['position'],
+            sx.ON, db['position']['id'] == db['employee']['positionID']
         ),
         (
-            INNER_JOIN, self.db['payments'],
+            sx.INNER_JOIN, self.db['payments'],
             ON, db['employee']['id'] == db['payments']['employeeID']
         )
     ),

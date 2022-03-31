@@ -1,4 +1,4 @@
-# AbstractDatabase.insert
+# SQLite3x.insert
 
 
 ```python
@@ -28,16 +28,16 @@ def insert(
 ## Examples
 
 ```python
-from sqllex.classes import AbstractDatabase
-from sqllex.constants import INTEGER, TEXT, NOT_NULL, IGNORE, REPLACE, ABORT
+import sqllex as sx
 
-db: AbstractDatabase = ...
+db = sx.SQLite3x(path='database.db')
+# db = sx.PostgreSQL(...)
 
 db.create_table(
     'users',
     {
-        'id': [INTEGER],
-        'name': [TEXT, NOT_NULL]
+        'id': [sx.INTEGER],
+        'name': [sx.TEXT, sx.NOT_NULL]
     }
 )
 
@@ -59,19 +59,19 @@ db.insert('user', name="User6")
 db.insert(
     'users',
     [100, 'Dex1'],
-    OR=IGNORE  # REPLACE, FAIL, ABORT, ROLLBACK
+    OR=sx.IGNORE  # REPLACE, FAIL, ABORT, ROLLBACK
 )
 
 db.insert(
     'users',
     [200, 'Dex2'],
-    OR=REPLACE 
+    OR=sx.REPLACE 
 )
 
 db.insert(
     'users',
     [300, 'Dex3'],
-    OR=ABORT
+    OR=sx.ABORT
 )
 
 ```

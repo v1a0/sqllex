@@ -36,15 +36,15 @@ Highly recommend create connection manually.
 ### Casual
 
 ```python
-from sqllex import SQLite3x
-from sqllex.constants.sqlite import *
+import sqllex as sx
 
-db = SQLite3x('db-1')
+db = sx.SQLite3x(path='db-1.db')
+# db = sx.PostgreSQL(...)
 
 db.connect()
 
 # ------------------ ANY INTERACTION WITH DATABASE -----------------------
-db.create_table("numbers", {"value": [INTEGER]}, IF_NOT_EXIST=True)
+db.create_table("numbers", {"value": [sx.INTEGER]}, IF_NOT_EXIST=True)
 
 for i in range(1000):
     db.insert("numbers", i, execute=False)
@@ -56,13 +56,15 @@ db.disconnect()
 ### Recommended
 
 ```python
-from sqllex import SQLite3x
-from sqllex.constants.sqlite import *
+import sqllex as sx
+
+db = sx.SQLite3x(path='db-1.db')
+# db = sx.PostgreSQL(...)
 
 db = SQLite3x('db-1', init_connection=False)
 
 with db.connect() as conn:
-    db.create_table("numbers", {"value": [INTEGER]}, IF_NOT_EXIST=True)
+    db.create_table("numbers", {"value": [sx.INTEGER]}, IF_NOT_EXIST=True)
 
     for i in range(1000):
         db.insert("numbers", i, execute=False)
