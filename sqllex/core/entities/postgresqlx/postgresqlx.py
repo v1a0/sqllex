@@ -13,8 +13,8 @@ from sqllex.types.types import *
 import sqllex.core.entities.postgresqlx.middleware as middleware
 from sqllex.core.tools.docs_helpers import copy_docs
 from types import ModuleType
-from sqllex.core.entities.abc import AbstractEngine
-from sqllex.core.entities.abc import AbstractConnection
+from sqllex.core.entities.postgresqlx.empty_engine import PostgreSQLxEngine
+from sqllex.core.entities.postgresqlx.empty_engine import PostgreSQLxConnection
 
 
 class PostgreSQLxTransaction(AbstractTransaction):
@@ -85,7 +85,7 @@ class PostgreSQLx(ABDatabase):
 
     def __init__(
             self,
-            engine: Union[AbstractEngine, ModuleType],
+            engine: Union[PostgreSQLxEngine, ModuleType],
             dbname: AnyStr = "postgres",
             user: AnyStr = "postgres",
             password: AnyStr = None,
@@ -173,7 +173,7 @@ class PostgreSQLx(ABDatabase):
 
     @property
     @copy_docs(ABDatabase.connection)
-    def connection(self) -> Union[AbstractConnection, None]:
+    def connection(self) -> Union[PostgreSQLxConnection, None]:
         return self.__connection
 
     @property

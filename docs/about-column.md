@@ -1,4 +1,4 @@
-# AbstractColumn
+# Column
 
 Sub-class of AbstractTable, itself it's one abstract column inside abstract table.
 Primary have the same methods but without table name argument.

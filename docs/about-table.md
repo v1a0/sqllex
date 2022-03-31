@@ -1,4 +1,4 @@
-# AbstractTable
+# Table
 
 ```python
 class AbstractTable(ABC):

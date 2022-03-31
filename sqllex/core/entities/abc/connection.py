@@ -2,16 +2,8 @@ from abc import ABC, abstractmethod
 
 
 class AbstractConnection(ABC):
-    """
-    Abstract connection
-
-    """
 
     class AbstractCursor(ABC):
-        """
-        Abstract cursor
-
-        """
 
         @abstractmethod
         def execute(self, script, values=None):
@@ -33,19 +25,19 @@ class AbstractConnection(ABC):
            """
             pass
 
-        @abstractmethod
-        def executescript(self, script, values=None):
-            """
-            script:
-                INSERT (?, ?, ?) INTO 'table_name';
-                SELECT * FROM 'table_name' WHERE col=?
-            values:
-                (
-                    1, 2, 3,
-                    'Column_value'
-                )
-            """
-            pass
+        # @abstractmethod
+        # def executescript(self, script, values=None):
+        #     """
+        #     script:
+        #         INSERT (?, ?, ?) INTO 'table_name';
+        #         SELECT * FROM 'table_name' WHERE col=?
+        #     values:
+        #         (
+        #             1, 2, 3,
+        #             'Column_value'
+        #         )
+        #     """
+        #     pass
 
         @abstractmethod
         def fetchall(self):

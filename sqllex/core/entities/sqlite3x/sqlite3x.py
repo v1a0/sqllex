@@ -6,13 +6,13 @@ from sqllex.core.entities.abc import \
     AbstractTable as ABTable, \
     AbstractColumn as ABColumn, \
     AbstractTransaction
-import sqllex.core.tools.parsers.parsers as parse
+import sqlite3
 from sqllex.debug import logger
 from sqllex.exceptions import TableNotExist
 from sqllex.types.types import *
-import sqllex.core.entities.sqlite3x.middleware as middleware
-import sqlite3
 from sqllex.core.tools.docs_helpers import copy_docs
+import sqllex.core.tools.parsers.parsers as parse
+import sqllex.core.entities.sqlite3x.middleware as middleware
 import sqllex.core.entities.sqlite3x.script_gens as script_gen
 
 

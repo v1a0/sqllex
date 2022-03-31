@@ -47,7 +47,7 @@ So It's currently best suited especially for work with it.
 
 PostgreSQL now is only partially support. 
 It has the same api interface as SQLite3x so feel free to use documentation
-of it for PostgreSQLx. 
+of it for PostgreSQLx. Need to installed ``
 
 ---
 

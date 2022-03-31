@@ -1,15 +1,17 @@
 # PostgreSQLx
 
 Main class to interact with PostgreSQL databases, belongs to the sqllex-databases family, child of AbstractDatabase.
+Postgres database need `engine`, we recommend to use psycopg2, just import this lib and give it to Database class constructor.
+You can read more [about engines here](./about-engines.md).
 
 ```python
-# from sqllex import PostgreSQLx, INTEGER, TEXT, AUTOINCREMENT
-from sqllex.classes import PostgreSQLx
-from sqllex.constants.sqlite import INTEGER, TEXT, AUTOINCREMENT
+import psycopg2
+import sqllex as sx
 
 
-db = PostgreSQLx(
-    dbname="sqllextests",   # database name
+db = sx.PostgreSQLx(
+    engine=psycopg2,        # Postgres engine
+    dbname="test_sqllex",   # database name
     user="postgres",        # username
     password="admin",       # user's password
     host="127.0.0.1",       # psql host address 
@@ -18,16 +20,20 @@ db = PostgreSQLx(
     # Optional parameters
     template={
         'users': {
-            'id': [INTEGER, AUTOINCREMENT],
-            'name': TEXT
+            'id': [sx.INTEGER, sx.AUTOINCREMENT],
+            'name': sx.TEXT
         }
     },
     
     # Create connection to database with database class object initialisation
     init_connection=True
 )
-
 ```
+
+PostgreSQL now is only partially support. 
+It has the same api interface as SQLite3x so feel free to use documentation
+of it for PostgreSQLx. Just replace `SQLite3x` at `PostgreSQLx`.
+
 
 ## PostgreSQLx Public Methods 
 
