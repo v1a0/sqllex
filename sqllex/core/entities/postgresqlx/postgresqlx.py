@@ -13,8 +13,8 @@ from sqllex.types.types import *
 import sqllex.core.entities.postgresqlx.middleware as middleware
 from sqllex.core.tools.docs_helpers import copy_docs
 from types import ModuleType
-from sqllex.core.entities.postgresqlx.empty_engine import PostgreSQLxEngine
-from sqllex.core.entities.postgresqlx.empty_engine import PostgreSQLxConnection
+from sqllex.core.entities.postgresqlx.engine import PostgreSQLxEngine
+from sqllex.core.entities.postgresqlx.engine import PostgreSQLxConnection
 
 
 class PostgreSQLxTransaction(AbstractTransaction):
