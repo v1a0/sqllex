@@ -22,6 +22,10 @@ class SQLite3xTransaction(AbstractTransaction):
         return "SQLite3xTransaction"
 
 
+class SQLite3xColumn(ABColumn):
+    pass
+
+
 class SQLite3xTable(ABTable):
     """
     Sub-class of SQLite3x, itself one table of ABTable
@@ -51,17 +55,17 @@ class SQLite3xTable(ABTable):
         self.name: AnyStr = name
 
     @copy_docs(ABTable.__getitem__)
-    def __getitem__(self, key) -> ABColumn:
+    def __getitem__(self, key) -> SQLite3xColumn:
         if key not in self.columns_names:
             raise KeyError(key, "No such column in table")
 
-        return ABColumn(table=self.name, name=key, placeholder=self.db.placeholder)
+        return SQLite3xColumn(table=self.name, name=key, placeholder=self.db.placeholder)
 
     @property
     @copy_docs(ABTable.columns)
-    def columns(self) -> Generator[ABColumn, None, None]:
+    def columns(self) -> Generator[SQLite3xColumn, None, None]:
         for column in self.columns_names:
-            yield ABColumn(table=self.name, name=column, placeholder=self.db.placeholder)
+            yield SQLite3xColumn(table=self.name, name=column, placeholder=self.db.placeholder)
 
     @property
     @copy_docs(ABTable.columns_names)
@@ -81,7 +85,7 @@ class SQLite3xTable(ABTable):
 
         """
 
-        return self.db.pragma(f"table_info({self.name})")
+        return self.db.table_info(table_name=self.name)
 
 
 class SQLite3x(ABDatabase):
@@ -426,5 +430,6 @@ class SQLite3x(ABDatabase):
 __all__ = [
     "SQLite3x",  # lgtm [py/undefined-export]
     "SQLite3xTable",  # lgtm [py/undefined-export]
+    "SQLite3xColumn",  # lgtm [py/undefined-export]
     "SQLite3xTransaction",  # lgtm [py/undefined-export]
 ]

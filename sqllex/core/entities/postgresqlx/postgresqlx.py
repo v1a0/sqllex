@@ -12,7 +12,7 @@ from sqllex.exceptions import TableNotExist
 from sqllex.types.types import *
 import sqllex.core.entities.postgresqlx.middleware as middleware
 from sqllex.core.tools.docs_helpers import copy_docs
-
+from types import ModuleType
 from sqllex.core.entities.abc import AbstractEngine
 from sqllex.core.entities.abc import AbstractConnection
 
@@ -21,6 +21,10 @@ class PostgreSQLxTransaction(AbstractTransaction):
     @property
     def __name__(self):
         return "PostgreSQLxTransaction"
+
+
+class PostgreSQLxColumn(ABColumn):
+    pass
 
 
 class PostgreSQLxTable(ABTable):
@@ -51,17 +55,17 @@ class PostgreSQLxTable(ABTable):
         self.name: AnyStr = name
 
     @copy_docs(ABTable.__getitem__)
-    def __getitem__(self, key) -> ABColumn:
+    def __getitem__(self, key) -> PostgreSQLxColumn:
         if key not in self.columns_names:
             raise KeyError(key, "No such column in table")
 
-        return ABColumn(table=self.name, name=key, placeholder=self.db.placeholder)
+        return PostgreSQLxColumn(table=self.name, name=key, placeholder=self.db.placeholder)
 
     @property
     @copy_docs(ABTable.columns)
-    def columns(self) -> Generator[ABColumn, None, None]:
+    def columns(self) -> Generator[PostgreSQLxColumn, None, None]:
         for column in self.columns_names:
-            yield ABColumn(table=self.name, name=column, placeholder=self.db.placeholder)
+            yield PostgreSQLxColumn(table=self.name, name=column, placeholder=self.db.placeholder)
 
     @property
     @copy_docs(ABTable.columns_names)
@@ -81,7 +85,7 @@ class PostgreSQLx(ABDatabase):
 
     def __init__(
             self,
-            engine: AbstractEngine,
+            engine: Union[AbstractEngine, ModuleType],
             dbname: AnyStr = "postgres",
             user: AnyStr = "postgres",
             password: AnyStr = None,
@@ -118,6 +122,8 @@ class PostgreSQLx(ABDatabase):
 
         super(PostgreSQLx, self).__init__(placeholder='%s')
 
+        self.engine = engine
+
         self.__dbname = dbname
         self.__user = user
         self.__host = host
@@ -136,13 +142,17 @@ class PostgreSQLx(ABDatabase):
             except TypeError:
                 self.connect(**connection_kwargs)
 
-        DEC2FLOAT = psycopg2.extensions.new_type(
-            psycopg2.extensions.DECIMAL.values,
-            'DEC2FLOAT',
-            lambda value, curs: float(value) if value is not None else None
-        )
+        try:
+            DEC2FLOAT = self.engine.extensions.new_type(
+                self.engine.extensions.DECIMAL.values,
+                'DEC2FLOAT',
+                lambda value, curs: float(value) if value is not None else None
+            )
 
-        psycopg2.extensions.register_type(DEC2FLOAT)
+            self.engine.extensions.register_type(DEC2FLOAT)
+
+        except Exception as e:
+            logger.warning(e)
 
         if template:
             self.markup(template=template)
@@ -163,7 +173,7 @@ class PostgreSQLx(ABDatabase):
 
     @property
     @copy_docs(ABDatabase.connection)
-    def connection(self) -> Union[connection, None]:
+    def connection(self) -> Union[AbstractConnection, None]:
         return self.__connection
 
     @property
@@ -328,6 +338,7 @@ class PostgreSQLx(ABDatabase):
                 port=port,
                 **kwargs
             )
+            self.__connection.autocommit = True
             return self.connection
 
         else:
@@ -363,5 +374,6 @@ class PostgreSQLx(ABDatabase):
 __all__ = [
     "PostgreSQLx",  # lgtm [py/undefined-export]
     "PostgreSQLxTable",  # lgtm [py/undefined-export]
+    "PostgreSQLxColumn",  # lgtm [py/undefined-export]
     "PostgreSQLxTransaction",  # lgtm [py/undefined-export]
 ]

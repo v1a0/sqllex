@@ -20,10 +20,12 @@ __all__ = [
     # SQLite3x
     "SQLite3x",  # lgtm [py/undefined-export]
     "SQLite3xTable",  # lgtm [py/undefined-export]
+    "SQLite3xColumn",  # lgtm [py/undefined-export]
     "SQLite3xTransaction",  # lgtm [py/undefined-export]
 
     # PostgreSQL
     "PostgreSQLx",  # lgtm [py/undefined-export]
     "PostgreSQLxTable",  # lgtm [py/undefined-export]
+    "PostgreSQLxColumn",  # lgtm [py/undefined-export]
     "PostgreSQLxTransaction",  # lgtm [py/undefined-export]
 ]
