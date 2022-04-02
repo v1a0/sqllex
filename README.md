@@ -26,17 +26,17 @@ The most pythonic ORM. Seriously, try it out!<br>
 pip install sqllex
 ```
 
-|   Version    |                              Status                              |                                                  Tests, and actions                                                   |
-|:------------:|:----------------------------------------------------------------:|:---------------------------------------------------------------------------------------------------------------------:|
-|  `==0.2.3`   |               ✔️ supported         <br> ✔️ stable                | [![code-ql-img]][code-ql-src] <br> [![sqllex-tests-img]][sqllex-tests-src] <br> [![pypi-upload-img]][pypi-upload-img] |
-| `<=0.2.0.4`  | ⚠️ outdated         <br>   ⚠️ Security issue <br>  CVE-2022-0329 |                                                   ⚠️ Mostly passing                                                   |
-| `<=0.1.10.4` |                           ❌️ outdated                            |                                                           ❌                                                           |
+|   Version   |                Status                 |                                                  Tests, and actions                                                   |
+|:-----------:|:-------------------------------------:|:---------------------------------------------------------------------------------------------------------------------:|
+|  `>=0.3.0`  |  ✔️ Supported         <br> ✔️ Stable  | [![code-ql-img]][code-ql-src] <br> [![sqllex-tests-img]][sqllex-tests-src] <br> [![pypi-upload-img]][pypi-upload-img] |
+|  `<=0.2.3`  |              ⚠️ OUTDATED              |                                                   ⚠️ Mostly passing                                                   |
+| `<=0.2.0.4` | ❌️ Security issue <br>  CVE-2022-0329 |                                                          ❌️                                                           |
 
 
 | Databases  | Support |
-| :---       | :-----: |
-| SQLite     | ✔️|
-| PostgreSQL | ✔️*|
+|:-----------|:-------:|
+| SQLite     |   ✔️    |
+| PostgreSQL |   ✔️*   |
 
 <small>* - partially support</small>
 
