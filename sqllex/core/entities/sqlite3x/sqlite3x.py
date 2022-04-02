@@ -159,6 +159,10 @@ class SQLite3x(ABDatabase):
             logger.error(error)
             return False
 
+    @copy_docs(ABDatabase.__getitem__)
+    def __getitem__(self, key) -> SQLite3xTable:
+        return super(SQLite3x, self).__getitem__(key)
+
     # =============================== PROPERTIES ==================================
 
     @copy_docs(ABDatabase.transaction)

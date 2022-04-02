@@ -101,6 +101,8 @@ class PostgreSQLx(ABDatabase):
 
         Parameters
         ----------
+        engine : PostgreSQLxEngine | ModuleType
+            Engine for postgres interaction (psycopg2 for example)
         dbname : AnyStr
             Name of database to connect, "postgres" by default
         user: AnyStr
@@ -168,6 +170,10 @@ class PostgreSQLx(ABDatabase):
         except Exception as error:
             logger.error(error)
             return False
+
+    @copy_docs(ABDatabase.__getitem__)
+    def __getitem__(self, key) -> PostgreSQLxTable:
+        return super(PostgreSQLx, self).__getitem__(key)
 
     # =============================== PROPERTIES ==================================
 
