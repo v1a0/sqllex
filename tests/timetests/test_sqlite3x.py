@@ -18,7 +18,7 @@ def save_prof(func: callable):
 
         stat = pstats.Stats(pr)
         stat.sort_stats(pstats.SortKey.TIME)
-        stat.dump_stats(filename=f'sqlite_time_{func.__name__}.prof')
+        stat.dump_stats(filename=f'time_{func.__name__}.prof')
 
     return wrapper
 

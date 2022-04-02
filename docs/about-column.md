@@ -41,6 +41,7 @@ class AbstractColumn:
 
 ```python
 import sqllex as sx
+from sqllex.classes import 
 
 db = sx.SQLite3x(path='db-1.db')
 # db = sx.PostgreSQL(...)
@@ -53,8 +54,8 @@ db.create_table(
     }
 )
 
-id_col: sx.SQLite3xColumn = db['users']['id']  # AbstractColumn
-name_col: sx.SQLite3xColumn = db['users']['name']  # AbstractColumn
+id_col: AbstractColumn = db['users']['id']  # AbstractColumn
+name_col: AbstractColumn = db['users']['name']  # AbstractColumn
 
 db.update(
     TABLE='users',  # table name

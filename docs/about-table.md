@@ -45,7 +45,7 @@ db.create_table(
     }
 )
 
-users: sx.SQLite3xTable = db['users'] # <--- HERE WE GOT 
+users: sx.SQLite3xTable = db['users'] # <--- HERE WE GOT AbstractTable
 # users: PostgreSQLxTable = db['users']
 
 users.insert([1, 'Alex', 1])

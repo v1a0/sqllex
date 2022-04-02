@@ -30,10 +30,6 @@ db = sx.PostgreSQLx(
 )
 ```
 
-> engine : {PostgreSQLxEngine | ModuleType}
->       
-> Engine for postgres interaction (psycopg2 for example)
-
 PostgreSQL now is only partially support. 
 It has the same api interface as SQLite3x so feel free to use documentation
 of it for PostgreSQLx. Just replace `SQLite3x` at `PostgreSQLx`.
