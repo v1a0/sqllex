@@ -1,16 +1,11 @@
-import os
-import sqlite3
 import unittest
 import importlib.util
-
-import sqllex
 from sqllex.constants import *
 from sqllex.constants.postgresql import *
 from sqllex.classes import PostgreSQLx
-from sqllex.debug import debug_mode
 import psycopg2
-from psycopg2 import extensions
 
+# from sqllex.debug import debug_mode
 # debug_mode(True)
 
 
@@ -43,9 +38,7 @@ class TestSqllexPostgres(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls) -> None:
-        cls.db.disconnect()
-        cls.admin_cur.execute("drop database test_sqllex")
-        cls.admin_cur.execute("drop user test_sqllex")
+        pass
 
     def setUp(self) -> None:
         self.tests_counter += 1
@@ -78,40 +71,11 @@ class TestSqllexPostgres(unittest.TestCase):
             """
         )))
 
-    # def test_sqlite_db_crating_db(self):
-    #     """
-    #     Testing SQLite database init
-    #     """
-    #
-    #     db_name = f"{self.db_name}_{1}"
-    #     SQLite3x(db_name)
-    #     self.assertTrue(os.path.isfile(db_name))
-    #     os.remove(db_name)
-    #
-    #     db_name = f"{self.db_name}_{2}"
-    #     SQLite3x(path=db_name)
-    #     self.assertTrue(os.path.isfile(db_name))
-    #     os.remove(db_name)
-    #
-    #     db_name = f"{self.db_name}_{3}"
-    #     SQLite3x(db_name, init_connection=False)
-    #     self.assertFalse(os.path.isfile(db_name))
-    #
-    #     db_name = f""
-    #     self.assertRaises(ValueError, SQLite3x, db_name)
-    #
-    #     db_name = f""
-    #     self.assertRaises(ValueError, SQLite3x, db_name)
-    #
-    #     db_name = f""
-    #     self.assertRaises(ValueError, SQLite3x, path=db_name)
-
     # def test_connection(self):
     #     """
     #     Testing connection with class object init
     #     """
     #
-    #     db_name = f"{self.db_name}_{1}"
     #     self.assertIsInstance(SQLite3x(db_name).connection, sqlite3.Connection)
     #     os.remove(db_name)
     #
@@ -127,10 +91,10 @@ class TestSqllexPostgres(unittest.TestCase):
         Testing transactions
         """
         def get_by_id(table: str, val: int):
-            return self.db.execute(f"SELECT * FROM {table} WHERE id={val}")
+            return self.db.execute(f'SELECT * FROM {table} WHERE id={val}')
 
         def get_user_by_id(val: int):
-            return get_by_id(table='user', val=val)
+            return get_by_id(table='"user"', val=val)
 
         def get_car_by_id(val: int):
             return get_by_id(table='car', val=val)
@@ -139,7 +103,7 @@ class TestSqllexPostgres(unittest.TestCase):
         self.db.execute(
             """
             CREATE TABLE "user" (
-                "id" INTEGER PRIMARY KEY,
+                "id" SERIAL PRIMARY KEY,
                 "name" TEXT UNIQUE
             );
             """
@@ -148,7 +112,7 @@ class TestSqllexPostgres(unittest.TestCase):
         self.db.execute(
             """
             CREATE TABLE "car" (
-                "id" SERIAL,
+                "id" SERIAL PRIMARY KEY,
                 "owner_id" INTEGER REFERENCES "user" (id),
                 "brand" TEXT
             );
@@ -166,13 +130,13 @@ class TestSqllexPostgres(unittest.TestCase):
         # Transaction with auto commit for many executes
         with self.db.transaction as tran:
             self.db.execute(
-                "INSERT INTO user VALUES (22, 'Alex22')"
+                """INSERT INTO "user" (id, name) VALUES (22, 'Alex22')"""
             )
             self.db.execute(
-                "INSERT INTO user VALUES (23, 'Alex23')"
+                """INSERT INTO "user" (id, name) VALUES (23, 'Alex23')"""
             )
             self.db.execute(
-                "INSERT INTO user VALUES (24, 'Alex24')"
+                """INSERT INTO "user" (id, name) VALUES (24, 'Alex24')"""
             )
 
         self.assertEqual(get_user_by_id(22), [(22, 'Alex22')])
@@ -182,7 +146,7 @@ class TestSqllexPostgres(unittest.TestCase):
         # Transaction with manual commit
         with self.db.transaction as tran:
             self.db.execute(
-                "INSERT INTO user VALUES (2, 'Bob')"
+                """INSERT INTO "user" (id, name) VALUES (2, 'Bob')"""
             )
             tran.commit()
 
@@ -191,7 +155,7 @@ class TestSqllexPostgres(unittest.TestCase):
         # Transaction with rollback
         with self.db.transaction as tran:
             self.db.execute(
-                "INSERT INTO user VALUES (3, 'Cara')"
+                """INSERT INTO "user" (id, name) VALUES (3, 'Cara')"""
             )
             self.assertEqual(get_user_by_id(3), [(3, 'Cara')])
             tran.rollback()
@@ -199,15 +163,19 @@ class TestSqllexPostgres(unittest.TestCase):
         self.assertEqual(get_user_by_id(3), [])
 
         # Prep
-        self.assertRaises(sqlite3.IntegrityError, self.db.execute, "INSERT INTO user VALUES (2, 'Sam')")
+        self.assertRaises(
+            psycopg2.errors.UniqueViolation,
+            self.db.execute,
+            """INSERT INTO "user" (id, name) VALUES (2, 'Sam')"""
+        )
 
         # Transaction with rollback
         with self.db.transaction as tran:
             try:
                 self.db.execute(
-                    "INSERT INTO user VALUES (2, 'Sam')"
+                    """INSERT INTO "user" (id, name) VALUES (2, 'Sam')"""
                 )
-            except sqlite3.IntegrityError:
+            except psycopg2.errors.UniqueViolation:
                 tran.rollback()
 
         self.assertEqual(get_user_by_id(2), [(2, 'Bob')])
@@ -215,17 +183,17 @@ class TestSqllexPostgres(unittest.TestCase):
         # Normal Transaction
         with self.db.transaction as tran:
             self.db.execute(
-                "INSERT INTO user VALUES (55, 'Master')"
+                """INSERT INTO "user" (id, name) VALUES (55, 'Master')"""
             )
             self.db.execute(
-                "INSERT INTO car VALUES (55, 55, 'BMW')"
+                """INSERT INTO car VALUES (55, 55, 'BMW')"""
             )
 
         self.assertEqual(get_user_by_id(55), [(55, 'Master')])
         self.assertEqual(get_car_by_id(55), [(55, 55, 'BMW')])
 
         # Prep
-        self.assertRaises(sqlite3.IntegrityError, self.db.execute, "INSERT INTO car VALUES (9999, 9999, 'BMW')")
+        self.assertRaises(psycopg2.errors.ForeignKeyViolation, self.db.execute, "INSERT INTO car VALUES (9999, 9999, 'BMW')")
 
         # Transaction with rollback
         with self.db.transaction as tran:
@@ -233,7 +201,7 @@ class TestSqllexPostgres(unittest.TestCase):
                 self.db.execute(
                     "INSERT INTO car VALUES (9999, 9999, 'BMW')"
                 )
-            except sqlite3.IntegrityError:
+            except psycopg2.errors.ForeignKeyViolation:
                 tran.rollback()
 
         self.assertEqual(get_car_by_id(9999), [])
@@ -279,8 +247,6 @@ class TestSqllexPostgres(unittest.TestCase):
                 'status': [TEXT, DEFAULT, "'offline'"]
             }
         )
-
-        print(self.raw_sql_get_tables_names())
 
         self.assertEqual(self.raw_sql_get_tables_names(), ('test_table',))
 
@@ -735,7 +701,7 @@ class TestSqllexPostgres(unittest.TestCase):
         self.db.execute(
             """
             CREATE  TABLE IF NOT EXISTS "position"  (
-            "id" SERIAL,
+            "id" SERIAL PRIMARY KEY,
             "name" TEXT,
             "description" TEXT DEFAULT NULL
             );
@@ -788,7 +754,7 @@ class TestSqllexPostgres(unittest.TestCase):
         # )
 
         self.db.executemany(
-            'INSERT INTO "position" (id, name, description) VALUES (?, ?, ?)',
+            'INSERT INTO "position" (id, name, description) VALUES (%s, %s, %s)',
             (
                 (0, 'Assistant', 'Novice developer'),
                 (1, 'Junior', 'Junior developer'),
@@ -799,23 +765,23 @@ class TestSqllexPostgres(unittest.TestCase):
         )
 
         self.db.executemany(
-            'INSERT INTO "employee" (id, firstName, surname, age, positionID) VALUES (?, ?, ?, ?, ?)',
+            'INSERT INTO "employee" ("firstName", surname, age, "positionID") VALUES (%s, %s, %s, %s)',
             (
-                (None, 'Alis', 'A', 11, 1),
-                (None, 'Bob', 'B', 22, 1),
-                (None, 'Carl', 'C', 33, 2),
-                (None, 'Alis', 'B', 44, 3),
-                (None, 'Dexter', 'B', 55, 1),
-                (None, 'Elis', 'A', 22, 1),
-                (None, 'Frank', 'B', 33, 1),
-                (None, 'Georgy', 'D', 22, 2),
-                (None, 'FoxCpp', 'M', 22, 1),
-                (None, 'Ira', 'D', 22, 2)
+                ('Alis', 'A', 11, 1),
+                ('Bob', 'B', 22, 1),
+                ('Carl', 'C', 33, 2),
+                ('Alis', 'B', 44, 3),
+                ('Dexter', 'B', 55, 1),
+                ('Elis', 'A', 22, 1),
+                ('Frank', 'B', 33, 1),
+                ('Georgy', 'D', 22, 2),
+                ('FoxCpp', 'M', 22, 1),
+                ('Ira', 'D', 22, 2)
             )
         )
 
         self.db.executemany(
-            'INSERT INTO "payments" (date, employeeID, amount) VALUES (?, ?, ?)',
+            'INSERT INTO "payments" (date, "employeeID", amount) VALUES (%s, %s, %s)',
             (
                 ('01.01.2022', 2, 2000),
                 ('01.01.2022', 3, 3000),
@@ -838,9 +804,9 @@ class TestSqllexPostgres(unittest.TestCase):
         self.assertEqual(
             expected, self.db['employee'].select_all()
         )
-        self.assertEqual(
-            expected, self.db['employee'].select_all(GROUP_BY=1)
-        )
+        # self.assertEqual(
+        #     expected, self.db['employee'].select_all(GROUP_BY=1)
+        # )
 
         # SELECT one column
         expected = self.db.execute('SELECT id FROM "employee"')
@@ -865,16 +831,16 @@ class TestSqllexPostgres(unittest.TestCase):
         )
 
         # SELECT 2 columns
-        expected = self.db.execute('SELECT id, firstName FROM "employee"')
+        expected = self.db.execute('SELECT id, "firstName" FROM "employee"')
 
         self.assertEqual(
-            expected, self.db['employee'].select('id, firstName')
+            expected, self.db['employee'].select('id, "firstName"')
         )
         self.assertEqual(
-            expected, self.db['employee'].select(['id', 'firstName'])
+            expected, self.db['employee'].select(['id', '"firstName"'])
         )
         self.assertEqual(
-            expected, self.db['employee'].select(('id', 'firstName'))
+            expected, self.db['employee'].select(('id', '"firstName"'))
         )
         self.assertEqual(
             expected, self.db['employee'].select(
@@ -886,26 +852,26 @@ class TestSqllexPostgres(unittest.TestCase):
         )
 
         # SELECT 2 columns WHERE (condition)
-        expected = self.db.execute('SELECT id, firstName FROM "employee" WHERE id > 2')
+        expected = self.db.execute('SELECT id, "firstName" FROM "employee" WHERE id > 2')
 
         self.assertEqual(
             expected,
             self.db['employee'].select(
-                SELECT=['id', 'firstName'],
+                SELECT=['id', '"firstName"'],
                 WHERE='id > 2',
             )
         )
         self.assertEqual(
             expected,
             self.db['employee'].select(
-                SELECT=['id', 'firstName'],
+                SELECT=['id', '"firstName"'],
                 WHERE='id > 2'
             )
         )
         self.assertEqual(
             expected,
             self.db['employee'].select(
-                SELECT=['id', 'firstName'],
+                SELECT=['id', '"firstName"'],
                 WHERE=(self.db['employee']['id'] > 2)
             )
         )
@@ -918,107 +884,107 @@ class TestSqllexPostgres(unittest.TestCase):
         )
 
         # SELECT 2 columns WHERE (condition) AND (condition)
-        expected = self.db.execute('SELECT id, firstName FROM "employee" WHERE (age > 11) AND (positionID <> 2)')
+        expected = self.db.execute('SELECT id, "firstName" FROM "employee" WHERE (age > 11) AND ("positionID" <> 2)')
 
         self.assertEqual(
             expected,
             self.db['employee'].select(
-                SELECT=['id', 'firstName'],
+                SELECT=['id', '"firstName"'],
                 WHERE=(self.db['employee']['age'] > 11) & (self.db['employee']['positionID'] != 2)
             )
         )
 
         # SELECT 2 columns WHERE (condition) AND (condition)
-        expected = self.db.execute('SELECT id, firstName FROM "employee" WHERE (age == 11) AND (positionID == 2)')
+        expected = self.db.execute('SELECT id, "firstName" FROM "employee" WHERE (age = 11) AND ("positionID" = 2)')
 
         self.assertEqual(
             expected,
             self.db['employee'].select(
-                SELECT=['id', 'firstName'],
+                SELECT=['id', '"firstName"'],
                 WHERE=(self.db['employee']['age'] == 11) & (self.db['employee']['positionID'] == 2)
             )
         )
 
         # SELECT 2 columns WHERE (condition) OR (condition)
-        expected = self.db.execute('SELECT id, firstName FROM "employee" WHERE (age == 11) OR (positionID == 2)')
+        expected = self.db.execute('SELECT id, "firstName" FROM "employee" WHERE (age = 11) OR ("positionID" = 2)')
 
         self.assertEqual(
             expected,
             self.db['employee'].select(
-                SELECT=['id', 'firstName'],
+                SELECT=['id', '"firstName"'],
                 WHERE=(self.db['employee']['age'] == 11) | (self.db['employee']['positionID'] == 2)
             )
         )
 
         # SELECT 3 columns ORDERED BY column
-        expected = self.db.execute('SELECT id, firstName, positionID FROM "employee" ORDER BY positionID')
+        expected = self.db.execute('SELECT id, "firstName", "positionID" FROM "employee" ORDER BY "positionID"')
 
         self.assertEqual(
             expected,
             self.db['employee'].select(
-                SELECT=['id', 'firstName', 'positionID'],
-                ORDER_BY='positionID'
+                SELECT=['id', '"firstName"', '"positionID"'],
+                ORDER_BY='"positionID"'
             )
         )
         self.assertEqual(
             expected,
             self.db['employee'].select(
-                SELECT=['id', 'firstName', 'positionID'],
+                SELECT=['id', '"firstName"', '"positionID"'],
                 ORDER_BY=3
             )
         )
         self.assertEqual(
             expected,
             self.db['employee'].select(
-                SELECT=['id', 'firstName', 'positionID'],
-                ORDER_BY=['positionID']
+                SELECT=['id', '"firstName"', '"positionID"'],
+                ORDER_BY=['"positionID"']
             )
         )
         self.assertEqual(
             expected,
             self.db['employee'].select(
-                SELECT=['id', 'firstName', 'positionID'],
-                ORDER_BY=('positionID',)
+                SELECT=['id', '"firstName"', '"positionID"'],
+                ORDER_BY=('"positionID"',)
             )
         )
 
         # SELECT 2 columns ORDERED BY column1, column2
-        expected = self.db.execute('SELECT id, firstName FROM "employee" ORDER BY firstName, surname')
+        expected = self.db.execute('SELECT id, "firstName" FROM "employee" ORDER BY "firstName", surname')
 
         self.assertEqual(
             expected,
             self.db['employee'].select(
-                SELECT=['id', 'firstName'],
-                ORDER_BY=['firstName', 'surname']
+                SELECT=['id', '"firstName"'],
+                ORDER_BY=['"firstName"', 'surname']
             )
         )
         self.assertEqual(
             expected,
             self.db['employee'].select(
-                SELECT=['id', 'firstName'],
-                ORDER_BY=('firstName', 'surname')
+                SELECT=['id', '"firstName"'],
+                ORDER_BY=('"firstName"', 'surname')
             )
         )
 
         # SELECT 2 columns ORDERED BY column ASC
-        expected = self.db.execute('SELECT id, firstName FROM "employee" ORDER BY firstName ASC')
+        expected = self.db.execute('SELECT id, "firstName" FROM "employee" ORDER BY "firstName" ASC')
 
         self.assertEqual(
             expected,
             self.db['employee'].select(
-                SELECT=['id', 'firstName'],
-                ORDER_BY='firstName ASC'
+                SELECT=['id', '"firstName"'],
+                ORDER_BY='"firstName" ASC'
             )
         )
 
         # SELECT 2 columns ORDERED BY column DESC
-        expected = self.db.execute('SELECT id, firstName FROM "employee" ORDER BY firstName DESC')
+        expected = self.db.execute('SELECT id, "firstName" FROM "employee" ORDER BY "firstName" DESC')
 
         self.assertEqual(
             expected,
             self.db['employee'].select(
-                SELECT=['id', 'firstName'],
-                ORDER_BY='firstName DESC'
+                SELECT=['id', '"firstName"'],
+                ORDER_BY='"firstName" DESC'
             )
         )
 
@@ -1039,30 +1005,30 @@ class TestSqllexPostgres(unittest.TestCase):
         # When issue #59 will be fixed, this code have to work fine
         #
         # SELECT 2 columns ORDERED BY column1 ASC, column DESC
-        expected = self.db.execute('SELECT id, firstName FROM "employee" ORDER BY firstName ASC, surname DESC')
+        expected = self.db.execute('SELECT id, "firstName" FROM "employee" ORDER BY "firstName" ASC, surname DESC')
 
         self.assertEqual(
             expected,
             self.db['employee'].select(
-                SELECT=['id', 'firstName'],
-                ORDER_BY=['firstName', 'ASC', 'surname', 'DESC']
+                SELECT=['id', '"firstName"'],
+                ORDER_BY=['"firstName"', 'ASC', 'surname', 'DESC']
             )
         )
         self.assertEqual(
             expected,
             self.db['employee'].select(
-                SELECT=['id', 'firstName'],
-                ORDER_BY=('firstName', 'ASC', 'surname', 'DESC')
+                SELECT=['id', '"firstName"'],
+                ORDER_BY=('"firstName"', 'ASC', 'surname', 'DESC')
             )
         )
 
         # SELECT with one INNER JOIN
         expected = self.db.execute(''
-                                   'SELECT e.id, e.firstName, p.name '
+                                   'SELECT e.id, e."firstName", p.name '
                                    'FROM employee e '
                                    'INNER JOIN position p '
-                                   'ON e.positionID == p.id '
-                                   'ORDER BY e.positionID DESC')
+                                   'ON e."positionID" = p.id '
+                                   'ORDER BY e."positionID" DESC')
 
         self.assertEqual(
             expected,
@@ -1085,12 +1051,12 @@ class TestSqllexPostgres(unittest.TestCase):
 
         # SELECT with two INNER JOINS
         expected = self.db.execute(''
-                                   'SELECT e.id, e.firstName, p.name '
+                                   'SELECT e.id, e."firstName", p.name '
                                    'FROM employee e '
                                    'INNER JOIN position p '
-                                   'ON e.positionID == p.id '
+                                   'ON e."positionID" = p.id '
                                    'INNER JOIN payments '
-                                   'ON e.id == payments.employeeID '
+                                   'ON e.id = payments."employeeID" '
                                    'ORDER BY payments.amount DESC')
 
         self.assertEqual(
@@ -1120,12 +1086,12 @@ class TestSqllexPostgres(unittest.TestCase):
 
         # SELECT with two FULL JOINS
         expected = self.db.execute(''
-                                   'SELECT e.id, e.firstName, p.name '
+                                   'SELECT e.id, e."firstName", p.name '
                                    'FROM employee e '
                                    'LEFT JOIN position p '
-                                   'ON e.positionID == p.id '
+                                   'ON e."positionID" = p.id '
                                    'LEFT JOIN payments '
-                                   'ON e.id == payments.employeeID '
+                                   'ON e.id = payments."employeeID" '
                                    'ORDER BY payments.amount DESC')
 
         self.assertEqual(
@@ -1153,61 +1119,61 @@ class TestSqllexPostgres(unittest.TestCase):
             )
         )
 
-        # SELECT * FROM employee GROUP BY
-        expected = self.db.execute("SELECT * FROM employee GROUP BY surname")
+        # SELECT 'surname, COUNT(id)' FROM employee GROUP BY
+        expected = self.db.execute("SELECT surname, COUNT(id) FROM employee GROUP BY surname")
         self.assertEqual(
             expected,
-            self.db.select(SELECT=ALL, FROM='employee', GROUP_BY='surname')
+            self.db.select(SELECT='surname, COUNT(id)', FROM='employee', GROUP_BY='surname')
         )
         self.assertEqual(
             expected,
-            self.db.select(SELECT=ALL, FROM='employee', GROUP_BY=('surname',))
+            self.db.select(SELECT='surname, COUNT(id)', FROM='employee', GROUP_BY=('surname',))
         )
         self.assertEqual(
             expected,
-            self.db.select(SELECT=ALL, FROM='employee', GROUP_BY=['surname'])
+            self.db.select(SELECT='surname, COUNT(id)', FROM='employee', GROUP_BY=['surname'])
         )
         self.assertEqual(
             expected,
-            self.db.select(SELECT=ALL, FROM='employee', GROUP_BY=self.db['employee']['surname'])
+            self.db.select(SELECT='surname, COUNT(id)', FROM='employee', GROUP_BY=self.db['employee']['surname'])
         )
         self.assertEqual(
             expected,
-            self.db.select(SELECT=ALL, FROM='employee', GROUP_BY=(self.db['employee']['surname'],))
+            self.db.select(SELECT='surname, COUNT(id)', FROM='employee', GROUP_BY=(self.db['employee']['surname'],))
         )
 
         # SELECT * FROM employee GROUP BY 2 rows
-        expected = self.db.execute("SELECT * FROM employee GROUP BY surname, positionID")
+        expected = self.db.execute('SELECT surname, COUNT(id) FROM employee GROUP BY surname, "positionID"')
         self.assertEqual(
             expected,
-            self.db.select(SELECT=ALL, FROM='employee', GROUP_BY='surname, positionID')
+            self.db.select(SELECT='surname, COUNT(id)', FROM='employee', GROUP_BY='surname, "positionID"')
         )
         self.assertEqual(
             expected,
-            self.db.select(SELECT=ALL, FROM='employee', GROUP_BY=('surname', 'positionID'))
+            self.db.select(SELECT='surname, COUNT(id)', FROM='employee', GROUP_BY=('surname', '"positionID"'))
         )
         self.assertEqual(
             expected,
-            self.db.select(SELECT=ALL, FROM='employee', GROUP_BY=['surname', 'positionID'])
+            self.db.select(SELECT='surname, COUNT(id)', FROM='employee', GROUP_BY=['surname', '"positionID"'])
         )
 
         # SELECT with JOINS GROUP BY
         expected = self.db.execute(''
-                                   'SELECT pos.name, pay.amount '
+                                   'SELECT pos.name, SUM(pay.amount) '
                                    'FROM payments pay '
                                    'INNER JOIN employee emp '
-                                   'ON emp.id == pay.employeeID '
+                                   'ON emp.id = pay."employeeID" '
                                    'INNER JOIN position pos '
-                                   'ON emp.positionID == pos.id '
+                                   'ON emp."positionID" = pos.id '
                                    'GROUP BY pos.name '
-                                   'ORDER BY pay.amount DESC')
+                                   'ORDER BY 2 DESC')
 
         self.assertEqual(
             expected,
             self.db['employee'].select(
                 SELECT=[
                     self.db['position']['name'],
-                    self.db['payments']['amount'],
+                    'SUM(amount)',
                 ],
                 JOIN=(
                     (
@@ -1221,8 +1187,7 @@ class TestSqllexPostgres(unittest.TestCase):
                 ),
                 GROUP_BY=self.db['position']['name'],
                 ORDER_BY=(
-                    self.db['payments']['amount'],
-                    'DESC'
+                    '2 DESC'
                 )
             )
         )
@@ -1280,6 +1245,7 @@ class TestSqllexPostgres(unittest.TestCase):
         self.assertEqual(self.db['test_table_1']['id'].table, 'test_table_1')
         self.assertEqual(self.db['test_table_2']['id'].table, 'test_table_2')
 
+    @unittest.skip
     @unittest.skipUnless(importlib.util.find_spec('numpy'), "Module numpy not found")
     def test_numpy(self):
         from numpy import array, nan
@@ -1303,105 +1269,8 @@ class TestSqllexPostgres(unittest.TestCase):
             """
         )
 
-        self.db.updatemany("test_table_numpy", array(data))
-        self.db.updatemany("test_table_numpy", array([[], []]))
-
-
-def save_prof(func: callable):
-    def wrapper(*args, **kwargs):
-        import pstats
-        import cProfile
-
-        with cProfile.Profile() as pr:
-            func(*args, **kwargs)
-
-        stat = pstats.Stats(pr)
-        stat.sort_stats(pstats.SortKey.TIME)
-        stat.dump_stats(filename=f'time_{func.__name__}.prof')
-
-    return wrapper
-
-
-# @unittest.skip("Turned off manually")
-@unittest.skipUnless(importlib.util.find_spec('cProfile'), "Module cProfile not found")
-@unittest.skipUnless(importlib.util.find_spec('pstats'), "Module pstats not found")
-class TimeTestsSqllexSQLite(unittest.TestCase):
-
-    @classmethod
-    def setUpClass(cls) -> None:
-        cls.complexity = 1000
-        cls.db_name = f"test_sqllex_db"
-        cls.db = SQLite3x(path=cls.db_name)
-
-    @classmethod
-    def tearDownClass(cls) -> None:
-        cls.db.disconnect()
-        os.remove(cls.db_name)
-
-    @save_prof
-    def test_create_table(self):
-        self.db.create_table(
-            'main',
-            {
-                'id': [INTEGER, PRIMARY_KEY, UNIQUE],
-                'name': [TEXT],
-                'age': [INTEGER, DEFAULT, 33]
-            }
-        )
-
-    @save_prof
-    def test_insert_fast(self):
-        for _ in range(self.complexity):
-            self.db.insert('main', (None, f'Alex', 33))
-
-    @save_prof
-    def test_insert_slow(self):
-        for _ in range(self.complexity):
-            self.db.insert('main', (None, 'Alex'))
-
-    @save_prof
-    def test_insert_many_fast(self):
-        data = [(None, 'Alex', 33) for _ in range(self.complexity)]
-
-        self.db.insertmany('main', data)
-
-    @save_prof
-    def test_insert_many_slow(self):
-        data = [(None, 'Alex') for _ in range(self.complexity)]
-
-        self.db.insertmany('main', data)
-
-    @save_prof
-    def test_select_all(self):
-        self.db.select_all('main', LIMIT=self.complexity)
-
-    @save_prof
-    def test_select_where_1(self):
-        """
-        Select where (something)
-        """
-        self.db.select(
-            'main', 'id',
-            WHERE={
-                'name': 'Alex'
-            },
-            LIMIT=self.complexity
-        )
-
-    @save_prof
-    def test_select_where_2(self):
-        """
-        Modern new way for WHERE (SearchConditions)
-        """
-        main_tab = self.db['main']
-        id_col = main_tab['id']
-        name_col = main_tab['name']
-
-        self.db.select(
-            main_tab, id_col,
-            WHERE=(name_col == 'Alex'),
-            LIMIT=self.complexity
-        )
+        self.db.insertmany("test_table_numpy", array(data))
+        self.db.insertmany("test_table_numpy", array([[], []]))
 
 
 if __name__ == '__main__':

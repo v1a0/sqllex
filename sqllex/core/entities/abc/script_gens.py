@@ -27,7 +27,7 @@ def insert(script: str, table: str, columns: tuple, placeholder='?'):
     return f"" \
            f"{script} " \
            f'INTO "{str(table)}" (' \
-           f"{', '.join(col for col in columns)}) " \
+           f""""{'", "'.join(col for col in columns)}") """ \
            f"VALUES (" \
            f"{', '.join((placeholder for _ in range(len(columns))))})"
 
@@ -41,7 +41,7 @@ def update_script(table: str, script: str):
 def select(method: str, columns: tuple, table: str = None):
     return f"" \
            f"{method} "\
-           f"{', '.join(str(col) for col in columns)} "\
+           f"""{', '.join(str(col) for col in columns)} """\
            f'FROM "{str(table)}" '
 
 
