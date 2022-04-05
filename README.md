@@ -168,7 +168,7 @@ print(users_33)  # [('Sqllex', 33)]
   [lgtm-quality-src]: https://lgtm.com/projects/g/V1A0/sqllex/context:python
   [lgtm-alerts-src]: https://lgtm.com/projects/g/V1A0/sqllex/alerts/
   [pypi-version-src]: https://pypi.org/project/sqllex/
-  [telegram-group-src]: https://t.me/joinchat/CKq9Mss1UlNlMDIy
+  [telegram-group-src]: https://t.me/+Lma-ADHl0H8wNzI6
   [code-ql-src]: https://github.com/v1a0/sqllex/actions/workflows/codeql-analysis.yml
   [sqllex-tests-src]: https://github.com/v1a0/sqllex/actions/workflows/test_sqllex.yml
   [pypi-upload-src]: https://github.com/v1a0/sqllex/actions/workflows/python-publish.yml
