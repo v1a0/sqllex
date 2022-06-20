@@ -688,7 +688,8 @@ class AbstractDatabase(ABC):
                     'col': ["INTEGER", "NOT NULL"],
                 }
                 """
-                parameters = sorted(parameters, key=lambda par: sort.column_types(par))
+                parameters = sorted(parameters,
+                                    key=lambda par: sort.column_types(par))
                 return script_gen.column(name=column, params=tuple(parameters))
 
             elif isinstance(parameters, tuple):
@@ -697,7 +698,8 @@ class AbstractDatabase(ABC):
                     'col': ("INTEGER", "NOT NULL"),
                 }
                 """
-                parameters = sorted(list(parameters), key=lambda par: sort.column_types(par))
+                parameters = sorted(list(parameters),
+                                    key=lambda par: sort.column_types(par))
                 return script_gen.column(name=column, params=tuple(parameters))
 
             elif isinstance(parameters, dict):
@@ -709,20 +711,46 @@ class AbstractDatabase(ABC):
                 }
                 """
                 if column != FOREIGN_KEY:
-                    raise TypeError(f'Incorrect column "{column}" initialisation: {parameters}')
+                    raise TypeError(f'Incorrect column "{column}" '
+                                    f'initialisation: {parameters}')
 
                 res = ""
                 for (key, refs) in parameters.items():
                     if isinstance(refs, (list, tuple)):
-                        res += script_gen.column_with_foreign_key(key=key, table=refs[0], column=refs[1])
+                        res += script_gen.column_with_foreign_key(
+                            key=key, table=refs[0], column=refs[1])
                     if isinstance(refs, AbstractColumn):
-                        res += script_gen.column_with_foreign_key(key=key, table=refs.table, column=refs.name)
+                        res += script_gen.column_with_foreign_key(
+                            key=key, table=refs.table, column=refs.name)
 
                 return res[:-1]
 
             else:
-                raise TypeError(f'Incorrect column "{column}" initialisation, parameters type {type(parameters)}, '
-                                f'expected tuple, list or str')
+                raise TypeError(f'Incorrect column "{column}" initialisation, '
+                                f'parameters type {type(parameters)}, '
+                                'expected tuple, list or str')
+
+        def translate_param(param: Union[type, str]) -> str:
+            dictionary = {int: "INTEGER",
+                          str: "TEXT",
+                          float: "REAL",
+                          None: "NULL"}
+
+            translation = dictionary.get(param)
+            return translation if translation else param
+
+        def translate_params(parameters: Union[type, str]) -> str:
+            if isinstance(parameters, (str, dict)):
+                return parameters
+
+            if isinstance(parameters, list):
+                parameters = [translate_param(param) for param in parameters]
+            elif isinstance(parameters, list):
+                parameters = (translate_param(param) for param in parameters)
+            else:
+                parameters = translate_param(parameters)
+
+            return parameters
 
         if not columns:
             raise ValueError("Zero-column tables aren't supported in SQLite")
@@ -731,7 +759,7 @@ class AbstractDatabase(ABC):
         values = ()
 
         for (col, params) in columns.items():
-            content += content_gen(params, column=col)
+            content += content_gen(translate_params(params), column=col)
 
         script = script_gen.create(
             temp=temp,

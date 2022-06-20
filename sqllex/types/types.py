@@ -44,7 +44,7 @@ ColumnType = Union[
     ConstantType,
     str
 ]
-ColumnsType = Mapping[str, ColumnType]
+ColumnsType = Mapping[Union[str, type], ColumnType]
 
 # Type for databases template
 DBTemplateType = Mapping[

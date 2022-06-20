@@ -219,7 +219,7 @@ class TestSqllexPostgres(unittest.TestCase):
         """
         Testing table creating
         """
-        columns = {'id': INTEGER}
+        columns = {'id': int}
 
         self.db.create_table(
             'test_table_1',
@@ -241,10 +241,10 @@ class TestSqllexPostgres(unittest.TestCase):
         self.db.create_table(
             name='test_table',
             columns={
-                'id': [INTEGER, PRIMARY_KEY],
-                'user': [TEXT, UNIQUE, NOT_NULL],
-                'about': [TEXT, DEFAULT, NULL],
-                'status': [TEXT, DEFAULT, "'offline'"]
+                'id': [int, PRIMARY_KEY],
+                'user': [str, UNIQUE, NOT_NULL],
+                'about': [str, DEFAULT, NULL],
+                'status': [str, DEFAULT, "'offline'"]
             }
         )
 
@@ -254,9 +254,9 @@ class TestSqllexPostgres(unittest.TestCase):
             name='test_table_1',
             columns={
                 'id': [SERIAL, PRIMARY_KEY],
-                'user': [TEXT, UNIQUE, NOT_NULL],
-                'about': [TEXT, DEFAULT, NULL],
-                'status': [TEXT, DEFAULT, "'offline'"]
+                'user': [str, UNIQUE, NOT_NULL],
+                'about': [str, DEFAULT, NULL],
+                'status': [str, DEFAULT, "'offline'"]
             }
         )
         self.assertEqual(self.raw_sql_get_tables_names(), ('test_table', 'test_table_1'))
@@ -265,7 +265,7 @@ class TestSqllexPostgres(unittest.TestCase):
         """
         Testing if not exist kwarg
         """
-        columns = {'id': INTEGER}
+        columns = {'id': int}
 
         self.db.create_table('test_table_1', columns, IF_NOT_EXIST=True)
         self.db.create_table('test_table_2', columns, IF_NOT_EXIST=True)
