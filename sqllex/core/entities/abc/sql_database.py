@@ -730,7 +730,7 @@ class AbstractDatabase(ABC):
                                 f'parameters type {type(parameters)}, '
                                 'expected tuple, list or str')
 
-        def translate_param(param: type | str) -> str:
+        def translate_param(param: Union[type, str]) -> str:
             dictionary = {int: "INTEGER",
                           str: "TEXT",
                           float: "REAL",
@@ -739,7 +739,7 @@ class AbstractDatabase(ABC):
             translation = dictionary.get(param)
             return translation if translation else param
 
-        def translate_params(parameters: type | str) -> str:
+        def translate_params(parameters: Union[type, str]) -> str:
             if isinstance(parameters, (str, dict)):
                 return parameters
 
